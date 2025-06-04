@@ -22,18 +22,22 @@ export default function NavigationHeader() {
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0 flex items-center space-x-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex items-center min-w-0">
+            <div className="flex-shrink-0 flex items-center space-x-2 sm:space-x-3">
               <img 
                 src="https://images.squarespace-cdn.com/content/v1/6490bc5d65728852ce40b805/1c310731-bb1d-41a1-99ef-b6a3e3932e3e/inktricatelogo-01.png?format=300w"
                 alt="Inktricate Designs"
-                className="h-10 w-auto"
+                className="h-8 sm:h-10 w-auto"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  console.log('Logo failed to load');
+                }}
               />
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-semibold text-slate-900">Inktricate Designs</h1>
-                <p className="text-xs text-slate-500">Time Tracking System</p>
+              <div className="hidden sm:block min-w-0">
+                <h1 className="text-sm sm:text-lg font-semibold text-black truncate">Inktricate Designs</h1>
+                <p className="text-xs text-gray-600">Time Tracking System</p>
               </div>
             </div>
           </div>
