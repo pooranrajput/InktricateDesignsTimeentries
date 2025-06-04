@@ -25,14 +25,21 @@ export default function NavigationHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl font-semibold text-slate-900">Inktricate Designs</h1>
-              <p className="text-xs text-slate-500">Time Tracking System</p>
+            <div className="flex-shrink-0 flex items-center space-x-3">
+              <img 
+                src="https://images.squarespace-cdn.com/content/v1/6490bc5d65728852ce40b805/1c310731-bb1d-41a1-99ef-b6a3e3932e3e/inktricatelogo-01.png?format=300w"
+                alt="Inktricate Designs"
+                className="h-10 w-auto"
+              />
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-semibold text-slate-900">Inktricate Designs</h1>
+                <p className="text-xs text-slate-500">Time Tracking System</p>
+              </div>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-4">
               <Link href="/">
                 <Button 
                   variant="ghost" 

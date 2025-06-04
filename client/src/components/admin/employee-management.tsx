@@ -182,21 +182,18 @@ export default function EmployeeManagement() {
   }
 
   return (
-    <Card className="border-0 shadow-sm mb-8">
-      <CardHeader className="border-b border-slate-200">
-        <div className="flex items-center justify-between">
+    <Card className="border-0 shadow-sm mb-6 sm:mb-8">
+      <CardHeader className="border-b border-slate-200 p-4 sm:p-6">
+        <div className="space-y-4">
           <div>
-            <CardTitle className="text-lg font-semibold text-slate-900">Employee Management</CardTitle>
+            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-900">Employee Management</CardTitle>
             <p className="text-slate-600 text-sm">Manage hourly rates and employee details</p>
           </div>
-          <div className="text-sm text-slate-600">
-            <p className="mb-2">New employees automatically appear here after their first login</p>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-blue-800 text-xs">
-                <strong>To add team members:</strong> Share the application URL with them. 
-                They'll automatically be added to your employee list when they sign in for the first time.
-              </p>
-            </div>
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <p className="text-blue-800 text-xs sm:text-sm">
+              <strong>To add team members:</strong> Share the application URL with them. 
+              They'll automatically be added to your employee list when they sign in for the first time.
+            </p>
           </div>
         </div>
       </CardHeader>
