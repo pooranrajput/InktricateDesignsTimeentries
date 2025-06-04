@@ -202,8 +202,35 @@ export class DatabaseStorage implements IStorage {
 
     for (const employee of employees) {
       const { totalHours: empHours, entries } = await this.getMonthlyHoursForUser(employee.id, year, month);
-      const hourlyRate = parseFloat(employee.hourlyRate || '0');
-      const grossPay = empHours * hourlyRate;
+      
+      // Calculate pay with task-specific rates
+      let grossPay = 0;
+      const standardHourlyRate = parseFloat(employee.hourlyRate || "0");
+      
+      for (const entry of entries) {
+        const entryHours = parseFloat(entry.totalHours || "0");
+        let hourlyRate = standardHourlyRate;
+        
+        // Check if this entry has a task-specific rate
+        if (entry.taskCategoryId) {
+          const taskAssignment = await db
+            .select()
+            .from(userTaskAssignments)
+            .where(
+              and(
+                eq(userTaskAssignments.userId, employee.id),
+                eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
+              )
+            )
+            .limit(1);
+          
+          if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
+            hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
+          }
+        }
+        
+        grossPay += entryHours * hourlyRate;
+      }
       
       employeeReports.push({
         user: employee,
@@ -233,7 +260,7 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string): Promise<void> {
+  async assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string, taskSpecificRate?: number): Promise<void> {
     // Remove existing assignments for this task
     await db.delete(userTaskAssignments).where(eq(userTaskAssignments.taskCategoryId, taskCategoryId));
     
@@ -243,6 +270,7 @@ export class DatabaseStorage implements IStorage {
         userId: employeeId,
         taskCategoryId,
         assignedBy,
+        taskSpecificHourlyRate: taskSpecificRate ? taskSpecificRate.toString() : null,
       }));
       await db.insert(userTaskAssignments).values(assignments);
     }

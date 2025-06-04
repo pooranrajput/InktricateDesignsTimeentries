@@ -46,18 +46,19 @@ export const taskCategories = pgTable("task_categories", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull().unique(),
   description: text("description"),
-  color: varchar("color").default("#3B82F6"),
+  color: varchar("color").default("#000000"),
   createdBy: varchar("created_by").notNull().references(() => users.id),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User task assignments table
+// User task assignments table with task-specific hourly rates
 export const userTaskAssignments = pgTable("user_task_assignments", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   taskCategoryId: integer("task_category_id").notNull().references(() => taskCategories.id),
+  taskSpecificHourlyRate: decimal("task_specific_hourly_rate", { precision: 8, scale: 2 }), // Override rate for specific tasks
   assignedAt: timestamp("assigned_at").defaultNow(),
   assignedBy: varchar("assigned_by").notNull().references(() => users.id),
 });
