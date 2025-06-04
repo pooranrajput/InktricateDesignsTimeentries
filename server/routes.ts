@@ -125,6 +125,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-only route to view specific employee time entries
+  app.get('/api/time-entries/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      // Only admins can view other users' time entries
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+      
+      const { userId } = req.params;
+      const { startDate, endDate } = req.query;
+      
+      let start: Date | undefined;
+      let end: Date | undefined;
+      
+      if (startDate) start = new Date(startDate as string);
+      if (endDate) end = new Date(endDate as string);
+      
+      const timeEntries = await storage.getUserTimeEntries(userId, start, end);
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching employee time entries:", error);
+      res.status(500).json({ message: "Failed to fetch employee time entries" });
+    }
+  });
+
   app.post('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -22,9 +22,17 @@ export default function EmployeeManagement() {
   const [newRate, setNewRate] = useState("");
   const [editingRole, setEditingRole] = useState<{ userId: string; currentRole: string } | null>(null);
   const [newRole, setNewRole] = useState("");
+  const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["/api/employees"],
+    retry: false,
+  });
+
+  const { data: employeeTimeEntries = [] } = useQuery({
+    queryKey: ["/api/time-entries", viewingEmployee],
+    queryFn: () => viewingEmployee ? fetch(`/api/time-entries/${viewingEmployee}`).then(res => res.json()) : [],
+    enabled: !!viewingEmployee,
     retry: false,
   });
 
@@ -120,6 +128,10 @@ export default function EmployeeManagement() {
         role: newRole 
       });
     }
+  };
+
+  const handleViewEmployee = (userId: string) => {
+    setViewingEmployee(userId);
   };
 
   const handleDeactivateUser = (userId: string, userName: string) => {
@@ -238,7 +250,13 @@ export default function EmployeeManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleViewEmployee(employee.id)}
+                        className="text-primary hover:text-primary/80"
+                        title="View Employee Details"
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button 
@@ -328,6 +346,60 @@ export default function EmployeeManagement() {
                 disabled={updateRoleMutation.isPending}
               >
                 {updateRoleMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Employee Dialog */}
+      <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Employee Time Entries</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {employeeTimeEntries.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Project</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Hours</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {employeeTimeEntries.map((entry: any) => (
+                      <tr key={entry.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {new Date(entry.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {entry.project}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {entry.startTime} - {entry.endTime}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {entry.totalHours}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-900">
+                          {entry.notes || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-slate-500">No time entries found for this employee.</p>
+            )}
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setViewingEmployee(null)}>
+                Close
               </Button>
             </div>
           </div>
