@@ -1,6 +1,9 @@
 import {
   users,
   timeEntries,
+  taskCategories,
+  userTaskAssignments,
+  monthlyPayroll,
   type User,
   type UpsertUser,
   type InsertTimeEntry,

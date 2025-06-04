@@ -303,6 +303,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Task management routes (admin only)
+  app.get('/api/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const tasks = await storage.getAllTaskCategories();
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.post('/api/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { name, description } = req.body;
+      const taskData = {
+        name,
+        description,
+        createdBy: userId,
+        isActive: true
+      };
+      
+      const task = await storage.createTaskCategory(taskData);
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(500).json({ message: "Failed to create task" });
+    }
+  });
+
+  app.post('/api/tasks/assign', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { taskCategoryId, employeeIds } = req.body;
+      await storage.assignTaskToEmployees(taskCategoryId, employeeIds, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error assigning tasks:", error);
+      res.status(500).json({ message: "Failed to assign tasks" });
+    }
+  });
+
+  // Payroll routes (admin only)
+  app.get('/api/payroll', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const currentDate = new Date();
+      const year = parseInt(req.query.year as string) || currentDate.getFullYear();
+      const month = parseInt(req.query.month as string) || (currentDate.getMonth() + 1);
+      
+      const payrollRecords = await storage.getMonthlyPayrollRecords(year, month);
+      res.json(payrollRecords);
+    } catch (error) {
+      console.error("Error fetching payroll:", error);
+      res.status(500).json({ message: "Failed to fetch payroll records" });
+    }
+  });
+
+  app.post('/api/payroll/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { year, month } = req.body;
+      const records = await storage.generateMonthlyPayroll(year, month);
+      res.json(records);
+    } catch (error) {
+      console.error("Error generating payroll:", error);
+      res.status(500).json({ message: "Failed to generate payroll" });
+    }
+  });
+
+  app.patch('/api/payroll/:id/paid', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const payrollId = parseInt(req.params.id);
+      const updatedRecord = await storage.markPayrollAsPaid(payrollId, userId);
+      
+      // TODO: Send email notification when Gmail credentials are provided
+      
+      res.json(updatedRecord);
+    } catch (error) {
+      console.error("Error marking payroll as paid:", error);
+      res.status(500).json({ message: "Failed to mark payroll as paid" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
