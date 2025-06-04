@@ -6,6 +6,7 @@ import {
   jsonb,
   index,
   serial,
+  integer,
   decimal,
   date,
   time,
@@ -40,6 +41,41 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Task categories table
+export const taskCategories = pgTable("task_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  description: text("description"),
+  color: varchar("color").default("#3B82F6"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User task assignments table
+export const userTaskAssignments = pgTable("user_task_assignments", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  taskCategoryId: integer("task_category_id").notNull().references(() => taskCategories.id),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  assignedBy: varchar("assigned_by").notNull().references(() => users.id),
+});
+
+// Monthly payroll status table
+export const monthlyPayroll = pgTable("monthly_payroll", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  totalHours: decimal("total_hours", { precision: 8, scale: 2 }).notNull(),
+  grossPay: decimal("gross_pay", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, paid
+  paidAt: timestamp("paid_at"),
+  paidBy: varchar("paid_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const timeEntries = pgTable("time_entries", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -47,6 +83,7 @@ export const timeEntries = pgTable("time_entries", {
   startTime: time("start_time").notNull(),
   endTime: time("end_time").notNull(),
   project: varchar("project").notNull(),
+  taskCategoryId: integer("task_category_id").references(() => taskCategories.id),
   notes: text("notes"),
   totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -56,11 +93,48 @@ export const timeEntries = pgTable("time_entries", {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   timeEntries: many(timeEntries),
+  taskAssignments: many(userTaskAssignments),
+  payrollRecords: many(monthlyPayroll),
 }));
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
   user: one(users, {
     fields: [timeEntries.userId],
+    references: [users.id],
+  }),
+  taskCategory: one(taskCategories, {
+    fields: [timeEntries.taskCategoryId],
+    references: [taskCategories.id],
+  }),
+}));
+
+export const taskCategoriesRelations = relations(taskCategories, ({ many }) => ({
+  assignments: many(userTaskAssignments),
+  timeEntries: many(timeEntries),
+}));
+
+export const userTaskAssignmentsRelations = relations(userTaskAssignments, ({ one }) => ({
+  user: one(users, {
+    fields: [userTaskAssignments.userId],
+    references: [users.id],
+  }),
+  taskCategory: one(taskCategories, {
+    fields: [userTaskAssignments.taskCategoryId],
+    references: [taskCategories.id],
+  }),
+  assignedByUser: one(users, {
+    fields: [userTaskAssignments.assignedBy],
+    references: [users.id],
+  }),
+}));
+
+export const monthlyPayrollRelations = relations(monthlyPayroll, ({ one }) => ({
+  user: one(users, {
+    fields: [monthlyPayroll.userId],
+    references: [users.id],
+  }),
+  paidByUser: one(users, {
+    fields: [monthlyPayroll.paidBy],
     references: [users.id],
   }),
 }));
