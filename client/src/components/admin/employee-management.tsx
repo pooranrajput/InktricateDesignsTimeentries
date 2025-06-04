@@ -20,6 +20,8 @@ export default function EmployeeManagement() {
   const { toast } = useToast();
   const [editingRate, setEditingRate] = useState<{ userId: string; currentRate: string } | null>(null);
   const [newRate, setNewRate] = useState("");
+  const [editingRole, setEditingRole] = useState<{ userId: string; currentRole: string } | null>(null);
+  const [newRole, setNewRole] = useState("");
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["/api/employees"],
@@ -38,6 +40,28 @@ export default function EmployeeManagement() {
       toast({
         title: "Success",
         description: "Hourly rate updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await apiRequest("PATCH", `/api/employees/${userId}/role`, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      setEditingRole(null);
+      setNewRole("");
+      toast({
+        title: "Success",
+        description: "Role updated successfully",
       });
     },
     onError: (error: Error) => {
@@ -80,6 +104,20 @@ export default function EmployeeManagement() {
       updateRateMutation.mutate({ 
         userId: editingRate.userId, 
         hourlyRate: newRate 
+      });
+    }
+  };
+
+  const handleEditRole = (userId: string, currentRole: string) => {
+    setEditingRole({ userId, currentRole });
+    setNewRole(currentRole);
+  };
+
+  const handleSaveRole = () => {
+    if (editingRole && newRole) {
+      updateRoleMutation.mutate({ 
+        userId: editingRole.userId, 
+        role: newRole 
       });
     }
   };
@@ -203,7 +241,13 @@ export default function EmployeeManagement() {
                       <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditRole(employee.id, employee.role)}
+                        className="text-slate-400 hover:text-slate-600"
+                        title="Edit Role"
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 
@@ -250,6 +294,40 @@ export default function EmployeeManagement() {
                 disabled={updateRateMutation.isPending}
               >
                 {updateRateMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Role Dialog */}
+      <Dialog open={!!editingRole} onOpenChange={() => setEditingRole(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Employee Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="role">Role</Label>
+              <select 
+                id="role"
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              >
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setEditingRole(null)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveRole}
+                disabled={updateRoleMutation.isPending}
+              >
+                {updateRoleMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
