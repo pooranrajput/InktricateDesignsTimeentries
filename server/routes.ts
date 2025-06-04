@@ -346,6 +346,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/tasks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { id } = req.params;
+      const { name, description, color } = req.body;
+      
+      const task = await storage.updateTaskCategory(parseInt(id), {
+        name,
+        description,
+        color,
+      });
+      
+      res.json(task);
+    } catch (error) {
+      console.error("Error updating task:", error);
+      res.status(500).json({ message: "Failed to update task" });
+    }
+  });
+
   app.post('/api/tasks/assign', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

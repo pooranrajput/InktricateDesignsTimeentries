@@ -14,9 +14,11 @@ import { Plus, Edit, Trash2, Users, CheckCircle } from "lucide-react";
 export default function TaskManagement() {
   const { toast } = useToast();
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [showEditTask, setShowEditTask] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [newTask, setNewTask] = useState({ name: "", description: "", color: "#000000" });
+  const [editTask, setEditTask] = useState({ id: 0, name: "", description: "", color: "#000000" });
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [taskSpecificRate, setTaskSpecificRate] = useState<string>("");
 
@@ -44,6 +46,40 @@ export default function TaskManagement() {
       toast({
         title: "Success",
         description: "Task category created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update task category mutation
+  const updateTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      await apiRequest("PUT", `/api/tasks/${taskData.id}`, taskData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      setShowEditTask(false);
+      setEditTask({ id: 0, name: "", description: "", color: "#000000" });
+      toast({
+        title: "Success",
+        description: "Task category updated successfully",
       });
     },
     onError: (error: Error) => {
@@ -120,6 +156,29 @@ export default function TaskManagement() {
     };
 
     assignTaskMutation.mutate(assignmentData);
+  };
+
+  const handleEditTask = (task: any) => {
+    setEditTask({
+      id: task.id,
+      name: task.name,
+      description: task.description || "",
+      color: task.color || "#000000",
+    });
+    setShowEditTask(true);
+  };
+
+  const handleUpdateTask = () => {
+    if (!editTask.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Task name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateTaskMutation.mutate(editTask);
   };
 
   const handleCreateTask = () => {
@@ -239,7 +298,11 @@ export default function TaskManagement() {
                     <Users className="w-3 h-3 mr-1" />
                     Assign
                   </Button>
-                  <Button size="sm" variant="ghost">
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => handleEditTask(task)}
+                  >
                     <Edit className="w-3 h-3" />
                   </Button>
                 </div>
@@ -374,6 +437,62 @@ export default function TaskManagement() {
                 disabled={assignTaskMutation.isPending || selectedEmployees.length === 0}
               >
                 {assignTaskMutation.isPending ? "Assigning..." : "Assign Tasks"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={showEditTask} onOpenChange={setShowEditTask}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Task Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editTaskName">Task Name</Label>
+              <Input
+                id="editTaskName"
+                value={editTask.name}
+                onChange={(e) => setEditTask({ ...editTask, name: e.target.value })}
+                placeholder="e.g., Design, Administrative"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editTaskDescription">Description (Optional)</Label>
+              <Input
+                id="editTaskDescription"
+                value={editTask.description}
+                onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
+                placeholder="Brief description of this task category"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editTaskColor">Color</Label>
+              <div className="flex space-x-2">
+                <div 
+                  className="w-10 h-10 rounded border border-slate-200 flex-shrink-0"
+                  style={{ backgroundColor: editTask.color }}
+                ></div>
+                <Input
+                  id="editTaskColor"
+                  value={editTask.color}
+                  onChange={(e) => setEditTask({ ...editTask, color: e.target.value })}
+                  placeholder="#000000"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowEditTask(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateTask}
+                disabled={updateTaskMutation.isPending}
+              >
+                {updateTaskMutation.isPending ? "Updating..." : "Update Task"}
               </Button>
             </div>
           </div>

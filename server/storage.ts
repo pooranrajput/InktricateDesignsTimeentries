@@ -260,6 +260,15 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
+  async updateTaskCategory(id: number, updates: any): Promise<any> {
+    const [category] = await db
+      .update(taskCategories)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(taskCategories.id, id))
+      .returning();
+    return category;
+  }
+
   async assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string, taskSpecificRate?: number): Promise<void> {
     // Remove existing assignments for this task
     await db.delete(userTaskAssignments).where(eq(userTaskAssignments.taskCategoryId, taskCategoryId));
