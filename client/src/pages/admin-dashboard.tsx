@@ -7,6 +7,8 @@ import NavigationHeader from "@/components/navigation-header";
 import StatsCard from "@/components/ui/stats-card";
 import EmployeeManagement from "@/components/admin/employee-management";
 import MonthlyReport from "@/components/admin/monthly-report";
+import TaskManagement from "@/components/admin/task-management";
+import PayrollManagement from "@/components/admin/payroll-management";
 import { Users, Clock, DollarSign, Calendar } from "lucide-react";
 
 export default function AdminDashboard() {

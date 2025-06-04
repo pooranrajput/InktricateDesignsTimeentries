@@ -40,6 +40,16 @@ export interface IStorage {
       entries: TimeEntry[];
     }>;
   }>;
+  
+  // Task category operations
+  getAllTaskCategories(): Promise<any[]>;
+  createTaskCategory(taskData: any): Promise<any>;
+  assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string): Promise<void>;
+  
+  // Payroll operations
+  getMonthlyPayrollRecords(year: number, month: number): Promise<any[]>;
+  generateMonthlyPayroll(year: number, month: number): Promise<any[]>;
+  markPayrollAsPaid(payrollId: number, paidBy: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -208,6 +218,115 @@ export class DatabaseStorage implements IStorage {
       totalPayroll,
       employeeReports,
     };
+  }
+
+  // Task category operations
+  async getAllTaskCategories(): Promise<any[]> {
+    return await db.select().from(taskCategories).where(eq(taskCategories.isActive, true));
+  }
+
+  async createTaskCategory(taskData: any): Promise<any> {
+    const [category] = await db.insert(taskCategories).values(taskData).returning();
+    return category;
+  }
+
+  async assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string): Promise<void> {
+    // Remove existing assignments for this task
+    await db.delete(userTaskAssignments).where(eq(userTaskAssignments.taskCategoryId, taskCategoryId));
+    
+    // Add new assignments
+    if (employeeIds.length > 0) {
+      const assignments = employeeIds.map(employeeId => ({
+        userId: employeeId,
+        taskCategoryId,
+        assignedBy,
+      }));
+      await db.insert(userTaskAssignments).values(assignments);
+    }
+  }
+
+  // Payroll operations
+  async getMonthlyPayrollRecords(year: number, month: number): Promise<any[]> {
+    return await db
+      .select({
+        id: monthlyPayroll.id,
+        userId: monthlyPayroll.userId,
+        year: monthlyPayroll.year,
+        month: monthlyPayroll.month,
+        totalHours: monthlyPayroll.totalHours,
+        grossPay: monthlyPayroll.grossPay,
+        status: monthlyPayroll.status,
+        paidAt: monthlyPayroll.paidAt,
+        paidBy: monthlyPayroll.paidBy,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(monthlyPayroll)
+      .leftJoin(users, eq(monthlyPayroll.userId, users.id))
+      .where(and(eq(monthlyPayroll.year, year), eq(monthlyPayroll.month, month)));
+  }
+
+  async generateMonthlyPayroll(year: number, month: number): Promise<any[]> {
+    // Get all active employees
+    const employees = await this.getAllEmployees();
+    const records = [];
+
+    for (const employee of employees) {
+      // Get monthly hours for this employee
+      const { totalHours } = await this.getMonthlyHoursForUser(employee.id, year, month);
+      
+      if (totalHours > 0) {
+        const hourlyRate = parseFloat(employee.hourlyRate || '0');
+        const grossPay = totalHours * hourlyRate;
+
+        // Check if record already exists
+        const [existing] = await db
+          .select()
+          .from(monthlyPayroll)
+          .where(
+            and(
+              eq(monthlyPayroll.userId, employee.id),
+              eq(monthlyPayroll.year, year),
+              eq(monthlyPayroll.month, month)
+            )
+          );
+
+        if (!existing) {
+          const [record] = await db
+            .insert(monthlyPayroll)
+            .values({
+              userId: employee.id,
+              year,
+              month,
+              totalHours: totalHours.toString(),
+              grossPay: grossPay.toFixed(2),
+              status: 'pending',
+            })
+            .returning();
+          records.push(record);
+        }
+      }
+    }
+
+    return records;
+  }
+
+  async markPayrollAsPaid(payrollId: number, paidBy: string): Promise<any> {
+    const [record] = await db
+      .update(monthlyPayroll)
+      .set({
+        status: 'paid',
+        paidAt: new Date(),
+        paidBy,
+      })
+      .where(eq(monthlyPayroll.id, payrollId))
+      .returning();
+    
+    return record;
   }
 }
 
