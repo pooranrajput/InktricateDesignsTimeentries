@@ -47,6 +47,7 @@ export interface IStorage {
   // Task category operations
   getAllTaskCategories(): Promise<any[]>;
   createTaskCategory(taskData: any): Promise<any>;
+  updateTaskCategory(id: number, updates: any): Promise<any>;
   assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string): Promise<void>;
   
   // Payroll operations
