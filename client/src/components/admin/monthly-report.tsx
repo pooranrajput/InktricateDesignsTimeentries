@@ -34,9 +34,66 @@ export default function MonthlyReport() {
   };
 
   const handleExport = (format: 'excel' | 'pdf') => {
-    // This would typically trigger a download
-    // For now, we'll just show a toast
-    console.log(`Exporting ${format} report for ${getMonthName(selectedMonth)} ${selectedYear}`);
+    if (!reportData || !reportData.employeeReports?.length) {
+      console.log('No data available for export');
+      return;
+    }
+
+    const filename = `payroll-report-${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`;
+    
+    if (format === 'excel') {
+      exportToCSV(reportData, filename);
+    } else {
+      exportToPDF(reportData, filename, selectedMonth, selectedYear);
+    }
+  };
+
+  const exportToCSV = (data: any, filename: string) => {
+    const headers = ['Employee Name', 'Email', 'Total Hours', 'Hourly Rate', 'Gross Pay', 'Status'];
+    const csvContent = [
+      headers.join(','),
+      ...data.employeeReports.map((report: any) => [
+        `"${getDisplayName(report.user)}"`,
+        `"${report.user.email}"`,
+        report.totalHours.toFixed(1),
+        `$${parseFloat(report.user.hourlyRate || '0').toFixed(2)}`,
+        `$${report.grossPay.toFixed(2)}`,
+        report.totalHours > 0 ? 'Ready' : 'Pending'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.csv`;
+    link.click();
+  };
+
+  const exportToPDF = (data: any, filename: string, month: number, year: number) => {
+    const content = `
+INKTRICATE DESIGNS
+Monthly Payroll Report - ${getMonthName(month)} ${year}
+
+Summary:
+Total Hours: ${data.totalHours?.toFixed(1) || '0.0'}
+Total Payroll: $${data.totalPayroll?.toFixed(2) || '0.00'}
+Employees: ${data.employeeReports?.length || 0}
+
+Employee Details:
+${data.employeeReports?.map((report: any) => 
+  `${getDisplayName(report.user)} (${report.user.email})
+   Hours: ${report.totalHours.toFixed(1)} | Rate: $${parseFloat(report.user.hourlyRate || '0').toFixed(2)}/hr | Pay: $${report.grossPay.toFixed(2)}
+   Status: ${report.totalHours > 0 ? 'Ready' : 'Pending'}
+`).join('\n') || 'No employee data'}
+
+Generated on: ${new Date().toLocaleDateString()}
+    `.trim();
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.txt`;
+    link.click();
   };
 
   if (isLoading) {
