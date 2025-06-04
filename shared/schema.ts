@@ -47,6 +47,7 @@ export const taskCategories = pgTable("task_categories", {
   name: varchar("name").notNull().unique(),
   description: text("description"),
   color: varchar("color").default("#3B82F6"),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
