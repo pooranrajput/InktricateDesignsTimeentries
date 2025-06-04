@@ -96,8 +96,14 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Task Management */}
+        <TaskManagement />
+
         {/* Employee Management */}
         <EmployeeManagement />
+
+        {/* Payroll Management */}
+        <PayrollManagement />
 
         {/* Monthly Report */}
         <MonthlyReport />
