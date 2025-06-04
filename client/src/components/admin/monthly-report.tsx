@@ -54,15 +54,15 @@ export default function MonthlyReport() {
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeader className="border-b border-slate-200">
-        <div className="flex items-center justify-between">
+      <CardHeader className="border-b border-slate-200 p-4 sm:p-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <CardTitle className="text-lg font-semibold text-slate-900">Monthly Payroll Report</CardTitle>
+            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-900">Monthly Payroll Report</CardTitle>
             <p className="text-slate-600 text-sm">Generate and export monthly payroll calculations</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
             <select 
-              className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary w-full sm:w-auto"
               value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
               onChange={(e) => {
                 const [year, month] = e.target.value.split('-');
@@ -77,28 +77,32 @@ export default function MonthlyReport() {
                 {getMonthName(currentDate.getMonth())} {currentDate.getFullYear()}
               </option>
             </select>
-            <Button 
-              onClick={() => handleExport('excel')}
-              className="bg-accent hover:bg-accent/90"
-            >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Export Excel
-            </Button>
-            <Button 
-              onClick={() => handleExport('pdf')}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => handleExport('excel')}
+                className="bg-accent hover:bg-accent/90 flex-1 sm:flex-none"
+                size="sm"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Export </span>Excel
+              </Button>
+              <Button 
+                onClick={() => handleExport('pdf')}
+                className="bg-red-500 hover:bg-red-600 flex-1 sm:flex-none"
+                size="sm"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Export </span>PDF
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         {/* Summary Stats */}
-        <div className="bg-slate-50 rounded-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-slate-50 rounded-lg p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center">
               <p className="text-sm font-medium text-slate-600">Total Hours</p>
               <p className="text-3xl font-bold text-slate-900">
@@ -121,8 +125,50 @@ export default function MonthlyReport() {
           </div>
         </div>
         
-        {/* Employee Report Table */}
-        <div className="overflow-x-auto">
+        {/* Employee Report - Mobile Cards */}
+        <div className="block sm:hidden space-y-4 mb-6">
+          {reportData?.employeeReports?.map((report: any) => (
+            <div key={report.user.id} className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                    <span className="text-black text-sm font-medium">
+                      {getInitials(report.user.firstName, report.user.lastName, report.user.email)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900 text-sm">{getDisplayName(report.user)}</p>
+                    <p className="text-xs text-slate-500">{report.user.email}</p>
+                  </div>
+                </div>
+                <Badge className={report.totalHours > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                  {report.totalHours > 0 ? 'Ready' : 'Pending'}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center pt-3 border-t border-gray-100">
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Hours</p>
+                  <p className="font-semibold text-slate-900">{report.totalHours.toFixed(1)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Rate</p>
+                  <p className="font-semibold text-slate-900">${parseFloat(report.user.hourlyRate || '0').toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Gross Pay</p>
+                  <p className="font-semibold text-green-600">${report.grossPay.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          )) || (
+            <div className="text-center py-8 text-slate-500">
+              No payroll data available for {getMonthName(selectedMonth)} {selectedYear}
+            </div>
+          )}
+        </div>
+
+        {/* Employee Report Table - Desktop */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
