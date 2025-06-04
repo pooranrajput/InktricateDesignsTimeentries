@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus } from "lucide-react";
+import { Plus, Clock, Zap } from "lucide-react";
 
 const timeEntrySchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -29,6 +29,7 @@ interface TimeEntryFormProps {
 export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
   const { toast } = useToast();
   const [calculatedHours, setCalculatedHours] = useState(0);
+  const [showQuickEntry, setShowQuickEntry] = useState(true);
 
   const form = useForm<TimeEntryFormData>({
     resolver: zodResolver(timeEntrySchema),
@@ -98,9 +99,104 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
     createTimeEntryMutation.mutate(data);
   };
 
+  // Quick entry presets
+  const quickEntryPresets = [
+    {
+      name: "Full Day",
+      icon: Clock,
+      startTime: "09:00",
+      endTime: "17:00",
+      project: "wedding-invites",
+      hours: 8,
+      color: "bg-blue-50 border-blue-200 hover:bg-blue-100"
+    },
+    {
+      name: "Half Day",
+      icon: Clock,
+      startTime: "09:00",
+      endTime: "13:00",
+      project: "wedding-invites",
+      hours: 4,
+      color: "bg-green-50 border-green-200 hover:bg-green-100"
+    },
+    {
+      name: "Production",
+      icon: Zap,
+      startTime: "09:00",
+      endTime: "17:00",
+      project: "production",
+      hours: 8,
+      color: "bg-orange-50 border-orange-200 hover:bg-orange-100"
+    },
+    {
+      name: "Consultation",
+      icon: Clock,
+      startTime: "10:00",
+      endTime: "12:00",
+      project: "design-consultation",
+      hours: 2,
+      color: "bg-purple-50 border-purple-200 hover:bg-purple-100"
+    }
+  ];
+
+  const handleQuickEntry = (preset: typeof quickEntryPresets[0]) => {
+    form.setValue("startTime", preset.startTime);
+    form.setValue("endTime", preset.endTime);
+    form.setValue("project", preset.project);
+    setShowQuickEntry(false);
+    toast({
+      title: "Quick Entry Applied",
+      description: `${preset.name} (${preset.hours} hours) - Review and submit`,
+    });
+  };
+
   return (
     <div>
-      <h4 className="text-md font-medium text-slate-900 mb-4">Add Time Entry</h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-md font-medium text-slate-900">Add Time Entry</h4>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowQuickEntry(!showQuickEntry)}
+          className="text-slate-600 hover:text-slate-900"
+        >
+          <Zap className="w-4 h-4 mr-1" />
+          Quick Entry
+        </Button>
+      </div>
+
+      {/* Quick Entry Shortcuts */}
+      {showQuickEntry && (
+        <div className="mb-6 p-4 bg-slate-50 rounded-lg border">
+          <h5 className="text-sm font-medium text-slate-700 mb-3">One-Tap Shortcuts</h5>
+          <div className="grid grid-cols-2 gap-2">
+            {quickEntryPresets.map((preset, index) => {
+              const IconComponent = preset.icon;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleQuickEntry(preset)}
+                  className={`p-3 rounded-lg border text-left transition-colors ${preset.color}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center">
+                        <IconComponent className="w-4 h-4 mr-2 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-900">{preset.name}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">{preset.hours} hours</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Tap a shortcut to auto-fill the form, then review and submit</p>
+        </div>
+      )}
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <Label htmlFor="date">Date</Label>
