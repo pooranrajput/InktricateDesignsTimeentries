@@ -12,6 +12,7 @@ export default function MonthlyReport() {
 
   const { data: reportData, isLoading } = useQuery({
     queryKey: ["/api/reports/monthly", { year: selectedYear, month: selectedMonth }],
+    queryFn: () => fetch(`/api/reports/monthly?year=${selectedYear}&month=${selectedMonth}`).then(res => res.json()),
     retry: false,
   });
 

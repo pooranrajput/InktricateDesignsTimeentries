@@ -139,10 +139,15 @@ export default function EmployeeManagement() {
             <CardTitle className="text-lg font-semibold text-slate-900">Employee Management</CardTitle>
             <p className="text-slate-600 text-sm">Manage hourly rates and employee details</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Employee
-          </Button>
+          <div className="text-sm text-slate-600">
+            <p className="mb-2">New employees automatically appear here after their first login</p>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-blue-800 text-xs">
+                <strong>To add team members:</strong> Share the application URL with them. 
+                They'll automatically be added to your employee list when they sign in for the first time.
+              </p>
+            </div>
+          </div>
         </div>
       </CardHeader>
       
