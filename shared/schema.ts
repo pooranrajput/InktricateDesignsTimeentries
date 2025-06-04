@@ -79,6 +79,7 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  totalHours: true,
 });
 
 export const updateTimeEntrySchema = insertTimeEntrySchema.partial().extend({
