@@ -68,14 +68,16 @@ export default function TaskManagement() {
 
   // Assign task to employee mutation
   const assignTaskMutation = useMutation({
-    mutationFn: async ({ taskId, employeeIds }: { taskId: number; employeeIds: string[] }) => {
-      await apiRequest("POST", "/api/tasks/assign", { taskCategoryId: taskId, employeeIds });
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/tasks/assign", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       setShowAssignTask(false);
       setSelectedTask(null);
+      setSelectedEmployees([]);
+      setTaskSpecificRate("");
       toast({
         title: "Success",
         description: "Tasks assigned successfully",
@@ -100,6 +102,25 @@ export default function TaskManagement() {
       });
     },
   });
+
+  const handleAssignTask = () => {
+    if (selectedEmployees.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one employee",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const assignmentData = {
+      taskCategoryId: selectedTask.id,
+      employeeIds: selectedEmployees,
+      taskSpecificRate: taskSpecificRate ? parseFloat(taskSpecificRate) : null,
+    };
+
+    assignTaskMutation.mutate(assignmentData);
+  };
 
   const handleCreateTask = () => {
     if (!newTask.name.trim()) {
