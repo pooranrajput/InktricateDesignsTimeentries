@@ -16,7 +16,9 @@ export default function TaskManagement() {
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#3B82F6" });
+  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#000000" });
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [taskSpecificRate, setTaskSpecificRate] = useState<string>("");
 
   // Fetch task categories
   const { data: taskCategories = [], isLoading: tasksLoading } = useQuery({
@@ -112,10 +114,11 @@ export default function TaskManagement() {
   };
 
   const defaultTasks = [
-    { name: "Administrative", description: "General administrative tasks", color: "#3B82F6" },
-    { name: "Design", description: "Creative design work", color: "#8B5CF6" },
-    { name: "Email Follow-up", description: "Client communication and follow-ups", color: "#10B981" },
-    { name: "Marketing", description: "Marketing and promotional activities", color: "#F59E0B" },
+    { name: "Administrative", description: "General administrative tasks", color: "#000000" },
+    { name: "Design", description: "Creative design work", color: "#404040" },
+    { name: "Email Follow-up", description: "Client communication and follow-ups", color: "#606060" },
+    { name: "Marketing", description: "Marketing and promotional activities", color: "#808080" },
+    { name: "Production", description: "Production work at special rate ($15/hour)", color: "#000000" },
   ];
 
   const initializeDefaultTasks = () => {
@@ -293,23 +296,62 @@ export default function TaskManagement() {
             <p className="text-sm text-slate-600">
               Select employees to assign this task category to:
             </p>
+            
+            {/* Task-specific hourly rate input */}
+            {selectedTask?.name === "Production" && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                <Label htmlFor="taskRate" className="text-sm font-medium">
+                  Production Task Hourly Rate (overrides standard rate)
+                </Label>
+                <Input
+                  id="taskRate"
+                  type="number"
+                  step="0.01"
+                  value={taskSpecificRate}
+                  onChange={(e) => setTaskSpecificRate(e.target.value)}
+                  placeholder="15.00"
+                  className="mt-1"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Leave empty to use employee's standard hourly rate
+                </p>
+              </div>
+            )}
+            
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {employees.map((employee: any) => (
                 <label key={employee.id} className="flex items-center space-x-2 p-2 hover:bg-slate-50 rounded">
                   <input 
                     type="checkbox" 
                     className="rounded border-slate-300"
-                    defaultChecked={employee.assignedTasks?.includes(selectedTask?.id)}
+                    checked={selectedEmployees.includes(employee.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedEmployees([...selectedEmployees, employee.id]);
+                      } else {
+                        setSelectedEmployees(selectedEmployees.filter(id => id !== employee.id));
+                      }
+                    }}
                   />
                   <span className="text-sm">{employee.firstName} {employee.lastName} ({employee.email})</span>
+                  <span className="text-xs text-slate-500 ml-auto">
+                    Standard: ${employee.hourlyRate}/hr
+                  </span>
                 </label>
               ))}
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowAssignTask(false)}>
+              <Button variant="outline" onClick={() => {
+                setShowAssignTask(false);
+                setSelectedEmployees([]);
+                setTaskSpecificRate("");
+              }}>
                 Cancel
               </Button>
-              <Button disabled={assignTaskMutation.isPending}>
+              <Button 
+                onClick={handleAssignTask}
+                disabled={assignTaskMutation.isPending || selectedEmployees.length === 0}
+              >
                 {assignTaskMutation.isPending ? "Assigning..." : "Assign Tasks"}
               </Button>
             </div>

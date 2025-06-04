@@ -355,8 +355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const { taskCategoryId, employeeIds } = req.body;
-      await storage.assignTaskToEmployees(taskCategoryId, employeeIds, userId);
+      const { taskCategoryId, employeeIds, taskSpecificRate } = req.body;
+      await storage.assignTaskToEmployees(taskCategoryId, employeeIds, userId, taskSpecificRate);
       res.json({ success: true });
     } catch (error) {
       console.error("Error assigning tasks:", error);
