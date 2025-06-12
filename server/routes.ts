@@ -27,8 +27,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can see the employee list
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const employees = await storage.getAllEmployees();
@@ -44,8 +45,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can change salary/hourly rates
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const { id } = req.params;
@@ -68,8 +70,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can change user roles
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const { id } = req.params;
@@ -92,8 +95,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can deactivate employees
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const { id } = req.params;
@@ -105,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Time entry routes
+  // Time entry routes - SECURITY CRITICAL: Users can only see their own time entries
   app.get('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -117,6 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (startDate) start = new Date(startDate as string);
       if (endDate) end = new Date(endDate as string);
       
+      // SECURITY: Each user can ONLY see their own time entries
       const timeEntries = await storage.getUserTimeEntries(userId, start, end);
       res.json(timeEntries);
     } catch (error) {
@@ -240,14 +245,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Monthly report routes (admin only)
+  // Monthly report routes (admin only) - SECURITY: Contains all employee pay rates
   app.get('/api/reports/monthly', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY CRITICAL: Only admins can see payroll reports with salary data
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required to view payroll data" });
       }
       
       const { year, month } = req.query;
@@ -268,14 +274,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard stats (admin only)
+  // Dashboard stats (admin only) - SECURITY: Contains sensitive business metrics
   app.get('/api/stats/dashboard', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY CRITICAL: Only admins can see dashboard statistics
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required to view dashboard statistics" });
       }
       
       const now = new Date();
@@ -303,14 +310,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Task management routes (admin only)
+  // Task management routes (admin only) - SECURITY: Task rates could reveal pay structure
   app.get('/api/tasks', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can manage tasks (which may contain rate information)
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const tasks = await storage.getAllTaskCategories();
@@ -326,8 +334,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY: Only admins can create tasks
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
       const { name, description } = req.body;
