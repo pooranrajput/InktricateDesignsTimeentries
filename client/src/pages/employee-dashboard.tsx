@@ -41,13 +41,13 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
-  // Calculate monthly stats - SECURITY: No pay calculations visible to employees
+  // Calculate monthly stats - employees can see their own pay estimates
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
   const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  // SECURITY REMOVED: Employees cannot see pay estimates or hourly rates
+  const estimatedPay = monthlyHours * parseFloat(user?.hourlyRate || '0');
   const workingDays = timeEntriesArray.length;
 
   if (isLoading || !isAuthenticated) {
@@ -119,9 +119,9 @@ export default function EmployeeDashboard() {
                     <TrendingUp className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-600">Entries Submitted</p>
+                    <p className="text-sm font-medium text-slate-600">Estimated Pay</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {entriesLoading ? "..." : timeEntriesArray.length}
+                      {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
                     </p>
                   </div>
                 </div>
