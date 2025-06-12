@@ -1,0 +1,3 @@
+firstName,lastName,email,phone,homeAddress,inktricateStartDate,hourlyRate
+John,Smith,john@inktricatedesigns.com,(555) 123-4567,"123 Main St, City, State 12345",2024-01-15,25.00
+Jane,Doe,jane@inktricatedesigns.com,(555) 234-5678,"456 Oak Ave, City, State 12345",2024-02-01,25.00

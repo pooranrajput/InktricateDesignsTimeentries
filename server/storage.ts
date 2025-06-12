@@ -17,6 +17,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createEmployeeBulk(employees: any[]): Promise<User[]>;
   
   // Employee management
   getAllEmployees(): Promise<User[]>;
@@ -76,6 +77,28 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async createEmployeeBulk(employees: any[]): Promise<User[]> {
+    const employeeData = employees.map((emp, index) => ({
+      id: `emp_${Date.now()}_${index}`,
+      email: emp.email,
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      phone: emp.phone,
+      homeAddress: emp.homeAddress,
+      inktricateStartDate: new Date(emp.inktricateStartDate),
+      hourlyRate: emp.hourlyRate || "25.00",
+      role: "employee",
+      isActive: true,
+    }));
+
+    const insertedUsers = await db
+      .insert(users)
+      .values(employeeData)
+      .returning();
+    
+    return insertedUsers;
   }
 
   // Employee management

@@ -34,6 +34,9 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  phone: varchar("phone"),
+  homeAddress: text("home_address"),
+  inktricateStartDate: date("inktricate_start_date"),
   role: varchar("role").notNull().default("employee"), // 'admin' or 'employee'
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
   isActive: boolean("is_active").notNull().default(true),
