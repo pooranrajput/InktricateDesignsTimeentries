@@ -87,9 +87,9 @@ export class DatabaseStorage implements IStorage {
       lastName: emp.lastName,
       phone: emp.phone,
       homeAddress: emp.homeAddress,
-      inktricateStartDate: new Date(emp.inktricateStartDate),
+      inktricateStartDate: emp.inktricateStartDate,
       hourlyRate: emp.hourlyRate || "25.00",
-      role: "employee",
+      role: "employee" as const,
       isActive: true,
     }));
 
