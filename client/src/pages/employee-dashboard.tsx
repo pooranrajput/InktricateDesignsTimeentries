@@ -41,13 +41,14 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
-  // Calculate monthly stats
-  const monthlyHours = timeEntries.reduce((sum: number, entry: any) => 
+  // Calculate monthly stats - SECURITY: No pay calculations visible to employees
+  const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
+  const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  const estimatedPay = monthlyHours * parseFloat(user?.hourlyRate || '0');
-  const workingDays = timeEntries.length;
+  // SECURITY REMOVED: Employees cannot see pay estimates or hourly rates
+  const workingDays = timeEntriesArray.length;
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -118,9 +119,9 @@ export default function EmployeeDashboard() {
                     <TrendingUp className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-600">Estimated Pay</p>
+                    <p className="text-sm font-medium text-slate-600">Entries Submitted</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
+                      {entriesLoading ? "..." : timeEntriesArray.length}
                     </p>
                   </div>
                 </div>
@@ -160,7 +161,7 @@ export default function EmployeeDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <TimeEntryForm onSuccess={refetch} />
               <TimeEntriesList 
-                timeEntries={timeEntries} 
+                timeEntries={timeEntriesArray} 
                 isLoading={entriesLoading}
                 onUpdate={refetch}
               />

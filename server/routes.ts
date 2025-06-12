@@ -398,14 +398,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Payroll routes (admin only)
+  // Payroll routes (admin only) - SECURITY CRITICAL: Contains all employee salaries
   app.get('/api/payroll', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY CRITICAL: Only admins can access payroll data with salary information
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required to view payroll data" });
       }
       
       const currentDate = new Date();
@@ -425,8 +426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY CRITICAL: Only admins can generate payroll with salary calculations
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required to generate payroll" });
       }
       
       const { year, month } = req.body;
@@ -443,8 +445,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
+      // SECURITY CRITICAL: Only admins can mark payroll as paid
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Access denied: Admin privileges required to manage payroll" });
       }
       
       const payrollId = parseInt(req.params.id);
