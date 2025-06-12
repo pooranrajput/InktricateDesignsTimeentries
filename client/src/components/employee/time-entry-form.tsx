@@ -45,6 +45,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
   const { watch, setValue } = form;
   const startTime = watch("startTime");
   const endTime = watch("endTime");
+  const project = watch("project");
 
   // Calculate hours when times change
   React.useEffect(() => {
@@ -240,7 +241,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
         
         <div>
           <Label htmlFor="project">Project/Task</Label>
-          <Select onValueChange={(value) => setValue("project", value)}>
+          <Select value={project} onValueChange={(value) => setValue("project", value)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select project..." />
             </SelectTrigger>
