@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
 
 const loginSchema = z.object({
@@ -29,9 +30,18 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function AuthPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Check if user is already logged in and needs to reset password
+  useEffect(() => {
+    if (user && user.mustResetPassword) {
+      setCurrentUser(user);
+      setShowResetForm(true);
+    }
+  }, [user]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -83,12 +93,21 @@ export default function AuthPage() {
       });
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Refresh user data to get updated mustResetPassword status
+      const userRes = await apiRequest("GET", "/api/user");
+      const updatedUser = await userRes.json();
+      queryClient.setQueryData(["/api/user"], updatedUser);
+      
       toast({
         title: "Password Updated",
         description: "Your password has been successfully updated.",
       });
-      window.location.href = "/";
+      
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     },
     onError: (error: Error) => {
       toast({

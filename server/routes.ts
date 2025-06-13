@@ -34,6 +34,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Password reset route
+  app.post('/api/reset-password', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      
+      // Hash the new password
+      const { hashPassword } = require('./auth');
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update password and clear reset flag
+      await storage.updatePassword(userId, hashedPassword);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Employee management routes (admin only)
   app.get('/api/employees', isAuthenticated, async (req: any, res) => {
     try {
