@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
+import { count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -277,7 +278,22 @@ export class DatabaseStorage implements IStorage {
 
   // Task category operations
   async getAllTaskCategories(): Promise<any[]> {
-    return await db.select().from(taskCategories).where(eq(taskCategories.isActive, true));
+    const tasks = await db
+      .select({
+        id: taskCategories.id,
+        name: taskCategories.name,
+        description: taskCategories.description,
+        color: taskCategories.color,
+        isActive: taskCategories.isActive,
+        createdAt: taskCategories.createdAt,
+        assignedCount: count(userTaskAssignments.id),
+      })
+      .from(taskCategories)
+      .leftJoin(userTaskAssignments, eq(taskCategories.id, userTaskAssignments.taskCategoryId))
+      .where(eq(taskCategories.isActive, true))
+      .groupBy(taskCategories.id);
+    
+    return tasks;
   }
 
   async createTaskCategory(taskData: any): Promise<any> {
