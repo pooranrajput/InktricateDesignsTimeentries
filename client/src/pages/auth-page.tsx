@@ -221,10 +221,10 @@ export default function AuthPage() {
                     className="pl-10"
                     placeholder="Enter your username"
                   />
-                  <User className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <User className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 </div>
                 {loginForm.formState.errors.username && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-destructive mt-1">
                     {loginForm.formState.errors.username.message}
                   </p>
                 )}
@@ -240,7 +240,7 @@ export default function AuthPage() {
                     className="pl-10 pr-10"
                     placeholder="Enter your password"
                   />
-                  <Lock className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <Lock className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   <Button
                     type="button"
                     variant="ghost"
@@ -252,7 +252,7 @@ export default function AuthPage() {
                   </Button>
                 </div>
                 {loginForm.formState.errors.password && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-destructive mt-1">
                     {loginForm.formState.errors.password.message}
                   </p>
                 )}
@@ -267,12 +267,12 @@ export default function AuthPage() {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Default Login Credentials:</h4>
-              <div className="text-sm text-blue-800 space-y-1">
+            <div className="mt-6 p-4 bg-muted rounded-lg">
+              <h4 className="font-medium text-foreground mb-2">Default Login Credentials:</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
                 <p><strong>Admin:</strong> username: admin, password: Inktricate2024!</p>
                 <p><strong>Employees:</strong> username: [firstname], password: Inktricate2024!</p>
-                <p className="text-xs mt-2 text-blue-700">
+                <p className="text-xs mt-2">
                   You'll be asked to reset your password on first login.
                 </p>
               </div>
