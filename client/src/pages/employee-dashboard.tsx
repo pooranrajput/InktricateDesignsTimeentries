@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import NavigationHeader from "@/components/navigation-header";
 import TimeEntryForm from "@/components/employee/time-entry-form";
 import TimeEntriesList from "@/components/employee/time-entries-list";
@@ -10,24 +10,24 @@ import { Clock, Calendar, TrendingUp } from "lucide-react";
 
 export default function EmployeeDashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // Redirect to home if not authenticated
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !user) {
       toast({
         title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        description: "You are logged out. Please log in again...",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [user, isLoading, toast]);
 
   // Calculate date range for current month
   const startDate = new Date(selectedYear, selectedMonth - 1, 1);
@@ -50,7 +50,7 @@ export default function EmployeeDashboard() {
   const estimatedPay = monthlyHours * parseFloat(user?.hourlyRate || '0');
   const workingDays = timeEntriesArray.length;
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
