@@ -39,7 +39,7 @@ export function setupAuth(app: Express) {
     store: new PostgresSessionStore({
       conString: process.env.DATABASE_URL,
       createTableIfMissing: false,
-      tableName: 'session',
+      tableName: 'sessions',
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -94,14 +94,19 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
+    if (req.session) {
       req.session.destroy((err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error('Session destroy error:', err);
+          return next(err);
+        }
         res.clearCookie('connect.sid');
+        res.clearCookie('session');
         res.sendStatus(200);
       });
-    });
+    } else {
+      res.sendStatus(200);
+    }
   });
 
   app.get("/api/user", (req, res) => {
