@@ -126,7 +126,7 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
     switch (project) {
       case 'production':
         return 'bg-primary text-primary-foreground';
-      case 'designing':
+      case 'design':
         return 'bg-muted text-foreground';
       default:
         return 'bg-secondary text-secondary-foreground';
@@ -137,8 +137,8 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
     switch (project) {
       case 'production':
         return 'Production';
-      case 'designing':
-        return 'Designing';
+      case 'design':
+        return 'Design';
       default:
         return project.charAt(0).toUpperCase() + project.slice(1);
     }

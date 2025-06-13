@@ -175,8 +175,8 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
           )}
         </div>
 
-        {/* Client Name field - only show for Designing tasks */}
-        {project === "designing" && (
+        {/* Client Name field - only show for Design tasks */}
+        {project === "design" && (
           <div>
             <Label htmlFor="clientName">Client Name</Label>
             <Input
