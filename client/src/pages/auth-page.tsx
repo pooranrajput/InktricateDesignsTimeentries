@@ -205,9 +205,20 @@ export default function AuthPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
           <CardHeader className="text-center">
+            <div className="mb-6">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-foreground mb-1" style={{ fontFamily: 'serif' }}>
+                  Inktricate
+                </h1>
+                <div className="text-xs text-muted-foreground tracking-widest font-medium">
+                  DESIGNS
+                </div>
+                <div className="mt-2 h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
+              </div>
+            </div>
             <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Sign in to your Inktricate Designs account
+              Sign in to your account
             </CardDescription>
           </CardHeader>
           <CardContent>
