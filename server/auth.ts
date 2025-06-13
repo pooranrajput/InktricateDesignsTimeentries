@@ -33,12 +33,12 @@ export function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
   
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "your-secret-key",
+    secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     store: new PostgresSessionStore({
       conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
+      createTableIfMissing: false,
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -57,6 +57,10 @@ export function setupAuth(app: Express) {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user || !user.isActive) {
+          return done(null, false);
+        }
+        
+        if (!user.password) {
           return done(null, false);
         }
         

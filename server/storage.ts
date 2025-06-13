@@ -176,9 +176,18 @@ export class DatabaseStorage implements IStorage {
 
   // Time entry operations
   async createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry> {
+    // Calculate total hours from start and end times
+    const startTime = new Date(`1970-01-01T${timeEntry.startTime}`);
+    const endTime = new Date(`1970-01-01T${timeEntry.endTime}`);
+    const diffMs = endTime.getTime() - startTime.getTime();
+    const totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+    
     const [entry] = await db
       .insert(timeEntries)
-      .values(timeEntry)
+      .values({
+        ...timeEntry,
+        totalHours: totalHours
+      })
       .returning();
     return entry;
   }
