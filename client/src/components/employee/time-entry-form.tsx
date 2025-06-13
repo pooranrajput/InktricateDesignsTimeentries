@@ -32,6 +32,11 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
   const [calculatedHours, setCalculatedHours] = useState(0);
   const [showQuickEntry, setShowQuickEntry] = useState(true);
 
+  // Fetch user's assigned tasks
+  const { data: assignedTasks = [] } = useQuery({
+    queryKey: ["/api/user/tasks"],
+  });
+
   const form = useForm<TimeEntryFormData>({
     resolver: zodResolver(timeEntrySchema),
     defaultValues: {
@@ -249,6 +254,11 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
               <SelectValue placeholder="Select project..." />
             </SelectTrigger>
             <SelectContent>
+              {assignedTasks.map((task: any) => (
+                <SelectItem key={task.id} value={task.name.toLowerCase()}>
+                  {task.name}
+                </SelectItem>
+              ))}
               <SelectItem value="wedding-invites">Wedding Invitations</SelectItem>
               <SelectItem value="place-cards">Place Cards</SelectItem>
               <SelectItem value="wooden-fixtures">Wooden Fixtures</SelectItem>
@@ -260,6 +270,22 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
             <p className="text-sm text-red-600 mt-1">{form.formState.errors.project.message}</p>
           )}
         </div>
+
+        {/* Client Name field - only show for Designing tasks */}
+        {project === "designing" && (
+          <div>
+            <Label htmlFor="clientName">Client Name</Label>
+            <Input
+              id="clientName"
+              {...form.register("clientName")}
+              className="mt-1"
+              placeholder="Enter client name..."
+            />
+            {form.formState.errors.clientName && (
+              <p className="text-sm text-red-600 mt-1">{form.formState.errors.clientName.message}</p>
+            )}
+          </div>
+        )}
         
         <div>
           <Label htmlFor="notes">Notes (Optional)</Label>

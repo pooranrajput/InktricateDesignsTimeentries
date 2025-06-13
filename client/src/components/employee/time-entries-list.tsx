@@ -81,6 +81,7 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
       startTime: entry.startTime,
       endTime: entry.endTime,
       project: entry.project,
+      clientName: entry.clientName || "",
       notes: entry.notes || "",
     });
   };
@@ -213,6 +214,11 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
               <div className="text-xs text-slate-500 mb-2">
                 {formatTimeRange(entry.startTime, entry.endTime)}
               </div>
+              {entry.clientName && (
+                <div className="text-sm text-slate-700 mb-1">
+                  <span className="font-medium">Client:</span> {entry.clientName}
+                </div>
+              )}
               {entry.notes && (
                 <div className="text-sm text-slate-600">{entry.notes}</div>
               )}
