@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
+import UserProfile from "@/pages/user-profile";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -48,6 +49,7 @@ function Router() {
         {/* If already authenticated and no password reset needed, redirect to dashboard */}
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
+      <Route path="/profile" component={UserProfile} />
       <Route path="/">
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>

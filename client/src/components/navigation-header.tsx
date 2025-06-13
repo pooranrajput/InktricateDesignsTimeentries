@@ -85,11 +85,13 @@ export default function NavigationHeader() {
                 </p>
               </div>
               
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground text-sm font-medium">
-                  {getInitials(user?.firstName, user?.lastName)}
-                </span>
-              </div>
+              <Link href="/profile">
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors">
+                  <span className="text-primary-foreground text-sm font-medium">
+                    {getInitials(user?.firstName, user?.lastName)}
+                  </span>
+                </div>
+              </Link>
               
               <Button 
                 variant="ghost" 

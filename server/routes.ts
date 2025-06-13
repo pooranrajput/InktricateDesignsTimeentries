@@ -38,14 +38,31 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/reset-password', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { newPassword } = req.body;
+      const { currentPassword, newPassword } = req.body;
       
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required" });
+      }
+      
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters long" });
+      }
+      
+      // Get user to verify current password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const { comparePasswords, hashPassword } = require('./auth');
+      const isCurrentPasswordValid = await comparePasswords(currentPassword, user.password);
+      
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
       }
       
       // Hash the new password
-      const { hashPassword } = require('./auth');
       const hashedPassword = await hashPassword(newPassword);
       
       // Update password and clear reset flag

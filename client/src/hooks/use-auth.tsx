@@ -13,9 +13,14 @@ type User = {
   email?: string;
   firstName?: string;
   lastName?: string;
+  phone?: string;
+  homeAddress?: string;
+  inktricateStartDate?: string;
   role: string;
   hourlyRate?: number;
   mustResetPassword: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type AuthContextType = {
