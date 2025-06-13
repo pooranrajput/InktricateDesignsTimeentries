@@ -134,6 +134,11 @@ export default function EmployeeDashboard() {
                     <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
                     </p>
+                    {user?.username === 'rhea' && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Production: $15/hr • Other: ${user.hourlyRate}/hr
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>

@@ -152,6 +152,11 @@ export default function UserProfile() {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Standard Hourly Rate</Label>
                   <p className="text-foreground">${user.hourlyRate}/hour</p>
+                  {user.username === 'rhea' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Production work: $15/hour
+                    </p>
+                  )}
                 </div>
               )}
               
