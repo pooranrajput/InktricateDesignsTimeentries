@@ -135,7 +135,7 @@ export default function AuthPage() {
 
   if (showResetForm) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Reset Password</CardTitle>
@@ -202,13 +202,11 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Left Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Sign in to your Inktricate Designs account
             </CardDescription>
           </CardHeader>
@@ -281,33 +279,6 @@ export default function AuthPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Right Side - Hero Section */}
-      <div className="flex-1 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-8 text-white">
-        <div className="max-w-md text-center">
-          <h1 className="text-4xl font-bold mb-4">Inktricate Designs</h1>
-          <p className="text-xl mb-6">Time Tracking System</p>
-          <div className="space-y-4 text-left">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-white rounded-full mt-2"></div>
-              <p>Track time for different projects and tasks</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-white rounded-full mt-2"></div>
-              <p>Automated payroll calculations</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-white rounded-full mt-2"></div>
-              <p>Role-based access controls</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-white rounded-full mt-2"></div>
-              <p>Monthly reporting and analytics</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
