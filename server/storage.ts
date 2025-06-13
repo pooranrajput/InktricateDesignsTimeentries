@@ -65,7 +65,7 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations (required for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, parseInt(id)));
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
@@ -83,7 +83,7 @@ export class DatabaseStorage implements IStorage {
         mustResetPassword: true,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, parseInt(id)))
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
         mustResetPassword: false,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, parseInt(id)))
+      .where(eq(users.id, id))
       .returning();
     return user;
   }

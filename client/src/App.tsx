@@ -1,16 +1,17 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 
 function Router() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -23,21 +24,30 @@ function Router() {
     );
   }
 
+  // If not authenticated, show auth page
+  if (!user) {
+    return (
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route path="*">
+          <AuthPage />
+        </Route>
+      </Switch>
+    );
+  }
+
+  // If user needs to reset password, redirect to auth page
+  if (user.mustResetPassword && location !== "/auth") {
+    return <AuthPage />;
+  }
+
+  // Authenticated routing based on role
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/">
-            {user?.role === 'admin' ? <AdminDashboard /> : <EmployeeDashboard />}
-          </Route>
-          <Route path="/admin" component={() => 
-            user?.role === 'admin' ? <AdminDashboard /> : <NotFound />
-          } />
-          <Route path="/employee" component={EmployeeDashboard} />
-        </>
-      )}
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/">
+        {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -46,10 +56,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
