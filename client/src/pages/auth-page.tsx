@@ -206,14 +206,12 @@ export default function AuthPage() {
       <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mb-6">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-foreground mb-1" style={{ fontFamily: 'serif' }}>
-                  Inktricate
-                </h1>
-                <div className="text-xs text-muted-foreground tracking-widest font-medium">
-                  DESIGNS
-                </div>
-                <div className="mt-2 h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
+              <div className="flex justify-center">
+                <img 
+                  src="https://images.squarespace-cdn.com/content/v1/6490bc5d65728852ce40b805/1c310731-bb1d-41a1-99ef-b6a3e3932e3e/inktricatelogo-01.png?format=300w"
+                  alt="Inktricate Designs"
+                  className="h-16 object-contain"
+                />
               </div>
             </div>
             <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
