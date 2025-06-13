@@ -134,6 +134,20 @@ export default function UserProfile() {
                 <p className="text-foreground capitalize">{user.role}</p>
               </div>
               
+              {user.phone && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+                  <p className="text-foreground">{user.phone}</p>
+                </div>
+              )}
+              
+              {user.homeAddress && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Address</Label>
+                  <p className="text-foreground">{user.homeAddress}</p>
+                </div>
+              )}
+              
               {user.hourlyRate && (
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Standard Hourly Rate</Label>
@@ -141,9 +155,16 @@ export default function UserProfile() {
                 </div>
               )}
               
-              {user.createdAt && (
+              {user.inktricateStartDate && (
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Start Date</Label>
+                  <p className="text-foreground">{formatDate(user.inktricateStartDate)}</p>
+                </div>
+              )}
+              
+              {user.createdAt && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Account Created</Label>
                   <p className="text-foreground">{formatDate(user.createdAt)}</p>
                 </div>
               )}
