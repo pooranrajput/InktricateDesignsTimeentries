@@ -37,17 +37,17 @@ export default function AdminDashboard() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <NavigationHeader />
       
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -55,8 +55,8 @@ export default function AdminDashboard() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Admin Dashboard</h2>
-              <p className="text-sm sm:text-base text-slate-600">Manage your team and track monthly hours</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Admin Dashboard</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">Manage your team and track monthly hours</p>
             </div>
           </div>
 
@@ -66,32 +66,32 @@ export default function AdminDashboard() {
               title="Total Employees"
               value={statsLoading ? "..." : stats?.totalEmployees?.toString() || "0"}
               icon={Users}
-              iconColor="text-primary-600"
-              iconBg="bg-primary-100"
+              iconColor="text-foreground"
+              iconBg="bg-muted"
             />
             
             <StatsCard
               title="Hours This Month"
               value={statsLoading ? "..." : stats?.monthlyHours?.toLocaleString() || "0"}
               icon={Clock}
-              iconColor="text-accent-600"
-              iconBg="bg-accent-100"
+              iconColor="text-foreground"
+              iconBg="bg-muted"
             />
             
             <StatsCard
               title="Monthly Payroll"
               value={statsLoading ? "..." : `$${stats?.monthlyPayroll?.toLocaleString() || "0"}`}
               icon={DollarSign}
-              iconColor="text-green-600"
-              iconBg="bg-green-100"
+              iconColor="text-foreground"
+              iconBg="bg-muted"
             />
             
             <StatsCard
               title="Days Remaining"
               value={statsLoading ? "..." : stats?.daysRemaining?.toString() || "0"}
               icon={Calendar}
-              iconColor="text-purple-600"
-              iconBg="bg-purple-100"
+              iconColor="text-foreground"
+              iconBg="bg-muted"
             />
           </div>
         </div>

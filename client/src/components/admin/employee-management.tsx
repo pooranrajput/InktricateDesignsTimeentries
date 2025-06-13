@@ -156,11 +156,11 @@ export default function EmployeeManagement() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-foreground text-background';
       case 'employee':
-        return 'bg-primary-100 text-primary-800';
+        return 'bg-muted text-foreground';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -169,10 +169,10 @@ export default function EmployeeManagement() {
       <Card className="border-0 shadow-sm mb-8">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/4"></div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-slate-200 rounded"></div>
+                <div key={i} className="h-12 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -183,14 +183,14 @@ export default function EmployeeManagement() {
 
   return (
     <Card className="border-0 shadow-sm mb-6 sm:mb-8">
-      <CardHeader className="border-b border-slate-200 p-4 sm:p-6">
+      <CardHeader className="border-b border-border p-4 sm:p-6">
         <div className="space-y-4">
           <div>
-            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-900">Employee Management</CardTitle>
-            <p className="text-slate-600 text-sm">Manage hourly rates and employee details</p>
+            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">Employee Management</CardTitle>
+            <p className="text-muted-foreground text-sm">Manage hourly rates and employee details</p>
           </div>
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-blue-800 text-xs sm:text-sm">
+          <div className="bg-muted p-3 rounded-lg">
+            <p className="text-foreground text-xs sm:text-sm">
               <strong>To add team members:</strong> Share the application URL with them. 
               They'll automatically be added to your employee list when they sign in for the first time.
             </p>

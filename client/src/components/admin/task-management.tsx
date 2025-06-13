@@ -212,10 +212,10 @@ export default function TaskManagement() {
       <Card className="border-0 shadow-sm mb-6 sm:mb-8">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/4"></div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-slate-200 rounded"></div>
+                <div key={i} className="h-12 bg-muted rounded"></div>
               ))}
             </div>
           </div>
