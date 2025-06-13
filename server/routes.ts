@@ -61,7 +61,7 @@ export function registerRoutes(app: Express): Server {
   // Employee management routes (admin only)
   app.get('/api/employees', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can see the employee list
@@ -79,7 +79,7 @@ export function registerRoutes(app: Express): Server {
 
   app.patch('/api/employees/:id/rate', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can change salary/hourly rates
@@ -104,7 +104,7 @@ export function registerRoutes(app: Express): Server {
 
   app.patch('/api/employees/:id/role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can change user roles
@@ -129,7 +129,7 @@ export function registerRoutes(app: Express): Server {
 
   app.delete('/api/employees/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can deactivate employees
@@ -149,7 +149,7 @@ export function registerRoutes(app: Express): Server {
   // Time entry routes - SECURITY CRITICAL: Users can only see their own time entries
   app.get('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { startDate, endDate } = req.query;
       
       let start: Date | undefined;
@@ -170,7 +170,7 @@ export function registerRoutes(app: Express): Server {
   // Admin-only route to view specific employee time entries
   app.get('/api/time-entries/:userId', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
+      const currentUserId = req.user.id;
       const currentUser = await storage.getUser(currentUserId);
       
       // Only admins can view other users' time entries
@@ -197,7 +197,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const timeEntryData = insertTimeEntrySchema.parse({
         ...req.body,
         userId,
@@ -223,7 +223,7 @@ export function registerRoutes(app: Express): Server {
 
   app.patch('/api/time-entries/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
       
       // Verify the time entry belongs to the user (unless admin)
@@ -259,7 +259,7 @@ export function registerRoutes(app: Express): Server {
 
   app.delete('/api/time-entries/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
       
       // Verify the time entry belongs to the user (unless admin)
@@ -282,7 +282,7 @@ export function registerRoutes(app: Express): Server {
   // Monthly report routes (admin only) - SECURITY: Contains all employee pay rates
   app.get('/api/reports/monthly', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY CRITICAL: Only admins can see payroll reports with salary data
@@ -311,7 +311,7 @@ export function registerRoutes(app: Express): Server {
   // Dashboard stats (admin only) - SECURITY: Contains sensitive business metrics
   app.get('/api/stats/dashboard', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY CRITICAL: Only admins can see dashboard statistics
@@ -347,7 +347,7 @@ export function registerRoutes(app: Express): Server {
   // Task management routes (admin only) - SECURITY: Task rates could reveal pay structure
   app.get('/api/tasks', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can manage tasks (which may contain rate information)
@@ -366,7 +366,7 @@ export function registerRoutes(app: Express): Server {
   // Employee route to get their assigned tasks for time tracking
   app.get('/api/my-tasks', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Get tasks assigned to this user
       const userTasks = await storage.getUserAssignedTasks(userId);
@@ -379,7 +379,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/tasks', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY: Only admins can create tasks
@@ -405,7 +405,7 @@ export function registerRoutes(app: Express): Server {
 
   app.put('/api/tasks/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       if (currentUser?.role !== 'admin') {
@@ -430,7 +430,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/tasks/assign', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       if (currentUser?.role !== 'admin') {
@@ -449,7 +449,7 @@ export function registerRoutes(app: Express): Server {
   // Payroll routes (admin only) - SECURITY CRITICAL: Contains all employee salaries
   app.get('/api/payroll', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY CRITICAL: Only admins can access payroll data with salary information
@@ -471,7 +471,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/payroll/generate', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY CRITICAL: Only admins can generate payroll with salary calculations
@@ -490,7 +490,7 @@ export function registerRoutes(app: Express): Server {
 
   app.patch('/api/payroll/:id/paid', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const currentUser = await storage.getUser(userId);
       
       // SECURITY CRITICAL: Only admins can mark payroll as paid
