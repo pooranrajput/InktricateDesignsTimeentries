@@ -56,6 +56,16 @@ export default function NavigationHeader() {
               
               {user?.role === 'admin' && (
                 <>
+                  <Link href="/time-tracking">
+                    <Button 
+                      variant="ghost" 
+                      className={`text-muted-foreground hover:text-primary ${location === '/time-tracking' ? 'text-primary bg-primary/10' : ''}`}
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      My Time
+                    </Button>
+                  </Link>
+                  
                   <Button 
                     variant="ghost" 
                     className="text-muted-foreground hover:text-primary"
@@ -66,7 +76,7 @@ export default function NavigationHeader() {
                   
                   <Button 
                     variant="ghost" 
-                    className="text-primary bg-primary/10"
+                    className={`text-muted-foreground hover:text-primary ${location === '/' ? 'text-primary bg-primary/10' : ''}`}
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Admin

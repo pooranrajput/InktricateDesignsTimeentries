@@ -50,6 +50,7 @@ function Router() {
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
       <Route path="/profile" component={UserProfile} />
+      <Route path="/time-tracking" component={EmployeeDashboard} />
       <Route path="/">
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
