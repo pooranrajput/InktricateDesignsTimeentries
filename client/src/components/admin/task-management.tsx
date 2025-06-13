@@ -17,8 +17,8 @@ export default function TaskManagement() {
   const [showEditTask, setShowEditTask] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#000000" });
-  const [editTask, setEditTask] = useState({ id: 0, name: "", description: "", color: "#000000" });
+  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#6B7280" });
+  const [editTask, setEditTask] = useState({ id: 0, name: "", description: "", color: "#6B7280" });
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [taskSpecificRate, setTaskSpecificRate] = useState<string>("");
 
@@ -42,7 +42,7 @@ export default function TaskManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setShowCreateTask(false);
-      setNewTask({ name: "", description: "", color: "#3B82F6" });
+      setNewTask({ name: "", description: "", color: "#6B7280" });
       toast({
         title: "Success",
         description: "Task category created successfully",
@@ -163,7 +163,7 @@ export default function TaskManagement() {
       id: task.id,
       name: task.name,
       description: task.description || "",
-      color: task.color || "#000000",
+      color: task.color || "#6B7280",
     });
     setShowEditTask(true);
   };
@@ -194,11 +194,11 @@ export default function TaskManagement() {
   };
 
   const defaultTasks = [
-    { name: "Administrative", description: "General administrative tasks", color: "#000000" },
-    { name: "Design", description: "Creative design work", color: "#404040" },
-    { name: "Email Follow-up", description: "Client communication and follow-ups", color: "#606060" },
-    { name: "Marketing", description: "Marketing and promotional activities", color: "#808080" },
-    { name: "Production", description: "Production work at special rate ($15/hour)", color: "#000000" },
+    { name: "Administrative", description: "General administrative tasks", color: "#6B7280" },
+    { name: "Design", description: "Creative design work", color: "#4B5563" },
+    { name: "Email Follow-up", description: "Client communication and follow-ups", color: "#9CA3AF" },
+    { name: "Marketing", description: "Marketing and promotional activities", color: "#D1D5DB" },
+    { name: "Production", description: "Production work at special rate ($15/hour)", color: "#374151" },
   ];
 
   const initializeDefaultTasks = () => {
