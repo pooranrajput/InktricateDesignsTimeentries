@@ -43,6 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     retry: false,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   const loginMutation = useMutation({
@@ -66,16 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
     },
-    onSuccess: () => {
-      // Clear all cached data
-      queryClient.clear();
-      // Redirect to auth page
-      window.location.href = "/auth";
-    },
-    onError: (error: Error) => {
-      console.error("Logout error:", error);
-      // Even if logout fails on server, clear local state and redirect
-      queryClient.clear();
+    onSettled: () => {
+      // Clear all authentication data regardless of success/failure
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.removeQueries();
+      // Force page reload to clear all state
       window.location.href = "/auth";
     },
   });
