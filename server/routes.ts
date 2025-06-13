@@ -198,9 +198,23 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      
+      // Find the task category ID from the project name
+      let taskCategoryId = null;
+      if (req.body.project) {
+        const userTasks = await storage.getUserAssignedTasks(userId);
+        const matchingTask = userTasks.find(task => 
+          task.name.toLowerCase() === req.body.project.toLowerCase()
+        );
+        if (matchingTask) {
+          taskCategoryId = matchingTask.id;
+        }
+      }
+      
       const timeEntryData = insertTimeEntrySchema.parse({
         ...req.body,
         userId,
+        taskCategoryId,
       });
       
       // Calculate total hours
@@ -209,7 +223,10 @@ export function registerRoutes(app: Express): Server {
       const diffMs = endTime.getTime() - startTime.getTime();
       const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
       
-      const timeEntry = await storage.createTimeEntry(timeEntryData);
+      const timeEntry = await storage.createTimeEntry({
+        ...timeEntryData,
+        totalHours: totalHours.toFixed(2),
+      });
       
       res.json(timeEntry);
     } catch (error) {

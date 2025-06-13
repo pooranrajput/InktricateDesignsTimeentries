@@ -41,13 +41,24 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
-  // Calculate monthly stats - employees can see their own pay estimates
+  // Calculate monthly stats with proper task-specific rates
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
   const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  const estimatedPay = monthlyHours * parseFloat(user?.hourlyRate || '0');
+  // Calculate pay considering task-specific rates
+  const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
+    const hours = parseFloat(entry.totalHours || '0');
+    let rate = parseFloat(user?.hourlyRate || '0'); // Default rate
+    
+    // Check if this is Production work (special $15/hour rate)
+    if (entry.project?.toLowerCase() === 'production') {
+      rate = 15;
+    }
+    
+    return sum + (hours * rate);
+  }, 0);
   const workingDays = timeEntriesArray.length;
 
   if (isLoading || !user) {
