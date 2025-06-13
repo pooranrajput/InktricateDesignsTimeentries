@@ -66,14 +66,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      try {
+        await fetch("/api/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (error) {
+        console.log("Logout request failed, clearing local state anyway");
+      }
+    },
+    onMutate: () => {
+      // Immediately clear user data
+      queryClient.setQueryData(["/api/user"], null);
     },
     onSettled: () => {
-      // Clear all authentication data regardless of success/failure
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.removeQueries();
-      // Force page reload to clear all state
-      window.location.href = "/auth";
+      // Clear all cached data
+      queryClient.clear();
+      // Force complete page reload
+      window.location.replace("/auth");
     },
   });
 
