@@ -15,8 +15,11 @@ import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 import { count } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  updateUserCredentials(id: string, username: string, hashedPassword: string): Promise<User>;
+  updatePassword(id: string, hashedPassword: string): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   createEmployeeBulk(employees: any[]): Promise<User[]>;
   
@@ -62,7 +65,39 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations (required for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await db.select().from(users).where(eq(users.id, parseInt(id)));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async updateUserCredentials(id: string, username: string, hashedPassword: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        username, 
+        password: hashedPassword,
+        mustResetPassword: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, parseInt(id)))
+      .returning();
+    return user;
+  }
+
+  async updatePassword(id: string, hashedPassword: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        password: hashedPassword,
+        mustResetPassword: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, parseInt(id)))
+      .returning();
     return user;
   }
 
