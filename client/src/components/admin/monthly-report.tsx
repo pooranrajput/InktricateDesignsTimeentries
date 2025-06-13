@@ -137,7 +137,7 @@ Generated on: ${new Date().toLocaleDateString()}
             <div className="flex space-x-2">
               <Button 
                 onClick={() => handleExport('excel')}
-                className="bg-accent hover:bg-accent/90 flex-1 sm:flex-none"
+                className="bg-foreground text-background hover:bg-foreground/90 flex-1 sm:flex-none"
                 size="sm"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -145,7 +145,7 @@ Generated on: ${new Date().toLocaleDateString()}
               </Button>
               <Button 
                 onClick={() => handleExport('pdf')}
-                className="bg-red-500 hover:bg-red-600 flex-1 sm:flex-none"
+                className="bg-muted text-foreground hover:bg-muted/90 flex-1 sm:flex-none"
                 size="sm"
               >
                 <FileText className="w-4 h-4 mr-2" />
@@ -158,23 +158,23 @@ Generated on: ${new Date().toLocaleDateString()}
       
       <CardContent className="p-4 sm:p-6">
         {/* Summary Stats */}
-        <div className="bg-slate-50 rounded-lg p-4 sm:p-6 mb-6">
+        <div className="bg-muted rounded-lg p-4 sm:p-6 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-600">Total Hours</p>
-              <p className="text-3xl font-bold text-slate-900">
+              <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
+              <p className="text-3xl font-bold text-foreground">
                 {reportData?.totalHours?.toFixed(1) || '0.0'}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-600">Total Payroll</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-sm font-medium text-muted-foreground">Total Payroll</p>
+              <p className="text-3xl font-bold text-foreground">
                 ${reportData?.totalPayroll?.toFixed(2) || '0.00'}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-600">Average Hours/Employee</p>
-              <p className="text-3xl font-bold text-slate-900">
+              <p className="text-sm font-medium text-muted-foreground">Average Hours/Employee</p>
+              <p className="text-3xl font-bold text-foreground">
                 {reportData?.employeeReports?.length ? 
                   (reportData.totalHours / reportData.employeeReports.length).toFixed(0) : '0'}
               </p>

@@ -226,11 +226,11 @@ export default function TaskManagement() {
 
   return (
     <Card className="border-0 shadow-sm mb-6 sm:mb-8">
-      <CardHeader className="border-b border-slate-200 p-4 sm:p-6">
+      <CardHeader className="border-b border-border p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-900">Task Management</CardTitle>
-            <p className="text-slate-600 text-sm">Create and assign task categories to employees</p>
+            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">Task Management</CardTitle>
+            <p className="text-muted-foreground text-sm">Create and assign task categories to employees</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             {taskCategories.length === 0 && (

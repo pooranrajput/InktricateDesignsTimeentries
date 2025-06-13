@@ -100,11 +100,11 @@ export default function PayrollManagement() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800';
+        return 'bg-foreground text-background';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-muted text-foreground';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -119,10 +119,10 @@ export default function PayrollManagement() {
       <Card className="border-0 shadow-sm mb-6 sm:mb-8">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/4"></div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-slate-200 rounded"></div>
+                <div key={i} className="h-16 bg-muted rounded"></div>
               ))}
             </div>
           </div>
