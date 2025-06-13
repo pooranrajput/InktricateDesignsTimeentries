@@ -24,6 +24,18 @@ export default function EmployeeManagement() {
   const [newRole, setNewRole] = useState("");
   const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmployee, setNewEmployee] = useState({
+    username: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    homeAddress: "",
+    inktricateStartDate: "",
+    role: "employee",
+    hourlyRate: "25"
+  });
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["/api/employees"],
@@ -103,6 +115,61 @@ export default function EmployeeManagement() {
     },
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("POST", `/api/employees/${userId}/reset-password`);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setResetPasswordUserId(null);
+      toast({
+        title: "Password Reset",
+        description: `Password reset to: ${data.newPassword}. User must change on first login.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addEmployeeMutation = useMutation({
+    mutationFn: async (employeeData: typeof newEmployee) => {
+      const res = await apiRequest("POST", "/api/employees", employeeData);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
+      setShowAddEmployee(false);
+      setNewEmployee({
+        username: "",
+        email: "",
+        firstName: "",
+        lastName: "",
+        phone: "",
+        homeAddress: "",
+        inktricateStartDate: "",
+        role: "employee",
+        hourlyRate: "25"
+      });
+      toast({
+        title: "Employee Added",
+        description: `Employee created with password: ${data.password}. They must change it on first login.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditRate = (userId: string, currentRate: string) => {
     setEditingRate({ userId, currentRate });
     setNewRate(currentRate);
@@ -138,6 +205,18 @@ export default function EmployeeManagement() {
   const handleDeactivateUser = (userId: string, userName: string) => {
     if (confirm(`Are you sure you want to deactivate ${userName}?`)) {
       deactivateUserMutation.mutate(userId);
+    }
+  };
+
+  const handleResetPassword = (userId: string, userName: string) => {
+    if (confirm(`Reset password for ${userName}? They will need to change it on first login.`)) {
+      resetPasswordMutation.mutate(userId);
+    }
+  };
+
+  const handleAddEmployee = () => {
+    if (newEmployee.username && newEmployee.email && newEmployee.firstName && newEmployee.lastName) {
+      addEmployeeMutation.mutate(newEmployee);
     }
   };
 
@@ -185,17 +264,18 @@ export default function EmployeeManagement() {
   return (
     <Card className="border-0 shadow-sm mb-6 sm:mb-8">
       <CardHeader className="border-b border-border p-4 sm:p-6">
-        <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
             <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">Employee Management</CardTitle>
-            <p className="text-muted-foreground text-sm">Manage hourly rates and employee details</p>
+            <p className="text-muted-foreground text-sm">Manage employees, rates, and passwords</p>
           </div>
-          <div className="bg-muted p-3 rounded-lg">
-            <p className="text-foreground text-xs sm:text-sm">
-              <strong>To add team members:</strong> Share the application URL with them. 
-              They'll automatically be added to your employee list when they sign in for the first time.
-            </p>
-          </div>
+          <Button 
+            onClick={() => setShowAddEmployee(true)}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Employee
+          </Button>
         </div>
       </CardHeader>
       
