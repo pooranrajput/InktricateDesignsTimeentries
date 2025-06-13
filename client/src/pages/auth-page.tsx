@@ -222,13 +222,13 @@ export default function AuthPage() {
           <CardContent>
             <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
               <div>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Username or Email</Label>
                 <div className="relative">
                   <Input
                     id="username"
                     {...loginForm.register("username")}
                     className="pl-10"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                   />
                   <User className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 </div>
