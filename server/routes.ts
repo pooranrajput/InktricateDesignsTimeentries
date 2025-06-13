@@ -377,6 +377,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Alternative endpoint for frontend compatibility
+  app.get('/api/user/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get tasks assigned to this user
+      const userTasks = await storage.getUserAssignedTasks(userId);
+      res.json(userTasks);
+    } catch (error) {
+      console.error("Error fetching user tasks:", error);
+      res.status(500).json({ message: "Failed to fetch assigned tasks" });
+    }
+  });
+
   app.post('/api/tasks', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
