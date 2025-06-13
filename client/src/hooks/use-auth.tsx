@@ -67,15 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      // Clear all cached data
+      queryClient.clear();
+      // Redirect to auth page
       window.location.href = "/auth";
     },
     onError: (error: Error) => {
-      toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Logout error:", error);
+      // Even if logout fails on server, clear local state and redirect
+      queryClient.clear();
+      window.location.href = "/auth";
     },
   });
 
