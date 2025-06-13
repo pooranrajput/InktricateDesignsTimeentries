@@ -94,18 +94,27 @@ export default function AuthPage() {
       return await res.json();
     },
     onSuccess: async () => {
-      // Refresh user data to get updated mustResetPassword status
-      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
-      toast({
-        title: "Password Updated",
-        description: "Your password has been successfully updated.",
-      });
-      
-      // Force reload to ensure clean state
-      setTimeout(() => {
+      try {
+        // Get fresh user data
+        const userRes = await apiRequest("GET", "/api/user");
+        const updatedUser = await userRes.json();
+        
+        // Update the auth context with fresh user data
+        queryClient.setQueryData(["/api/user"], updatedUser);
+        
+        toast({
+          title: "Password Updated",
+          description: "Your password has been successfully updated.",
+        });
+        
+        // Navigate to dashboard based on role
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
+      } catch (error) {
+        console.error("Error updating user data:", error);
         window.location.reload();
-      }, 1000);
+      }
     },
     onError: (error: Error) => {
       toast({

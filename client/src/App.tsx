@@ -36,15 +36,18 @@ function Router() {
     );
   }
 
-  // If user needs to reset password, redirect to auth page
-  if (user.mustResetPassword && location !== "/auth") {
+  // If user needs to reset password, show auth page
+  if (user.mustResetPassword) {
     return <AuthPage />;
   }
 
   // Authenticated routing based on role
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth">
+        {/* If already authenticated and no password reset needed, redirect to dashboard */}
+        {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
+      </Route>
       <Route path="/">
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
