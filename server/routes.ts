@@ -4,6 +4,16 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -160,6 +170,83 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error deactivating user:", error);
       res.status(500).json({ message: "Failed to deactivate user" });
+    }
+  });
+
+  // Reset password endpoint
+  app.post('/api/employees/:id/reset-password', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const currentUser = await storage.getUser(userId);
+      
+      // SECURITY: Only admins can reset passwords
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+      
+      const { id } = req.params;
+      const newPassword = "Inktricate2024!";
+      const hashedPassword = await hashPassword(newPassword);
+      
+      await storage.updatePassword(id, hashedPassword);
+      res.json({ newPassword });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // Add new employee endpoint
+  app.post('/api/employees', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const currentUser = await storage.getUser(userId);
+      
+      // SECURITY: Only admins can add employees
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+      
+      const { username, email, firstName, lastName, phone, homeAddress, inktricateStartDate, role, hourlyRate } = req.body;
+      
+      if (!username || !email || !firstName || !lastName) {
+        return res.status(400).json({ message: "Username, email, first name, and last name are required" });
+      }
+      
+      // Check if username or email already exists
+      const existingUser = await storage.getUserByUsername(username);
+      const existingEmail = await storage.getUserByEmail(email);
+      
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      
+      const defaultPassword = "Inktricate2024!";
+      const hashedPassword = await hashPassword(defaultPassword);
+      
+      const newEmployee = await storage.createEmployee({
+        username,
+        email,
+        firstName,
+        lastName,
+        phone,
+        homeAddress,
+        inktricateStartDate,
+        role: role || 'employee',
+        hourlyRate: parseFloat(hourlyRate) || 25,
+        password: hashedPassword,
+        mustResetPassword: true,
+        isActive: true
+      });
+      
+      res.json({ ...newEmployee, password: defaultPassword });
+    } catch (error) {
+      console.error("Error creating employee:", error);
+      res.status(500).json({ message: "Failed to create employee" });
     }
   });
 

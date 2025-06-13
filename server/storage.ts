@@ -22,6 +22,7 @@ export interface IStorage {
   updateUserCredentials(id: string, username: string, hashedPassword: string): Promise<User>;
   updatePassword(id: string, hashedPassword: string): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createEmployee(employee: any): Promise<User>;
   createEmployeeBulk(employees: any[]): Promise<User[]>;
   
   // Employee management
@@ -117,6 +118,19 @@ export class DatabaseStorage implements IStorage {
           ...userData,
           updatedAt: new Date(),
         },
+      })
+      .returning();
+    return user;
+  }
+
+  async createEmployee(employeeData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: `emp_${employeeData.username.toLowerCase()}_${Date.now()}`,
+        ...employeeData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
     return user;

@@ -350,8 +350,18 @@ export default function EmployeeManagement() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
+                        onClick={() => handleResetPassword(employee.id, getDisplayName(employee))}
+                        className="text-blue-400 hover:text-blue-600"
+                        title="Reset Password"
+                      >
+                        <Key className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
                         onClick={() => handleDeactivateUser(employee.id, getDisplayName(employee))}
                         className="text-red-400 hover:text-red-600"
+                        title="Deactivate Employee"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -480,6 +490,112 @@ export default function EmployeeManagement() {
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setViewingEmployee(null)}>
                 Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Employee Dialog */}
+      <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Employee</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  value={newEmployee.firstName}
+                  onChange={(e) => setNewEmployee({...newEmployee, firstName: e.target.value})}
+                  placeholder="First name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  value={newEmployee.lastName}
+                  onChange={(e) => setNewEmployee({...newEmployee, lastName: e.target.value})}
+                  placeholder="Last name"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="username">Username *</Label>
+              <Input
+                id="username"
+                value={newEmployee.username}
+                onChange={(e) => setNewEmployee({...newEmployee, username: e.target.value})}
+                placeholder="Username"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newEmployee.email}
+                onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
+                placeholder="Email address"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={newEmployee.phone}
+                onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
+                placeholder="Phone number"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="homeAddress">Home Address</Label>
+              <Input
+                id="homeAddress"
+                value={newEmployee.homeAddress}
+                onChange={(e) => setNewEmployee({...newEmployee, homeAddress: e.target.value})}
+                placeholder="Home address"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="startDate">Inktricate Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={newEmployee.inktricateStartDate}
+                onChange={(e) => setNewEmployee({...newEmployee, inktricateStartDate: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
+              <Input
+                id="hourlyRate"
+                type="number"
+                step="0.01"
+                value={newEmployee.hourlyRate}
+                onChange={(e) => setNewEmployee({...newEmployee, hourlyRate: e.target.value})}
+                placeholder="25.00"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowAddEmployee(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddEmployee}
+                disabled={!newEmployee.username || !newEmployee.email || !newEmployee.firstName || !newEmployee.lastName}
+              >
+                Add Employee
               </Button>
             </div>
           </div>
