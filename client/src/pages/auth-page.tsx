@@ -95,18 +95,16 @@ export default function AuthPage() {
     },
     onSuccess: async () => {
       // Refresh user data to get updated mustResetPassword status
-      const userRes = await apiRequest("GET", "/api/user");
-      const updatedUser = await userRes.json();
-      queryClient.setQueryData(["/api/user"], updatedUser);
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       
       toast({
         title: "Password Updated",
         description: "Your password has been successfully updated.",
       });
       
-      // Redirect to home page
+      // Force reload to ensure clean state
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.reload();
       }, 1000);
     },
     onError: (error: Error) => {
