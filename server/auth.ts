@@ -94,19 +94,34 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Session destroy error:', err);
-          return next(err);
-        }
-        res.clearCookie('connect.sid');
-        res.clearCookie('session');
+    const sessionId = req.sessionID;
+    
+    // First logout from passport
+    req.logout((err) => {
+      if (err) {
+        console.error('Passport logout error:', err);
+      }
+      
+      // Then destroy the session
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Session destroy error:', err);
+            return res.status(500).json({ error: 'Failed to destroy session' });
+          }
+          
+          // Clear cookies
+          res.clearCookie('connect.sid', { path: '/' });
+          res.clearCookie('session', { path: '/' });
+          
+          console.log(`Session ${sessionId} destroyed successfully`);
+          res.sendStatus(200);
+        });
+      } else {
+        res.clearCookie('connect.sid', { path: '/' });
         res.sendStatus(200);
-      });
-    } else {
-      res.sendStatus(200);
-    }
+      }
+    });
   });
 
   app.get("/api/user", (req, res) => {
