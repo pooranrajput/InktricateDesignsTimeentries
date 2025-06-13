@@ -1,10 +1,10 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Clock, BarChart3, Settings, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function NavigationHeader() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
@@ -94,7 +94,8 @@ export default function NavigationHeader() {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => window.location.href = '/api/logout'}
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <LogOut className="w-4 h-4" />
