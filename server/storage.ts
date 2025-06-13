@@ -193,9 +193,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTimeEntry(id: number, updates: Partial<InsertTimeEntry>): Promise<TimeEntry> {
+    let updateData: any = { ...updates, updatedAt: new Date() };
+    
+    // Recalculate total hours if start or end time is updated
+    if (updates.startTime || updates.endTime) {
+      const current = await db.select().from(timeEntries).where(eq(timeEntries.id, id));
+      if (current.length > 0) {
+        const startTime = updates.startTime || current[0].startTime;
+        const endTime = updates.endTime || current[0].endTime;
+        const start = new Date(`1970-01-01T${startTime}`);
+        const end = new Date(`1970-01-01T${endTime}`);
+        const diffMs = end.getTime() - start.getTime();
+        updateData.totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+      }
+    }
+    
     const [entry] = await db
       .update(timeEntries)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(timeEntries.id, id))
       .returning();
     return entry;
@@ -206,19 +221,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTimeEntries(userId: string, startDate?: Date, endDate?: Date): Promise<TimeEntry[]> {
-    let query = db.select().from(timeEntries).where(eq(timeEntries.userId, userId));
-    
     if (startDate && endDate) {
-      query = query.where(
-        and(
-          eq(timeEntries.userId, userId),
-          gte(timeEntries.date, startDate.toISOString().split('T')[0]),
-          lte(timeEntries.date, endDate.toISOString().split('T')[0])
+      return await db
+        .select()
+        .from(timeEntries)
+        .where(
+          and(
+            eq(timeEntries.userId, userId),
+            gte(timeEntries.date, startDate.toISOString().split('T')[0]),
+            lte(timeEntries.date, endDate.toISOString().split('T')[0])
+          )
         )
-      );
+        .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
     }
     
-    return await query.orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
+    return await db
+      .select()
+      .from(timeEntries)
+      .where(eq(timeEntries.userId, userId))
+      .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
   }
 
   async getAllTimeEntriesWithUsers(startDate?: Date, endDate?: Date): Promise<TimeEntryWithUser[]> {

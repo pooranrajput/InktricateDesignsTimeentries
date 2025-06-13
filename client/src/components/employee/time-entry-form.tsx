@@ -254,7 +254,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
               <SelectValue placeholder="Select project..." />
             </SelectTrigger>
             <SelectContent>
-              {assignedTasks.map((task: any) => (
+              {(assignedTasks as any[]).map((task: any) => (
                 <SelectItem key={task.id} value={task.name.toLowerCase()}>
                   {task.name}
                 </SelectItem>

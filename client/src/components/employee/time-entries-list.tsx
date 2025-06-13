@@ -30,6 +30,7 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
     startTime: "",
     endTime: "",
     project: "",
+    clientName: "",
     notes: "",
   });
 
