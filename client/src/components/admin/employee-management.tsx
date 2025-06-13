@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Eye, Edit, Trash2, Plus, DollarSign } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, DollarSign, Key } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ export default function EmployeeManagement() {
   const [editingRole, setEditingRole] = useState<{ userId: string; currentRole: string } | null>(null);
   const [newRole, setNewRole] = useState("");
   const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["/api/employees"],
