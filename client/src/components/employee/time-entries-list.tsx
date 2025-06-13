@@ -124,35 +124,23 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
 
   const getProjectBadgeColor = (project: string) => {
     switch (project) {
-      case 'wedding-invites':
-        return 'bg-primary-100 text-primary-800';
-      case 'place-cards':
-        return 'bg-accent-100 text-accent-800';
-      case 'wooden-fixtures':
-        return 'bg-purple-100 text-purple-800';
-      case 'design-consultation':
-        return 'bg-green-100 text-green-800';
       case 'production':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary text-primary-foreground';
+      case 'designing':
+        return 'bg-muted text-foreground';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
   const getProjectDisplayName = (project: string) => {
     switch (project) {
-      case 'wedding-invites':
-        return 'Wedding Invitations';
-      case 'place-cards':
-        return 'Place Cards';
-      case 'wooden-fixtures':
-        return 'Wooden Fixtures';
-      case 'design-consultation':
-        return 'Design Consultation';
       case 'production':
-        return 'Production Work';
+        return 'Production';
+      case 'designing':
+        return 'Designing';
       default:
-        return project;
+        return project.charAt(0).toUpperCase() + project.slice(1);
     }
   };
 

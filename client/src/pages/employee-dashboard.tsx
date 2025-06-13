@@ -110,12 +110,12 @@ export default function EmployeeDashboard() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-primary-100 rounded-lg">
-                    <Clock className="w-5 h-5 text-primary-600" />
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Clock className="w-5 h-5 text-foreground" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-600">Total Hours</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : monthlyHours.toFixed(1)}
                     </p>
                   </div>
@@ -126,12 +126,12 @@ export default function EmployeeDashboard() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div className="p-2 bg-muted rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-foreground" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-600">Estimated Pay</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-sm font-medium text-muted-foreground">Estimated Pay</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
                     </p>
                   </div>
@@ -142,12 +142,12 @@ export default function EmployeeDashboard() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-accent-100 rounded-lg">
-                    <Calendar className="w-5 h-5 text-accent-600" />
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Calendar className="w-5 h-5 text-foreground" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-600">Working Days</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-sm font-medium text-muted-foreground">Working Days</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : workingDays}
                     </p>
                   </div>
@@ -159,11 +159,11 @@ export default function EmployeeDashboard() {
 
         {/* Time Entry Section */}
         <Card className="border-0 shadow-sm mb-8">
-          <CardHeader className="border-b border-slate-200">
+          <CardHeader className="border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold text-slate-900">Time Entry</CardTitle>
-                <p className="text-slate-600 text-sm">Log your daily work hours</p>
+                <CardTitle className="text-lg font-semibold text-foreground">Time Entry</CardTitle>
+                <p className="text-muted-foreground text-sm">Log your daily work hours</p>
               </div>
             </div>
           </CardHeader>
