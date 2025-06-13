@@ -276,16 +276,7 @@ export default function AuthPage() {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-muted rounded-lg">
-              <h4 className="font-medium text-foreground mb-2">Default Login Credentials:</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p><strong>Admin:</strong> username: admin, password: Inktricate2024!</p>
-                <p><strong>Employees:</strong> username: [firstname], password: Inktricate2024!</p>
-                <p className="text-xs mt-2">
-                  You'll be asked to reset your password on first login.
-                </p>
-              </div>
-            </div>
+
           </CardContent>
         </Card>
     </div>
