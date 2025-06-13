@@ -63,17 +63,17 @@ export default function EmployeeDashboard() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <NavigationHeader />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -81,13 +81,13 @@ export default function EmployeeDashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Time Tracking</h2>
-              <p className="text-slate-600">Record your daily work hours</p>
+              <h2 className="text-2xl font-bold text-foreground">Time Tracking</h2>
+              <p className="text-muted-foreground">Record your daily work hours</p>
             </div>
             
             <div className="flex items-center space-x-3">
               <select 
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
                 onChange={(e) => {
                   const [year, month] = e.target.value.split('-');

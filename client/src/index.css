@@ -3,32 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%; /* #FFFFFF */
-  --foreground: 0 0% 0%; /* #000000 */
-  --muted: 0 0% 96%; /* #F5F5F5 */
-  --muted-foreground: 0 0% 45%; /* #737373 */
-  --popover: 0 0% 100%; /* #FFFFFF */
-  --popover-foreground: 0 0% 0%; /* #000000 */
-  --card: 0 0% 100%; /* #FFFFFF */
-  --card-foreground: 0 0% 0%; /* #000000 */
-  --border: 0 0% 90%; /* #E5E5E5 */
-  --input: 0 0% 90%; /* #E5E5E5 */
-  --primary: 0 0% 0%; /* #000000 */
-  --primary-foreground: 0 0% 100%; /* #FFFFFF */
-  --secondary: 0 0% 96%; /* #F5F5F5 */
-  --secondary-foreground: 0 0% 0%; /* #000000 */
-  --accent: 0 0% 15%; /* #262626 */
-  --accent-foreground: 0 0% 100%; /* #FFFFFF */
-  --destructive: 0 84% 60%; /* #EF4444 */
+  --background: 0 0% 5%; /* #0D0D0D - Very dark background */
+  --foreground: 0 0% 95%; /* #F2F2F2 - Light text */
+  --muted: 0 0% 10%; /* #1A1A1A - Dark muted areas */
+  --muted-foreground: 0 0% 65%; /* #A6A6A6 - Muted text */
+  --popover: 0 0% 8%; /* #141414 - Dark popover */
+  --popover-foreground: 0 0% 95%; /* #F2F2F2 - Light popover text */
+  --card: 0 0% 8%; /* #141414 - Dark cards */
+  --card-foreground: 0 0% 95%; /* #F2F2F2 - Light card text */
+  --border: 0 0% 20%; /* #333333 - Dark borders */
+  --input: 0 0% 12%; /* #1F1F1F - Dark inputs */
+  --primary: 0 0% 100%; /* #FFFFFF - White primary */
+  --primary-foreground: 0 0% 0%; /* #000000 - Black text on white */
+  --secondary: 0 0% 15%; /* #262626 - Dark secondary */
+  --secondary-foreground: 0 0% 95%; /* #F2F2F2 - Light secondary text */
+  --accent: 0 0% 20%; /* #333333 - Dark accent */
+  --accent-foreground: 0 0% 95%; /* #F2F2F2 - Light accent text */
+  --destructive: 0 70% 50%; /* #CC3333 - Darker red */
   --destructive-foreground: 0 0% 100%; /* #FFFFFF */
-  --ring: 0 0% 0%; /* #000000 */
+  --ring: 0 0% 60%; /* #999999 - Gray ring */
   --radius: 0.5rem;
   
-  /* Inktricate brand colors */
+  /* Inktricate brand colors - updated for dark theme */
   --inktricate-black: 0 0% 0%; /* #000000 */
   --inktricate-white: 0 0% 100%; /* #FFFFFF */
-  --inktricate-gray-light: 0 0% 96%; /* #F5F5F5 */
-  --inktricate-gray-dark: 0 0% 15%; /* #262626 */
+  --inktricate-gray-light: 0 0% 20%; /* #333333 */
+  --inktricate-gray-dark: 0 0% 10%; /* #1A1A1A */
 }
 
 .dark {
