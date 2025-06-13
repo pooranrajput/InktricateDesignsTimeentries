@@ -257,9 +257,9 @@ export default function TaskManagement() {
       <CardContent className="p-4 sm:p-6">
         {taskCategories.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No task categories yet</h3>
-            <p className="text-slate-600 mb-4">Create task categories to assign specific work types to your employees.</p>
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No task categories yet</h3>
+            <p className="text-muted-foreground mb-4">Create task categories to assign specific work types to your employees.</p>
             <Button onClick={() => setShowCreateTask(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Create First Task
@@ -268,14 +268,14 @@ export default function TaskManagement() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {taskCategories.map((task: any) => (
-              <div key={task.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={task.id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <div 
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: task.color }}
                     ></div>
-                    <h3 className="font-medium text-slate-900">{task.name}</h3>
+                    <h3 className="font-medium text-foreground">{task.name}</h3>
                   </div>
                   <Badge variant="secondary" className="text-xs">
                     {task.assignedCount || 0} assigned
@@ -283,7 +283,7 @@ export default function TaskManagement() {
                 </div>
                 
                 {task.description && (
-                  <p className="text-sm text-slate-600 mb-3">{task.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
                 )}
                 
                 <div className="flex space-x-2">
