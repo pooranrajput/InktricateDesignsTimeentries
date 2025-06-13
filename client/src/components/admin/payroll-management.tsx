@@ -133,13 +133,13 @@ export default function PayrollManagement() {
 
   return (
     <Card className="border-0 shadow-sm mb-6 sm:mb-8">
-      <CardHeader className="border-b border-slate-200 p-4 sm:p-6">
+      <CardHeader className="border-b border-border p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-900">
+            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">
               Payroll Management - {getMonthName(currentMonth)} {currentYear}
             </CardTitle>
-            <p className="text-slate-600 text-sm">Review and process employee payments</p>
+            <p className="text-muted-foreground text-sm">Review and process employee payments</p>
           </div>
           {payrollData.length === 0 && (
             <Button 
@@ -157,9 +157,9 @@ export default function PayrollManagement() {
       <CardContent className="p-4 sm:p-6">
         {payrollData.length === 0 ? (
           <div className="text-center py-12">
-            <DollarSign className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No payroll records yet</h3>
-            <p className="text-slate-600 mb-4">
+            <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No payroll records yet</h3>
+            <p className="text-muted-foreground mb-4">
               Generate payroll records for {getMonthName(currentMonth)} {currentYear} to start processing payments.
             </p>
             <Button 
@@ -173,22 +173,22 @@ export default function PayrollManagement() {
         ) : (
           <div className="space-y-4">
             {payrollData.map((record: any) => (
-              <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={record.id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                      <span className="text-primary-600 font-medium text-sm">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-foreground font-medium text-sm">
                         {record.user?.firstName?.charAt(0) || record.user?.email?.charAt(0) || 'U'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-medium text-slate-900">
+                      <h3 className="font-medium text-foreground">
                         {record.user?.firstName && record.user?.lastName 
                           ? `${record.user.firstName} ${record.user.lastName}`
                           : record.user?.email || 'Unknown Employee'
                         }
                       </h3>
-                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {record.totalHours} hours
