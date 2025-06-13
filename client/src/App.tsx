@@ -48,7 +48,7 @@ function Router() {
       <Route path="/">
         {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
-      <Route component={NotFound} />
+      <Route path="*" component={NotFound} />
     </Switch>
   );
 }
