@@ -39,6 +39,7 @@ export function setupAuth(app: Express) {
     store: new PostgresSessionStore({
       conString: process.env.DATABASE_URL,
       createTableIfMissing: false,
+      tableName: 'session',
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours

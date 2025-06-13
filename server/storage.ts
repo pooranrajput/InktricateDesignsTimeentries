@@ -243,21 +243,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTimeEntriesWithUsers(startDate?: Date, endDate?: Date): Promise<TimeEntryWithUser[]> {
-    let query = db
-      .select()
-      .from(timeEntries)
-      .innerJoin(users, eq(timeEntries.userId, users.id));
-    
     if (startDate && endDate) {
-      query = query.where(
-        and(
-          gte(timeEntries.date, startDate.toISOString().split('T')[0]),
-          lte(timeEntries.date, endDate.toISOString().split('T')[0])
+      const results = await db
+        .select()
+        .from(timeEntries)
+        .innerJoin(users, eq(timeEntries.userId, users.id))
+        .where(
+          and(
+            gte(timeEntries.date, startDate.toISOString().split('T')[0]),
+            lte(timeEntries.date, endDate.toISOString().split('T')[0])
+          )
         )
-      );
+        .orderBy(desc(timeEntries.date));
+      
+      return results.map(result => ({
+        ...result.time_entries,
+        user: result.users,
+      }));
     }
     
-    const results = await query.orderBy(desc(timeEntries.date));
+    const results = await db
+      .select()
+      .from(timeEntries)
+      .innerJoin(users, eq(timeEntries.userId, users.id))
+      .orderBy(desc(timeEntries.date));
     
     return results.map(result => ({
       ...result.time_entries,

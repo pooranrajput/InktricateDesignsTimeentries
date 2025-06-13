@@ -185,10 +185,7 @@ export function registerRoutes(app: Express): Server {
       const diffMs = endTime.getTime() - startTime.getTime();
       const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
       
-      const timeEntry = await storage.createTimeEntry({
-        ...timeEntryData,
-        totalHours: totalHours.toFixed(2),
-      });
+      const timeEntry = await storage.createTimeEntry(timeEntryData);
       
       res.json(timeEntry);
     } catch (error) {
