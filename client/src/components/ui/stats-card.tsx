@@ -18,8 +18,8 @@ export default function StatsCard({ title, value, icon: Icon, iconColor, iconBg 
             <Icon className={`w-5 h-5 ${iconColor}`} />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-slate-600">{title}</p>
-            <p className="text-2xl font-bold text-slate-900">{value}</p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold text-foreground">{value}</p>
           </div>
         </div>
       </CardContent>
