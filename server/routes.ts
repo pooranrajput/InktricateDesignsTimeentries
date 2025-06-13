@@ -335,6 +335,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Employee route to get their assigned tasks for time tracking
+  app.get('/api/my-tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get tasks assigned to this user
+      const userTasks = await storage.getUserAssignedTasks(userId);
+      res.json(userTasks);
+    } catch (error) {
+      console.error("Error fetching user tasks:", error);
+      res.status(500).json({ message: "Failed to fetch assigned tasks" });
+    }
+  });
+
   app.post('/api/tasks', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

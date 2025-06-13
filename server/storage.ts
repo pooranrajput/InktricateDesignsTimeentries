@@ -50,6 +50,7 @@ export interface IStorage {
   createTaskCategory(taskData: any): Promise<any>;
   updateTaskCategory(id: number, updates: any): Promise<any>;
   assignTaskToEmployees(taskCategoryId: number, employeeIds: string[], assignedBy: string): Promise<void>;
+  getUserAssignedTasks(userId: string): Promise<any[]>;
   
   // Payroll operations
   getMonthlyPayrollRecords(year: number, month: number): Promise<any[]>;
@@ -307,6 +308,19 @@ export class DatabaseStorage implements IStorage {
       }));
       await db.insert(userTaskAssignments).values(assignments);
     }
+  }
+
+  async getUserAssignedTasks(userId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: taskCategories.id,
+        name: taskCategories.name,
+        description: taskCategories.description,
+        taskSpecificRate: userTaskAssignments.taskSpecificHourlyRate,
+      })
+      .from(userTaskAssignments)
+      .innerJoin(taskCategories, eq(userTaskAssignments.taskCategoryId, taskCategories.id))
+      .where(eq(userTaskAssignments.userId, userId));
   }
 
   // Payroll operations
