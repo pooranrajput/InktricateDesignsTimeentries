@@ -88,6 +88,7 @@ export const timeEntries = pgTable("time_entries", {
   startTime: time("start_time").notNull(),
   endTime: time("end_time").notNull(),
   project: varchar("project").notNull(),
+  clientName: varchar("client_name"),
   taskCategoryId: integer("task_category_id").references(() => taskCategories.id),
   notes: text("notes"),
   totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(),

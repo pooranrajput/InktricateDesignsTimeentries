@@ -17,6 +17,7 @@ const timeEntrySchema = z.object({
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   project: z.string().min(1, "Project is required"),
+  clientName: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -38,6 +39,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
       startTime: "",
       endTime: "",
       project: "",
+      clientName: "",
       notes: "",
     },
   });
@@ -70,6 +72,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
         startTime: "",
         endTime: "",
         project: "",
+        clientName: "",
         notes: "",
       });
       setCalculatedHours(0);
