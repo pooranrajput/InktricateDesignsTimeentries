@@ -108,14 +108,15 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
     createTimeEntryMutation.mutate(data);
   };
 
-  // Quick entry presets
+  // Quick entry presets based on assigned tasks
+  const firstTask = (assignedTasks as any[])[0]?.name?.toLowerCase() || "production";
   const quickEntryPresets = [
     {
       name: "Full Day",
       icon: Clock,
       startTime: "09:00",
       endTime: "17:00",
-      project: "wedding-invites",
+      project: firstTask,
       hours: 8,
       color: "bg-blue-50 border-blue-200 hover:bg-blue-100"
     },
@@ -124,7 +125,7 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
       icon: Clock,
       startTime: "09:00",
       endTime: "13:00",
-      project: "wedding-invites",
+      project: firstTask,
       hours: 4,
       color: "bg-green-50 border-green-200 hover:bg-green-100"
     },
@@ -138,12 +139,12 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
       color: "bg-orange-50 border-orange-200 hover:bg-orange-100"
     },
     {
-      name: "Consultation",
+      name: "Designing",
       icon: Clock,
       startTime: "10:00",
-      endTime: "12:00",
-      project: "design-consultation",
-      hours: 2,
+      endTime: "14:00",
+      project: "designing",
+      hours: 4,
       color: "bg-purple-50 border-purple-200 hover:bg-purple-100"
     }
   ];
@@ -259,11 +260,6 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
                   {task.name}
                 </SelectItem>
               ))}
-              <SelectItem value="wedding-invites">Wedding Invitations</SelectItem>
-              <SelectItem value="place-cards">Place Cards</SelectItem>
-              <SelectItem value="wooden-fixtures">Wooden Fixtures</SelectItem>
-              <SelectItem value="design-consultation">Design Consultation</SelectItem>
-              <SelectItem value="production">Production Work</SelectItem>
             </SelectContent>
           </Select>
           {form.formState.errors.project && (
