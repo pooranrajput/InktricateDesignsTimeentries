@@ -291,29 +291,29 @@ export default function EmployeeManagement() {
         <div className="overflow-x-auto -mx-4 sm:mx-0">
           <div className="min-w-full inline-block align-middle">
             <table className="min-w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Employee</th>
-                  <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rate</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Employee</th>
+                  <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Role</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Rate</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody className="bg-card divide-y divide-border">
                 {(employees as any[]).map((employee: any) => (
-                  <tr key={employee.id} className="hover:bg-slate-50">
+                  <tr key={employee.id} className="hover:bg-muted/50">
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center mr-3">
-                        <span className="text-primary-600 text-sm font-medium">
+                      <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                        <span className="text-primary text-sm font-medium">
                           {getInitials(employee.firstName, employee.lastName, employee.email)}
                         </span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-slate-900">
+                        <div className="text-sm font-medium text-foreground">
                           {getDisplayName(employee)}
                         </div>
-                        <div className="text-sm text-slate-500">{employee.email}</div>
+                        <div className="text-sm text-muted-foreground">{employee.email}</div>
                       </div>
                     </div>
                   </td>
@@ -322,14 +322,14 @@ export default function EmployeeManagement() {
                       {employee.role}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     <div className="flex items-center space-x-2">
                       <span>${parseFloat(employee.hourlyRate || '0').toFixed(2)}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditRate(employee.id, employee.hourlyRate || '0')}
-                        className="text-slate-400 hover:text-primary h-6 w-6 p-0"
+                        className="text-muted-foreground hover:text-primary h-6 w-6 p-0"
                       >
                         <Edit className="w-3 h-3" />
                       </Button>
@@ -338,19 +338,20 @@ export default function EmployeeManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm" 
                         onClick={() => handleViewEmployee(employee.id)}
-                        className="text-primary hover:text-primary/80"
-                        title="View Employee Details"
+                        className="text-primary hover:text-primary/80 border-primary/20 hover:border-primary/40"
+                        title="View Timesheet"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">View</span>
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleEditRole(employee.id, employee.role)}
-                        className="text-slate-400 hover:text-slate-600"
+                        className="text-muted-foreground hover:text-foreground"
                         title="Edit Role"
                       >
                         <Edit className="w-4 h-4" />
@@ -359,7 +360,7 @@ export default function EmployeeManagement() {
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleResetPassword(employee.id, getDisplayName(employee))}
-                        className="text-blue-400 hover:text-blue-600"
+                        className="text-blue-500 hover:text-blue-600"
                         title="Reset Password"
                       >
                         <Key className="w-4 h-4" />
@@ -368,7 +369,7 @@ export default function EmployeeManagement() {
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleDeactivateUser(employee.id, getDisplayName(employee))}
-                        className="text-red-400 hover:text-red-600"
+                        className="text-red-500 hover:text-red-600"
                         title="Deactivate Employee"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -454,37 +455,75 @@ export default function EmployeeManagement() {
       <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Employee Time Entries</DialogTitle>
+            <DialogTitle>
+              Time Entries - {viewingEmployee ? getDisplayName(employees.find((emp: any) => emp.id === viewingEmployee)) : 'Employee'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Month/Year Filter */}
+            <div className="flex gap-4 items-center bg-muted/50 p-3 rounded-lg">
+              <div>
+                <Label htmlFor="timesheetMonth">Month</Label>
+                <select
+                  id="timesheetMonth"
+                  value={timesheetMonth}
+                  onChange={(e) => setTimesheetMonth(Number(e.target.value))}
+                  className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="timesheetYear">Year</Label>
+                <select
+                  id="timesheetYear"
+                  value={timesheetYear}
+                  onChange={(e) => setTimesheetYear(Number(e.target.value))}
+                  className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
+                >
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - 2 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
             {employeeTimeEntries.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Project</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Hours</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Notes</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Hours</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
+                  <tbody className="bg-card divide-y divide-border">
                     {employeeTimeEntries.map((entry: any) => (
-                      <tr key={entry.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                      <tr key={entry.id} className="hover:bg-muted/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {new Date(entry.date).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {entry.project}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {entry.startTime} - {entry.endTime}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {entry.totalHours}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-900">
+                        <td className="px-6 py-4 text-sm text-foreground">
                           {entry.notes || '-'}
                         </td>
                       </tr>
@@ -493,7 +532,7 @@ export default function EmployeeManagement() {
                 </table>
               </div>
             ) : (
-              <p className="text-slate-500">No time entries found for this employee.</p>
+              <p className="text-muted-foreground text-center py-8">No time entries found for this employee in the selected month.</p>
             )}
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setViewingEmployee(null)}>
