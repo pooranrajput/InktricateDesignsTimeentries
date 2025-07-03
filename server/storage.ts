@@ -242,17 +242,33 @@ export class DatabaseStorage implements IStorage {
 
   async getUserTimeEntries(userId: string, startDate?: Date, endDate?: Date): Promise<TimeEntry[]> {
     if (startDate && endDate) {
-      return await db
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+      
+      console.log('Storage filtering:', {
+        userId,
+        startStr,
+        endStr,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+      
+      const results = await db
         .select()
         .from(timeEntries)
         .where(
           and(
             eq(timeEntries.userId, userId),
-            gte(timeEntries.date, startDate.toISOString().split('T')[0]),
-            lte(timeEntries.date, endDate.toISOString().split('T')[0])
+            gte(timeEntries.date, startStr),
+            lte(timeEntries.date, endStr)
           )
         )
         .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
+        
+      console.log('Storage results:', results.length, 'entries found');
+      results.forEach(entry => console.log('Entry date:', entry.date, 'project:', entry.project));
+      
+      return results;
     }
     
     return await db
