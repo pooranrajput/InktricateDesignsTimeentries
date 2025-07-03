@@ -113,22 +113,15 @@ export default function EmployeeDashboard() {
                 className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
                 onChange={(e) => {
+                  console.log('Dropdown changed to:', e.target.value);
                   const [year, month] = e.target.value.split('-');
+                  console.log('Setting year:', year, 'month:', month);
                   setSelectedYear(parseInt(year));
                   setSelectedMonth(parseInt(month));
                 }}
               >
-                <option value={`${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`}>
-                  Current Month
-                </option>
-                {(() => {
-                  const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-                  return (
-                    <option value={`${prevMonth.getFullYear()}-${(prevMonth.getMonth() + 1).toString().padStart(2, '0')}`}>
-                      Previous Month
-                    </option>
-                  );
-                })()}
+                <option value="2025-07">Current Month (July)</option>
+                <option value="2025-06">Previous Month (June)</option>
               </select>
             </div>
           </div>
