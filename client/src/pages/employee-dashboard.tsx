@@ -63,9 +63,6 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
-  // Debug logging
-  console.log('Current state:', { selectedYear, selectedMonth, timeEntries: timeEntries?.length });
-
   // Calculate monthly stats with proper task-specific rates
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
   const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
@@ -86,6 +83,16 @@ export default function EmployeeDashboard() {
     return sum + (hours * rate);
   }, 0);
   const workingDays = timeEntriesArray.length;
+
+  // Debug logging
+  console.log('Current state:', { 
+    selectedYear, 
+    selectedMonth, 
+    timeEntries: timeEntries?.length,
+    monthlyHours,
+    estimatedPay,
+    workingDays 
+  });
 
   if (isLoading || !user) {
     return (
