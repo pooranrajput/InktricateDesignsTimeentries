@@ -54,11 +54,22 @@ export default function EmployeeManagement() {
       if (!viewingEmployee) return [];
       const url = `/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`;
       console.log('Fetching timesheet:', url);
-      return fetch(url).then(res => res.json());
+      console.log('Date range:', timesheetStartDate.toISOString().split('T')[0], 'to', timesheetEndDate.toISOString().split('T')[0]);
+      return fetch(url).then(res => {
+        console.log('Response status:', res.status);
+        return res.json();
+      }).then(data => {
+        console.log('Received entries:', data.length, 'entries');
+        data.forEach((entry: any) => {
+          console.log('Entry:', entry.date, entry.project, entry.totalHours + 'h');
+        });
+        return data;
+      });
     },
     enabled: !!viewingEmployee,
     retry: false,
     staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache at all
   });
 
   const updateRateMutation = useMutation({
