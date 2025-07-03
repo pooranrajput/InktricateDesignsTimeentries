@@ -30,18 +30,7 @@ export default function EmployeeDashboard() {
     }
   }, [user, isLoading, toast]);
 
-  // Reset to current month when component mounts or when month changes naturally
-  useEffect(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    
-    // Auto-update to current month if we're viewing a past month and it's a new month
-    if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
-      setSelectedMonth(currentMonth);
-      setSelectedYear(currentYear);
-    }
-  }, [selectedMonth, selectedYear]);
+  // Note: Removed auto-reset logic that was interfering with manual month selection
 
   // Calculate date range for current month
   const startDate = new Date(selectedYear, selectedMonth - 1, 1);
