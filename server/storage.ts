@@ -313,6 +313,12 @@ export class DatabaseStorage implements IStorage {
       totalHours: number;
       grossPay: number;
       entries: TimeEntry[];
+      taskBreakdown?: Array<{
+        taskName: string;
+        hours: number;
+        rate: number;
+        pay: number;
+      }>;
     }>;
   }> {
     const employees = await this.getAllEmployees();
@@ -352,11 +358,60 @@ export class DatabaseStorage implements IStorage {
         grossPay += entryHours * hourlyRate;
       }
       
+      // Create task breakdown for this employee
+      const taskBreakdown: Array<{
+        taskName: string;
+        hours: number;
+        rate: number;
+        pay: number;
+      }> = [];
+      const taskTotals: Record<string, { hours: number; rate: number }> = {};
+      
+      for (const entry of entries) {
+        const taskName = entry.project;
+        const entryHours = parseFloat(entry.totalHours || "0");
+        let hourlyRate = standardHourlyRate;
+        
+        // Check if this entry has a task-specific rate
+        if (entry.taskCategoryId) {
+          const taskAssignment = await db
+            .select()
+            .from(userTaskAssignments)
+            .where(
+              and(
+                eq(userTaskAssignments.userId, employee.id),
+                eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
+              )
+            )
+            .limit(1);
+          
+          if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
+            hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
+          }
+        }
+        
+        if (!taskTotals[taskName]) {
+          taskTotals[taskName] = { hours: 0, rate: hourlyRate };
+        }
+        
+        taskTotals[taskName].hours += entryHours;
+      }
+      
+      Object.entries(taskTotals).forEach(([taskName, data]) => {
+        taskBreakdown.push({
+          taskName,
+          hours: data.hours,
+          rate: data.rate,
+          pay: data.hours * data.rate,
+        });
+      });
+
       employeeReports.push({
         user: employee,
         totalHours: empHours,
         grossPay,
         entries,
+        taskBreakdown,
       });
       
       totalHours += empHours;
