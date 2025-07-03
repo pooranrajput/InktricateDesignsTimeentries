@@ -119,12 +119,17 @@ export default function EmployeeDashboard() {
                   setSelectedMonth(parseInt(month));
                 }}
               >
-                <option value={`${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`}>
+                <option value={`${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`}>
                   Current Month
                 </option>
-                <option value={`${new Date().getFullYear()}-${new Date().getMonth().toString().padStart(2, '0')}`}>
-                  Previous Month
-                </option>
+                {(() => {
+                  const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+                  return (
+                    <option value={`${prevMonth.getFullYear()}-${(prevMonth.getMonth() + 1).toString().padStart(2, '0')}`}>
+                      Previous Month
+                    </option>
+                  );
+                })()}
               </select>
             </div>
           </div>

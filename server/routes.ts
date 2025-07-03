@@ -262,18 +262,8 @@ export function registerRoutes(app: Express): Server {
       if (startDate) start = new Date(startDate as string);
       if (endDate) end = new Date(endDate as string);
       
-      // Debug logging
-      console.log('Dashboard query:', {
-        userId,
-        startDate: startDate as string,
-        endDate: endDate as string,
-        startDateParsed: start?.toISOString().split('T')[0],
-        endDateParsed: end?.toISOString().split('T')[0]
-      });
-      
       // SECURITY: Each user can ONLY see their own time entries
       const timeEntries = await storage.getUserTimeEntries(userId, start, end);
-      console.log('Found entries:', timeEntries.length, 'for user', userId);
       res.json(timeEntries);
     } catch (error) {
       console.error("Error fetching time entries:", error);
