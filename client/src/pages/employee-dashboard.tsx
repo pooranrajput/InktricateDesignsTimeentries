@@ -48,14 +48,13 @@ export default function EmployeeDashboard() {
   const endDate = new Date(selectedYear, selectedMonth, 0);
   
   const { data: timeEntries = [], isLoading: entriesLoading, refetch } = useQuery({
-    queryKey: ["/api/time-entries", { 
-      startDate: startDate.toISOString().split('T')[0], 
-      endDate: endDate.toISOString().split('T')[0] 
-    }],
+    queryKey: ["/api/time-entries", selectedYear, selectedMonth],
     queryFn: async () => {
+      const currentStartDate = new Date(selectedYear, selectedMonth - 1, 1);
+      const currentEndDate = new Date(selectedYear, selectedMonth, 0);
       const params = new URLSearchParams({
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0]
+        startDate: currentStartDate.toISOString().split('T')[0],
+        endDate: currentEndDate.toISOString().split('T')[0]
       });
       const response = await fetch(`/api/time-entries?${params}`);
       if (!response.ok) throw new Error('Failed to fetch time entries');
