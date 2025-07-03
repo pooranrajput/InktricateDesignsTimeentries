@@ -52,6 +52,15 @@ export default function EmployeeDashboard() {
       startDate: startDate.toISOString().split('T')[0], 
       endDate: endDate.toISOString().split('T')[0] 
     }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
+      });
+      const response = await fetch(`/api/time-entries?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch time entries');
+      return response.json();
+    },
     retry: false,
   });
 
