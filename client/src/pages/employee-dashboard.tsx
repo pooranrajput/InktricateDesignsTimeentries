@@ -11,8 +11,9 @@ import { Clock, Calendar, TrendingUp } from "lucide-react";
 export default function EmployeeDashboard() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -28,6 +29,19 @@ export default function EmployeeDashboard() {
       return;
     }
   }, [user, isLoading, toast]);
+
+  // Reset to current month when component mounts or when month changes naturally
+  useEffect(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    
+    // Auto-update to current month if we're viewing a past month and it's a new month
+    if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
+      setSelectedMonth(currentMonth);
+      setSelectedYear(currentYear);
+    }
+  }, [selectedMonth, selectedYear]);
 
   // Calculate date range for current month
   const startDate = new Date(selectedYear, selectedMonth - 1, 1);
@@ -50,7 +64,8 @@ export default function EmployeeDashboard() {
   // Calculate pay considering task-specific rates
   const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
     const hours = parseFloat(entry.totalHours || '0');
-    let rate = parseFloat(user?.hourlyRate || '0'); // Default rate
+    const userRate = user?.hourlyRate;
+    let rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0')); // Default rate
     
     // Check if this is Production work (special $15/hour rate)
     if (entry.project?.toLowerCase() === 'production') {

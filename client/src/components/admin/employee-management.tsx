@@ -23,6 +23,8 @@ export default function EmployeeManagement() {
   const [editingRole, setEditingRole] = useState<{ userId: string; currentRole: string } | null>(null);
   const [newRole, setNewRole] = useState("");
   const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
+  const [timesheetMonth, setTimesheetMonth] = useState(new Date().getMonth() + 1);
+  const [timesheetYear, setTimesheetYear] = useState(new Date().getFullYear());
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
@@ -42,9 +44,15 @@ export default function EmployeeManagement() {
     retry: false,
   });
 
+  // Calculate date range for timesheet viewing
+  const timesheetStartDate = new Date(timesheetYear, timesheetMonth - 1, 1);
+  const timesheetEndDate = new Date(timesheetYear, timesheetMonth, 0);
+
   const { data: employeeTimeEntries = [] } = useQuery({
-    queryKey: ["/api/time-entries", viewingEmployee],
-    queryFn: () => viewingEmployee ? fetch(`/api/time-entries/${viewingEmployee}`).then(res => res.json()) : [],
+    queryKey: ["/api/time-entries", viewingEmployee, timesheetMonth, timesheetYear],
+    queryFn: () => viewingEmployee ? 
+      fetch(`/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`)
+        .then(res => res.json()) : [],
     enabled: !!viewingEmployee,
     retry: false,
   });
@@ -292,7 +300,7 @@ export default function EmployeeManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {employees.map((employee: any) => (
+                {(employees as any[]).map((employee: any) => (
                   <tr key={employee.id} className="hover:bg-slate-50">
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -598,6 +606,90 @@ export default function EmployeeManagement() {
                 Add Employee
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Employee Timesheet Dialog */}
+      <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>
+              Employee Timesheet - {viewingEmployee ? getDisplayName((employees as any[]).find((emp: any) => emp.id === viewingEmployee)) : ''}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {/* Month/Year Selector */}
+          <div className="flex items-center space-x-3 pb-4 border-b">
+            <Label htmlFor="timesheet-month" className="text-sm font-medium">View Month:</Label>
+            <select 
+              id="timesheet-month"
+              className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              value={`${timesheetYear}-${timesheetMonth.toString().padStart(2, '0')}`}
+              onChange={(e) => {
+                const [year, month] = e.target.value.split('-');
+                setTimesheetYear(parseInt(year));
+                setTimesheetMonth(parseInt(month));
+              }}
+            >
+              <option value={`${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`}>
+                Current Month
+              </option>
+              <option value={`${new Date().getFullYear()}-${new Date().getMonth().toString().padStart(2, '0')}`}>
+                Previous Month
+              </option>
+              {/* Add more month options as needed */}
+              <option value="2025-06">June 2025</option>
+              <option value="2025-07">July 2025</option>
+            </select>
+          </div>
+          <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+            {employeeTimeEntries.length > 0 ? (
+              <div className="space-y-3">
+                {employeeTimeEntries.map((entry: any) => (
+                  <div key={entry.id} className="border border-border rounded-lg p-4 bg-muted/30">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center space-x-4">
+                        <span className="font-medium text-foreground">
+                          {new Date(entry.date).toLocaleDateString()}
+                        </span>
+                        <Badge variant="outline" className="capitalize">
+                          {entry.project}
+                        </Badge>
+                        {entry.clientName && (
+                          <Badge variant="secondary">
+                            Client: {entry.clientName}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">
+                          {entry.startTime} - {entry.endTime}
+                        </div>
+                        <div className="font-medium text-foreground">
+                          {entry.totalHours}h
+                        </div>
+                      </div>
+                    </div>
+                    {entry.notes && (
+                      <div className="mt-2 p-2 bg-background rounded border">
+                        <div className="text-xs text-muted-foreground mb-1">Notes:</div>
+                        <div className="text-sm text-foreground">{entry.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No time entries found for this employee.
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => setViewingEmployee(null)}>
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
