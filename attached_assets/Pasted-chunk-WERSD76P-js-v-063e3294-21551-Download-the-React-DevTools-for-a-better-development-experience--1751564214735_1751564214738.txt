@@ -1,0 +1,73 @@
+chunk-WERSD76P.js?v=063e3294:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+employee-management.tsx:52 Timesheet params: Object
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:52 Timesheet params: Object
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:52 Timesheet params: Object
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:52 Timesheet params: Object
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:60 Fetching timesheet: /api/time-entries/emp_madhuri_mccartney?startDate=2025-07-01&endDate=2025-07-31
+employee-management.tsx:61 Date range: 2025-07-01 to 2025-07-31
+2@radix-ui_react-dialog.js?v=063e3294:335 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=063e3294:335Understand this warningAI
+employee-management.tsx:63 Response status: 200
+employee-management.tsx:66 Received entries: 1 entries
+employee-management.tsx:68 Entry: 2025-07-01 proposals 3.00h
+employee-management.tsx:52 Timesheet params: Object
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev/:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: div
+Ancestor with aria-hidden:  <div role=​"dialog" id=​"radix-:​rc:​" aria-describedby=​"radix-:​re:​" aria-labelledby=​"radix-:​rd:​" data-state=​"closed" data-replit-metadata=​"client/​src/​components/​admin/​employee-management.tsx:​686:​8" data-component-name=​"DialogContent" class=​"fixed left-[50%]​ top-[50%]​ z-50 grid w-full translate-x-[-50%]​ translate-y-[-50%]​ gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]​:​animate-in data-[state=closed]​:​animate-out data-[state=closed]​:​fade-out-0 data-[state=open]​:​fade-in-0 data-[state=closed]​:​zoom-out-95 data-[state=open]​:​zoom-in-95 data-[state=closed]​:​slide-out-to-left-1/​2 data-[state=closed]​:​slide-out-to-top-[48%]​ data-[state=open]​:​slide-in-from-left-1/​2 data-[state=open]​:​slide-in-from-top-[48%]​ sm:​rounded-lg max-w-4xl max-h-[80vh]​ overflow-hidden" tabindex=​"-1" style=​"pointer-events:​ auto;​ animation-fill-mode:​ forwards;​">​…​</div>​Understand this errorAI
+employee-management.tsx:52 Timesheet params: {timesheetYear: 2025, timesheetMonth: 7}
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:52 Timesheet params: {timesheetYear: 2025, timesheetMonth: 7}
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:60 Fetching timesheet: /api/time-entries/emp_madhuri_mccartney?startDate=2025-07-01&endDate=2025-07-31
+employee-management.tsx:61 Date range: 2025-07-01 to 2025-07-31
+2@radix-ui_react-dialog.js?v=063e3294:335 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=063e3294:335
+commitHookEffectListMount @ chunk-WERSD76P.js?v=063e3294:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=063e3294:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=063e3294:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=063e3294:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=063e3294:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=063e3294:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=063e3294:19447
+commitRootImpl @ chunk-WERSD76P.js?v=063e3294:19416
+commitRoot @ chunk-WERSD76P.js?v=063e3294:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=063e3294:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=063e3294:9119
+(anonymous) @ chunk-WERSD76P.js?v=063e3294:18627Understand this warningAI
+aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev/:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: select
+Ancestor with aria-hidden:  <div role=​"dialog" id=​"radix-:​rc:​" aria-describedby=​"radix-:​re:​" aria-labelledby=​"radix-:​rd:​" data-state=​"closed" data-replit-metadata=​"client/​src/​components/​admin/​employee-management.tsx:​686:​8" data-component-name=​"DialogContent" class=​"fixed left-[50%]​ top-[50%]​ z-50 grid w-full translate-x-[-50%]​ translate-y-[-50%]​ gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]​:​animate-in data-[state=closed]​:​animate-out data-[state=closed]​:​fade-out-0 data-[state=open]​:​fade-in-0 data-[state=closed]​:​zoom-out-95 data-[state=open]​:​zoom-in-95 data-[state=closed]​:​slide-out-to-left-1/​2 data-[state=closed]​:​slide-out-to-top-[48%]​ data-[state=open]​:​slide-in-from-left-1/​2 data-[state=open]​:​slide-in-from-top-[48%]​ sm:​rounded-lg max-w-4xl max-h-[80vh]​ overflow-hidden" tabindex=​"-1" style=​"pointer-events:​ auto;​ animation-fill-mode:​ forwards;​">​…​</div>​Understand this errorAI
+employee-management.tsx:63 Response status: 200
+employee-management.tsx:66 Received entries: 1 entries
+employee-management.tsx:68 Entry: 2025-07-01 proposals 3.00h
+employee-management.tsx:52 Timesheet params: {timesheetYear: 2025, timesheetMonth: 7}
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:52 Timesheet params: {timesheetYear: 2025, timesheetMonth: 7}
+employee-management.tsx:53 Date range: 2025-07-01 to 2025-07-31
+employee-management.tsx:60 Fetching timesheet: /api/time-entries/emp_madhuri_mccartney?startDate=2025-07-01&endDate=2025-07-31
+employee-management.tsx:61 Date range: 2025-07-01 to 2025-07-31
+2@radix-ui_react-dialog.js?v=063e3294:335 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=063e3294:335
+commitHookEffectListMount @ chunk-WERSD76P.js?v=063e3294:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=063e3294:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=063e3294:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=063e3294:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=063e3294:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=063e3294:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=063e3294:19447
+commitRootImpl @ chunk-WERSD76P.js?v=063e3294:19416
+commitRoot @ chunk-WERSD76P.js?v=063e3294:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=063e3294:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=063e3294:9119
+(anonymous) @ chunk-WERSD76P.js?v=063e3294:18627Understand this warningAI
+aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev/:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: select
+Ancestor with aria-hidden:  <div role=​"dialog" id=​"radix-:​rc:​" aria-describedby=​"radix-:​re:​" aria-labelledby=​"radix-:​rd:​" data-state=​"open" data-replit-metadata=​"client/​src/​components/​admin/​employee-management.tsx:​686:​8" data-component-name=​"DialogContent" class=​"fixed left-[50%]​ top-[50%]​ z-50 grid w-full translate-x-[-50%]​ translate-y-[-50%]​ gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]​:​animate-in data-[state=closed]​:​animate-out data-[state=closed]​:​fade-out-0 data-[state=open]​:​fade-in-0 data-[state=closed]​:​zoom-out-95 data-[state=open]​:​zoom-in-95 data-[state=closed]​:​slide-out-to-left-1/​2 data-[state=closed]​:​slide-out-to-top-[48%]​ data-[state=open]​:​slide-in-from-left-1/​2 data-[state=open]​:​slide-in-from-top-[48%]​ sm:​rounded-lg max-w-4xl max-h-[80vh]​ overflow-hidden" tabindex=​"-1" data-aria-hidden=​"true" aria-hidden=​"true" style=​"pointer-events:​ auto;​">​…​</div>​gridUnderstand this errorAI
+employee-management.tsx:63 Response status: 200
+employee-management.tsx:66 Received entries: 1 entries
+employee-management.tsx:68 Entry: 2025-07-01 proposals 3.00h

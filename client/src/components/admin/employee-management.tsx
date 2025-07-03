@@ -65,7 +65,7 @@ export default function EmployeeManagement() {
       }).then(data => {
         console.log('Received entries:', data.length, 'entries');
         data.forEach((entry: any) => {
-          console.log('Entry:', entry.date, entry.project, entry.totalHours + 'h');
+          console.log('Entry:', entry.date, entry.project, entry.totalHours + 'h', 'Display:', new Date(entry.date + 'T00:00:00').toLocaleDateString());
         });
         return data;
       });
@@ -726,7 +726,7 @@ export default function EmployeeManagement() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center space-x-4">
                         <span className="font-medium text-foreground">
-                          {new Date(entry.date).toLocaleDateString()}
+                          {new Date(entry.date + 'T00:00:00').toLocaleDateString()}
                         </span>
                         <Badge variant="outline" className="capitalize">
                           {entry.project}
