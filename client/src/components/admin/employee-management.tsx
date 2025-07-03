@@ -68,8 +68,8 @@ export default function EmployeeManagement() {
     },
     enabled: !!viewingEmployee,
     retry: false,
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache at all
+    refetchOnMount: true,
+    refetchOnWindowFocus: false
   });
 
   const updateRateMutation = useMutation({
@@ -222,6 +222,8 @@ export default function EmployeeManagement() {
   };
 
   const handleViewEmployee = (userId: string) => {
+    // Force cache invalidation when opening timesheet
+    queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
     setViewingEmployee(userId);
   };
 
@@ -485,7 +487,11 @@ export default function EmployeeManagement() {
                 <select
                   id="timesheetMonth"
                   value={timesheetMonth}
-                  onChange={(e) => setTimesheetMonth(Number(e.target.value))}
+                  onChange={(e) => {
+                    setTimesheetMonth(Number(e.target.value));
+                    // Force fresh data when month changes
+                    queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+                  }}
                   className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
                 >
                   {Array.from({ length: 12 }, (_, i) => (
@@ -500,7 +506,11 @@ export default function EmployeeManagement() {
                 <select
                   id="timesheetYear"
                   value={timesheetYear}
-                  onChange={(e) => setTimesheetYear(Number(e.target.value))}
+                  onChange={(e) => {
+                    setTimesheetYear(Number(e.target.value));
+                    // Force fresh data when year changes
+                    queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+                  }}
                   className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
                 >
                   {Array.from({ length: 5 }, (_, i) => {
