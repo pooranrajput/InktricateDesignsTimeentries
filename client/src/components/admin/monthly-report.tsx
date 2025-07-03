@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -208,7 +208,7 @@ Generated on: ${new Date().toLocaleDateString()}
                   <p className="font-semibold text-foreground">{report.totalHours.toFixed(1)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Rate</p>
+                  <p className="text-xs text-muted-foreground mb-1">Base Rate</p>
                   <p className="font-semibold text-foreground">${parseFloat(report.user.hourlyRate || '0').toFixed(2)}</p>
                 </div>
                 <div>
@@ -216,6 +216,23 @@ Generated on: ${new Date().toLocaleDateString()}
                   <p className="font-semibold text-green-600">${report.grossPay.toFixed(2)}</p>
                 </div>
               </div>
+              
+              {/* Task-specific rate breakdown */}
+              {report.taskBreakdown && report.taskBreakdown.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground mb-2">Task Rate Breakdown:</p>
+                  <div className="space-y-1">
+                    {report.taskBreakdown.map((task: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground capitalize">{task.taskName}</span>
+                        <span className="text-foreground">
+                          {task.hours.toFixed(1)}h @ ${task.rate.toFixed(2)} = ${task.pay.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )) || (
             <div className="text-center py-8 text-slate-500">
@@ -246,8 +263,20 @@ Generated on: ${new Date().toLocaleDateString()}
                           {getInitials(report.user.firstName, report.user.lastName, report.user.email)}
                         </span>
                       </div>
-                      <div className="text-sm font-medium text-foreground">
-                        {getDisplayName(report.user)}
+                      <div>
+                        <div className="text-sm font-medium text-foreground">
+                          {getDisplayName(report.user)}
+                        </div>
+                        {/* Task-specific rate breakdown inline */}
+                        {report.taskBreakdown && report.taskBreakdown.length > 0 && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {report.taskBreakdown.map((task: any, index: number) => (
+                              <div key={index}>
+                                {task.taskName}: {task.hours.toFixed(1)}h @ ${task.rate.toFixed(2)} = ${task.pay.toFixed(2)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -255,7 +284,7 @@ Generated on: ${new Date().toLocaleDateString()}
                     {report.totalHours.toFixed(1)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                    ${parseFloat(report.user.hourlyRate || '0').toFixed(2)}
+                    Base: ${parseFloat(report.user.hourlyRate || '0').toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     ${report.grossPay.toFixed(2)}
