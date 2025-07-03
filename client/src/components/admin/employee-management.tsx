@@ -47,6 +47,10 @@ export default function EmployeeManagement() {
   // Calculate date range for timesheet viewing
   const timesheetStartDate = new Date(timesheetYear, timesheetMonth - 1, 1);
   const timesheetEndDate = new Date(timesheetYear, timesheetMonth, 0);
+  
+  // Debug logging
+  console.log('Timesheet params:', { timesheetYear, timesheetMonth });
+  console.log('Date range:', timesheetStartDate.toISOString().split('T')[0], 'to', timesheetEndDate.toISOString().split('T')[0]);
 
   const { data: employeeTimeEntries = [] } = useQuery({
     queryKey: ["/api/time-entries", viewingEmployee, timesheetMonth, timesheetYear],
@@ -700,14 +704,18 @@ export default function EmployeeManagement() {
               }}
             >
               <option value={`${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`}>
-                Current Month
+                Current Month ({new Date().toLocaleString('default', { month: 'long', year: 'numeric' })})
               </option>
-              <option value={`${new Date().getFullYear()}-${new Date().getMonth().toString().padStart(2, '0')}`}>
-                Previous Month
+              <option value={`${new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()}-${(new Date().getMonth() === 0 ? 12 : new Date().getMonth()).toString().padStart(2, '0')}`}>
+                Previous Month ({new Date(new Date().getFullYear(), new Date().getMonth() - 1).toLocaleString('default', { month: 'long', year: 'numeric' })})
               </option>
-              {/* Add more month options as needed */}
+              {/* Add more month options */}
               <option value="2025-06">June 2025</option>
-              <option value="2025-07">July 2025</option>
+              <option value="2025-05">May 2025</option>
+              <option value="2025-04">April 2025</option>
+              <option value="2025-03">March 2025</option>
+              <option value="2025-02">February 2025</option>
+              <option value="2025-01">January 2025</option>
             </select>
           </div>
           <div className="space-y-4 overflow-y-auto max-h-[60vh]">
