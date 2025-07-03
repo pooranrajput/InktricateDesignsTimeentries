@@ -47,10 +47,6 @@ export default function EmployeeManagement() {
   // Calculate date range for timesheet viewing
   const timesheetStartDate = new Date(timesheetYear, timesheetMonth - 1, 1);
   const timesheetEndDate = new Date(timesheetYear, timesheetMonth, 0);
-  
-  // Debug logging
-  console.log('Timesheet params:', { timesheetYear, timesheetMonth });
-  console.log('Date range:', timesheetStartDate.toISOString().split('T')[0], 'to', timesheetEndDate.toISOString().split('T')[0]);
 
   const { data: employeeTimeEntries = [] } = useQuery({
     queryKey: ["/api/time-entries", viewingEmployee, timesheetMonth, timesheetYear],
@@ -64,9 +60,6 @@ export default function EmployeeManagement() {
         return res.json();
       }).then(data => {
         console.log('Received entries:', data.length, 'entries');
-        data.forEach((entry: any) => {
-          console.log('Entry:', entry.date, entry.project, entry.totalHours + 'h', 'Display:', new Date(entry.date + 'T00:00:00').toLocaleDateString());
-        });
         return data;
       });
     },
@@ -544,7 +537,7 @@ export default function EmployeeManagement() {
                     {employeeTimeEntries.map((entry: any) => (
                       <tr key={entry.id} className="hover:bg-muted/50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {new Date(entry.date).toLocaleDateString()}
+                          {new Date(entry.date + 'T00:00:00').toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {entry.project}

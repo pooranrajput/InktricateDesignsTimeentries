@@ -113,6 +113,7 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 3, 2025. Fixed critical timezone issue with date display across all timesheet components
 - June 13, 2025. Initial setup
 ```
 
