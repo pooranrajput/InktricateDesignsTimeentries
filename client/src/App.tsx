@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ViewToggleProvider, useViewToggle } from "@/hooks/use-view-toggle";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -12,6 +13,7 @@ import UserProfile from "@/pages/user-profile";
 
 function Router() {
   const { user, isLoading } = useAuth();
+  const { viewAsEmployee } = useViewToggle();
   const [location] = useLocation();
 
   if (isLoading) {
@@ -42,17 +44,20 @@ function Router() {
     return <AuthPage />;
   }
 
-  // Authenticated routing based on role
+  // Authenticated routing based on role and view toggle
+  const isAdmin = user.role === "admin";
+  const shouldShowEmployeeView = !isAdmin || (isAdmin && viewAsEmployee);
+  
   return (
     <Switch>
       <Route path="/auth">
         {/* If already authenticated and no password reset needed, redirect to dashboard */}
-        {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
+        {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
       </Route>
       <Route path="/profile" component={UserProfile} />
       <Route path="/time-tracking" component={EmployeeDashboard} />
       <Route path="/">
-        {user.role === "admin" ? <AdminDashboard /> : <EmployeeDashboard />}
+        {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
       </Route>
       <Route path="*" component={NotFound} />
     </Switch>
@@ -63,10 +68,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <ViewToggleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ViewToggleProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

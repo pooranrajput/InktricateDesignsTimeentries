@@ -1,10 +1,13 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useViewToggle } from "@/hooks/use-view-toggle";
 import { Button } from "@/components/ui/button";
-import { Clock, BarChart3, Settings, LogOut } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Clock, BarChart3, Settings, LogOut, ToggleLeft, ToggleRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function NavigationHeader() {
   const { user, logoutMutation } = useAuth();
+  const { viewAsEmployee, setViewAsEmployee } = useViewToggle();
   const [location] = useLocation();
   
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
@@ -86,12 +89,37 @@ export default function NavigationHeader() {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Admin View Toggle */}
+              {user?.role === 'admin' && (
+                <div className="flex items-center space-x-2 bg-muted/50 rounded-lg p-2">
+                  <Badge variant={!viewAsEmployee ? "default" : "outline"} className="text-xs">
+                    Admin
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewAsEmployee(!viewAsEmployee)}
+                    className="h-8 w-8 p-0"
+                    title={viewAsEmployee ? "Switch to Admin View" : "Switch to Employee View"}
+                  >
+                    {viewAsEmployee ? (
+                      <ToggleRight className="h-4 w-4 text-primary" />
+                    ) : (
+                      <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                  <Badge variant={viewAsEmployee ? "default" : "outline"} className="text-xs">
+                    Employee
+                  </Badge>
+                </div>
+              )}
+              
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-foreground">
                   {getDisplayName()}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {user?.role || 'Employee'}
+                  {viewAsEmployee ? 'Employee View' : (user?.role || 'Employee')}
                 </p>
               </div>
               
