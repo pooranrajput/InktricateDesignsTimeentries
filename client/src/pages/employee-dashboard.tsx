@@ -73,15 +73,7 @@ export default function EmployeeDashboard() {
   }, 0);
   const workingDays = timeEntriesArray.length;
 
-  // Debug logging
-  console.log('Current state:', { 
-    selectedYear, 
-    selectedMonth, 
-    timeEntries: timeEntries?.length,
-    monthlyHours,
-    estimatedPay,
-    workingDays 
-  });
+
 
   if (isLoading || !user) {
     return (
@@ -112,9 +104,7 @@ export default function EmployeeDashboard() {
                 className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
                 onChange={(e) => {
-                  console.log('Dropdown changed to:', e.target.value);
                   const [year, month] = e.target.value.split('-');
-                  console.log('Setting year:', year, 'month:', month);
                   setSelectedYear(parseInt(year));
                   setSelectedMonth(parseInt(month));
                 }}
