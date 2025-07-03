@@ -458,12 +458,15 @@ export default function EmployeeManagement() {
             <DialogTitle>
               Time Entries - {viewingEmployee ? getDisplayName(employees.find((emp: any) => emp.id === viewingEmployee)) : 'Employee'}
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Showing entries by work date (not submission date)
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             {/* Month/Year Filter */}
             <div className="flex gap-4 items-center bg-muted/50 p-3 rounded-lg">
               <div>
-                <Label htmlFor="timesheetMonth">Month</Label>
+                <Label htmlFor="timesheetMonth">Work Month</Label>
                 <select
                   id="timesheetMonth"
                   value={timesheetMonth}
