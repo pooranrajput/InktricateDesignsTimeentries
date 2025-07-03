@@ -50,11 +50,15 @@ export default function EmployeeManagement() {
 
   const { data: employeeTimeEntries = [] } = useQuery({
     queryKey: ["/api/time-entries", viewingEmployee, timesheetMonth, timesheetYear],
-    queryFn: () => viewingEmployee ? 
-      fetch(`/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`)
-        .then(res => res.json()) : [],
+    queryFn: () => {
+      if (!viewingEmployee) return [];
+      const url = `/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`;
+      console.log('Fetching timesheet:', url);
+      return fetch(url).then(res => res.json());
+    },
     enabled: !!viewingEmployee,
     retry: false,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const updateRateMutation = useMutation({
@@ -456,10 +460,10 @@ export default function EmployeeManagement() {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              Time Entries - {viewingEmployee ? getDisplayName(employees.find((emp: any) => emp.id === viewingEmployee)) : 'Employee'}
+              Time Entries - {viewingEmployee ? getDisplayName((employees as any[]).find((emp: any) => emp.id === viewingEmployee)) : 'Employee'}
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Showing entries by work date (not submission date)
+              Showing work performed in {new Date(0, timesheetMonth - 1).toLocaleString('default', { month: 'long' })} {timesheetYear} only
             </p>
           </DialogHeader>
           <div className="space-y-4">
