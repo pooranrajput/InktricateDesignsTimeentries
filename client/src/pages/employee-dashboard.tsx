@@ -14,7 +14,7 @@ export default function EmployeeDashboard() {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-
+  
   // Redirect to auth if not authenticated
   useEffect(() => {
     if (!isLoading && !user) {
@@ -62,6 +62,9 @@ export default function EmployeeDashboard() {
     },
     retry: false,
   });
+
+  // Debug logging
+  console.log('Current state:', { selectedYear, selectedMonth, timeEntries: timeEntries?.length });
 
   // Calculate monthly stats with proper task-specific rates
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
