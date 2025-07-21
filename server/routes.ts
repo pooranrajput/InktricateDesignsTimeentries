@@ -907,28 +907,73 @@ export function registerRoutes(app: Express): Server {
   // Create a test bill in QuickBooks
   app.post('/api/quickbooks/create-test-bill', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🧾 Test bill creation endpoint called');
+      console.log('🧾 Request body:', req.body);
+      console.log('🧾 User role:', req.user.role);
+      
       if (req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only admins can create test bills" });
       }
       
       const { vendorName, amount, description } = req.body;
-      const qbo = await quickbooksService.initializeClient();
-      
       console.log(`🧾 Creating test bill for vendor: ${vendorName}, amount: $${amount}`);
+      
+      const qbo = await quickbooksService.initializeClient();
+      console.log('🧾 QuickBooks client initialized');
+      
+      // First, try to find or create the vendor
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors(`SELECT * FROM Vendor WHERE Name = '${vendorName}'`, (err: any, vendors: any) => {
+          if (err) {
+            console.log('⚠️ Vendor search failed, will create new vendor');
+            resolve([]);
+          } else {
+            const vendorList = vendors?.QueryResponse?.Vendor || [];
+            console.log(`🔍 Found ${vendorList.length} vendors matching "${vendorName}"`);
+            resolve(vendorList);
+          }
+        });
+      });
+      
+      let vendorRef;
+      if ((vendors as any[]).length > 0) {
+        vendorRef = { value: (vendors as any[])[0].Id };
+        console.log(`✅ Using existing vendor ID: ${(vendors as any[])[0].Id}`);
+      } else {
+        // Create vendor first
+        console.log(`🔨 Creating new vendor: ${vendorName}`);
+        const newVendor = await new Promise((resolve, reject) => {
+          const vendorData = {
+            DisplayName: vendorName,
+            Vendor1099: true,
+            Active: true
+          };
+          
+          qbo.createVendor(vendorData, (err: any, vendor: any) => {
+            if (err) {
+              console.error('❌ Vendor creation failed:', err);
+              reject(err);
+            } else {
+              console.log('✅ Vendor created successfully:', vendor.Id);
+              resolve(vendor);
+            }
+          });
+        });
+        
+        vendorRef = { value: (newVendor as any).Id };
+      }
       
       // Create a bill for the vendor
       const bill = {
-        VendorRef: {
-          name: vendorName
-        },
+        VendorRef: vendorRef,
         TotalAmt: amount,
         Line: [{
           Amount: amount,
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: {
-              value: "7", // Professional Services expense account
-              name: "Professional Services"
+              value: "67", // Try Contractors expense account
+              name: "Contractors"
             }
           },
           Description: description || "Contractor payment"
@@ -941,9 +986,10 @@ export function registerRoutes(app: Express): Server {
         qbo.createBill(bill, (err: any, createdBill: any) => {
           if (err) {
             console.error('❌ Bill creation failed:', err);
+            console.error('❌ Full error:', JSON.stringify(err, null, 2));
             reject(err);
           } else {
-            console.log('✅ Bill created successfully:', createdBill.Id);
+            console.log('✅ Bill created successfully with ID:', createdBill.Id);
             resolve(createdBill);
           }
         });
