@@ -442,10 +442,8 @@ export class QuickBooksService {
       
       // Create vendor object with correct QuickBooks API structure
       const vendor: any = {
-        Name: fullName,
-        DisplayName: fullName,  // QuickBooks requires DisplayName, not Name
-        Track1099: true,        // Make them appear as contractors by enabling 1099 tracking
-        Vendor1099: true,       // Alternative field that might be required
+        DisplayName: fullName,  // QuickBooks requires DisplayName for vendor creation
+        Vendor1099: true,       // CORRECT FIELD: This vendor is a 1099 contractor
         Active: true            // Ensure vendor is active
       };
       
@@ -531,8 +529,8 @@ export class QuickBooksService {
           console.log(`🔄 Updating vendor "${fullName}" to enable 1099 tracking...`);
           console.log(`🔧 Current vendor data before update:`, JSON.stringify({
             Id: existingVendor.Id,
-            Name: existingVendor.Name,
-            Track1099: existingVendor.Track1099,
+            DisplayName: existingVendor.DisplayName,
+            Vendor1099: existingVendor.Vendor1099,
             SyncToken: existingVendor.SyncToken,
             Active: existingVendor.Active
           }, null, 2));
@@ -540,18 +538,13 @@ export class QuickBooksService {
           try {
             const qbo = await this.initializeClient();
             
-            // Use comprehensive vendor object with all required fields for Track1099
+            // Use correct QuickBooks API field for 1099 contractors
             const updateData = {
               Id: existingVendor.Id,
               SyncToken: existingVendor.SyncToken,
-              Name: existingVendor.Name || existingVendor.DisplayName,
               DisplayName: existingVendor.DisplayName || existingVendor.Name,
-              Active: existingVendor.Active !== false,
-              Track1099: true,
-              Vendor1099: true, // Alternative field that might be required
-              TaxIdentifier: existingVendor.TaxIdentifier || undefined,
-              VendorPaymentBankAccount: existingVendor.VendorPaymentBankAccount || undefined,
-              sparse: true // Use sparse update to only modify specified fields
+              Vendor1099: true, // CORRECT FIELD: This makes vendor appear as 1099 contractor
+              sparse: true      // Use sparse update to only modify specified fields
             };
             
             console.log(`🔧 Update data being sent:`, JSON.stringify(updateData, null, 2));
@@ -566,7 +559,7 @@ export class QuickBooksService {
                   reject(err);
                 } else {
                   console.log(`✅ Successfully updated ${fullName} with 1099 tracking enabled`);
-                  console.log(`✅ Updated vendor Track1099:`, updatedVendor?.Track1099);
+                  console.log(`✅ Updated vendor Vendor1099:`, updatedVendor?.Vendor1099);
                   resolve(updatedVendor);
                 }
               });
@@ -580,7 +573,7 @@ export class QuickBooksService {
                   console.error(`⚠️ Could not verify update for ${fullName}:`, err);
                   resolve(null);
                 } else {
-                  console.log(`✅ Verified vendor ${fullName} Track1099:`, vendor?.Track1099);
+                  console.log(`✅ Verified vendor ${fullName} Vendor1099:`, vendor?.Vendor1099);
                   resolve(vendor);
                 }
               });
