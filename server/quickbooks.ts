@@ -452,6 +452,11 @@ export class QuickBooksService {
         vendor.PrimaryEmailAddr = { Address: employee.email.trim() };
       }
       
+      // Add tax identifier if available (helps with 1099 processing)
+      if (employee.socialSecurityNumber || employee.taxId) {
+        vendor.TaxIdentifier = employee.socialSecurityNumber || employee.taxId;
+      }
+      
       console.log('🔧 Creating contractor-vendor with structure:', vendor);
 
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
@@ -538,13 +543,22 @@ export class QuickBooksService {
           try {
             const qbo = await this.initializeClient();
             
-            // Use correct QuickBooks API field for 1099 contractors
+            // Use full vendor update with all fields to ensure Vendor1099 takes effect
             const updateData = {
               Id: existingVendor.Id,
               SyncToken: existingVendor.SyncToken,
               DisplayName: existingVendor.DisplayName || existingVendor.Name,
-              Vendor1099: true, // CORRECT FIELD: This makes vendor appear as 1099 contractor
-              sparse: true      // Use sparse update to only modify specified fields
+              Vendor1099: true,     // Mark as 1099 contractor
+              Active: existingVendor.Active !== false,
+              // Include all existing fields to prevent data loss
+              GivenName: existingVendor.GivenName,
+              FamilyName: existingVendor.FamilyName,
+              CompanyName: existingVendor.CompanyName,
+              PrimaryEmailAddr: existingVendor.PrimaryEmailAddr,
+              PrimaryPhone: existingVendor.PrimaryPhone,
+              BillAddr: existingVendor.BillAddr,
+              TaxIdentifier: existingVendor.TaxIdentifier,
+              sparse: false     // Full update to ensure all fields are properly set
             };
             
             console.log(`🔧 Update data being sent:`, JSON.stringify(updateData, null, 2));

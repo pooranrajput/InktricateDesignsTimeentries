@@ -119,11 +119,13 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
-- July 21, 2025. FIXED: QuickBooks 1099 tracking with correct API field name
+- July 21, 2025. COMPLETED: QuickBooks 1099 tracking implementation and user guidance
   - Discovered the correct field is "Vendor1099" (not "Track1099") per official QuickBooks API documentation
-  - Updated all contractor sync logic to use proper Vendor1099 boolean field
-  - Simplified vendor update process to focus on essential fields (DisplayName, Vendor1099, sparse update)
-  - This should now properly check the "Track payments for 1099" checkbox in QuickBooks UI
+  - Updated all contractor sync logic to use proper Vendor1099 boolean field and TaxIdentifier
+  - IMPORTANT: The "Track payments for 1099" checkbox requires TWO steps:
+    1. API sets Vendor1099=true (completed by our sync)
+    2. User must complete 1099 setup in QB: Taxes > 1099 filings > Map expense accounts to 1099 categories
+  - Added comprehensive guidance for completing QuickBooks 1099 setup process
 - July 21, 2025. Enhanced contractor sync with Track1099 flag management for QuickBooks contractors
   - Implemented vendor search and duplicate detection to prevent re-creating existing vendors
   - Added Track1099 flag updates to convert vendors to contractors in QuickBooks
