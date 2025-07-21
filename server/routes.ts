@@ -904,53 +904,79 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Create a test bill in QuickBooks - SIMPLE VERSION
+  // Create a test bill matching the manual structure (Bill ID 145)
   app.post('/api/quickbooks/create-test-bill', isAuthenticated, async (req: any, res) => {
     try {
-      console.log('🧾 === BILL CREATION DEBUG START ===');
-      console.log('🧾 Request body:', req.body);
+      console.log('🧾 === TESTING BILL CREATION TO MATCH MANUAL BILL ID 145 ===');
       
       if (req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only admins can create test bills" });
       }
       
       const { amount = 60.00 } = req.body;
-      console.log(`🧾 Creating bill for amount: $${amount}`);
+      console.log(`🧾 Creating bill for $${amount} matching manual bill structure`);
       
       const qbo = await quickbooksService.initializeClient();
-      console.log('🧾 QuickBooks client initialized successfully');
+      console.log('🧾 QuickBooks client initialized');
       
-      // First get available accounts to use correct account reference
-      console.log('🔍 Getting chart of accounts...');
-      const accounts = await new Promise((resolve, reject) => {
-        qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 5", (err: any, accounts: any) => {
+      // Find "Pooran Rajput" vendor (the one you manually created)
+      console.log('🔍 Finding Pooran Rajput vendor...');
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors("SELECT * FROM Vendor WHERE Name = 'Pooran Rajput'", (err: any, vendors: any) => {
           if (err) {
-            console.log('⚠️ Account search failed, using default');
-            resolve([]);
+            console.error('❌ Vendor search failed:', err);
+            reject(err);
+          } else {
+            const vendorList = vendors?.QueryResponse?.Vendor || [];
+            console.log(`🔍 Found ${vendorList.length} vendors named "Pooran Rajput"`);
+            if (vendorList.length > 0) {
+              console.log(`✅ Found vendor: ID ${vendorList[0].Id}, Name: ${vendorList[0].Name}`);
+            }
+            resolve(vendorList);
+          }
+        });
+      });
+      
+      if ((vendors as any[]).length === 0) {
+        throw new Error('Pooran Rajput vendor not found - please create manually first');
+      }
+      
+      const vendorRef = { value: (vendors as any[])[0].Id };
+      
+      // Find "Professional Services" account (the one you manually created)
+      console.log('🔍 Finding Professional Services account...');
+      const accounts = await new Promise((resolve, reject) => {
+        qbo.findAccounts("SELECT * FROM Account WHERE Name = 'Professional Services'", (err: any, accounts: any) => {
+          if (err) {
+            console.log('⚠️ Account search failed, searching for any expense account');
+            // Fallback to any expense account
+            qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 3", (err2: any, accounts2: any) => {
+              if (err2) reject(err2);
+              else resolve(accounts2?.QueryResponse?.Account || []);
+            });
           } else {
             const accountList = accounts?.QueryResponse?.Account || [];
-            console.log(`🔍 Found ${accountList.length} expense accounts`);
-            accountList.forEach((a: any) => console.log(`  - ID: ${a.Id}, Name: ${a.Name}, Type: ${a.AccountType}`));
+            console.log(`🔍 Found ${accountList.length} "Professional Services" accounts`);
+            if (accountList.length > 0) {
+              console.log(`✅ Found account: ID ${accountList[0].Id}, Name: ${accountList[0].Name}`);
+            }
             resolve(accountList);
           }
         });
       });
       
-      // Use first expense account or default to "1"
-      const accountRef = (accounts as any[]).length > 0 
-        ? { value: (accounts as any[])[0].Id, name: (accounts as any[])[0].Name }
-        : { value: "1", name: "Default" };
-      console.log(`🧾 Using account ID: ${accountRef.value}, Name: ${accountRef.name}`);
+      if ((accounts as any[]).length === 0) {
+        throw new Error('No expense accounts found');
+      }
       
-      // Use hardcoded vendor ID 59 (we know this exists from our previous sync)
-      const vendorRef = { value: "59" };
-      console.log('🧾 Using hardcoded vendor ID: 59');
+      const accountRef = { value: (accounts as any[])[0].Id };
       
-      // Updated bill structure with proper account reference
+      // Create bill matching your manual structure
       const bill = {
         VendorRef: vendorRef,
         Line: [{
           Amount: amount,
+          Description: "July 2025 - Pooran Rajput Payroll",
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: accountRef
@@ -958,38 +984,90 @@ export function registerRoutes(app: Express): Server {
         }]
       };
       
-      console.log('📤 Bill structure:', JSON.stringify(bill, null, 2));
+      console.log('📤 Creating bill with exact manual structure:', JSON.stringify(bill, null, 2));
       
-      console.log('📤 Calling qbo.createBill()...');
+      console.log('📤 About to call qbo.createBill - this should work now...');
       qbo.createBill(bill, (err: any, createdBill: any) => {
+        console.log('📋 createBill callback triggered');
         if (err) {
-          console.error('❌ BILL CREATION ERROR:', err);
+          console.error('❌ BILL CREATION FAILED:');
+          console.error('❌ Error type:', typeof err);
           console.error('❌ Error message:', err?.message);
           console.error('❌ Error fault:', err?.Fault);
-          console.error('❌ Full error:', JSON.stringify(err, null, 2));
+          console.error('❌ Error intuitBatchItemRequest:', err?.intuitBatchItemRequest);
+          console.error('❌ Full error object:', JSON.stringify(err, null, 2));
           res.status(500).json({ 
             success: false, 
             error: err?.message || 'Bill creation failed',
             details: err
           });
         } else {
-          console.log('✅ BILL CREATION SUCCESS!');
-          console.log('✅ Bill ID:', createdBill?.Id);
-          console.log('✅ Bill data:', JSON.stringify(createdBill, null, 2));
+          console.log('✅ BILL CREATED SUCCESSFULLY!');
+          console.log('✅ New Bill ID:', createdBill?.Id);
+          console.log('✅ Vendor used:', createdBill?.VendorRef);
+          console.log('✅ Amount:', createdBill?.TotalAmt);
+          console.log('✅ Success! Compare with manual Bill ID: 145');
+          console.log('✅ Full bill object:', JSON.stringify(createdBill, null, 2));
           res.json({ 
             success: true, 
             bill: createdBill, 
-            message: `Bill created with ID: ${createdBill?.Id}` 
+            message: `🎉 API bill created! ID: ${createdBill?.Id} (Manual reference: ID 145)` 
           });
         }
       });
       
     } catch (error) {
-      console.error('❌ Outer error:', error);
+      console.error('❌ Error:', error);
       res.status(500).json({ 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
+    }
+  });
+
+  // Debug endpoint to check QB entities
+  app.get('/api/quickbooks/debug-entities', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin only" });
+      }
+
+      const qbo = await quickbooksService.initializeClient();
+      
+      // Check vendors
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors("SELECT * FROM Vendor WHERE Name = 'Pooran Rajput'", (err: any, data: any) => {
+          if (err) reject(err);
+          else resolve(data?.QueryResponse?.Vendor || []);
+        });
+      });
+      
+      // Check accounts
+      const accounts = await new Promise((resolve, reject) => {
+        qbo.findAccounts("SELECT * FROM Account WHERE Name = 'Professional Services'", (err: any, data: any) => {
+          if (err) reject(err);
+          else resolve(data?.QueryResponse?.Account || []);
+        });
+      });
+      
+      // Check bills
+      const bills = await new Promise((resolve, reject) => {
+        qbo.findBills("SELECT * FROM Bill WHERE Id = '145'", (err: any, data: any) => {
+          if (err) reject(err);
+          else resolve(data?.QueryResponse?.Bill || []);
+        });
+      });
+      
+      res.json({
+        vendors: vendors,
+        accounts: accounts,
+        manualBill145: bills,
+        message: "Entity debug info"
+      });
+      
+    } catch (error) {
+      console.error('Debug error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Debug failed' });
     }
   });
 

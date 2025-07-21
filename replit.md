@@ -119,6 +119,11 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 21, 2025. BREAKTHROUGH: Manual QuickBooks bill creation successful - debugging automated API
+  - User manually created Bill ID 145 for "Pooran Rajput" vendor with "Professional Services" category
+  - Manual bill structure: $60, description "July 2025 - Pooran Rajput Payroll"
+  - API updated to match exact manual structure for automated bill creation
+  - Currently testing API bill creation using same vendor and account references as manual bill
 - July 21, 2025. IMPLEMENTED: Complete payroll workflow testing and QuickBooks bill creation
   - Fixed missing payroll records by manually creating payroll entry for admin account
   - Added comprehensive test bill creation endpoint for QuickBooks vendor payment testing
