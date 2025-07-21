@@ -80,9 +80,16 @@ export default function QuickBooksIntegration() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Contractors Synced",
-        description: data.message,
+        title: "Contractor Sync Complete",
+        description: data.message || "Contractors processed successfully",
       });
+      
+      // Log detailed results for admin review
+      if (data.details && data.details.length > 0) {
+        console.log('📋 Contractor Sync Results:', data.details);
+        console.log(`✅ ${data.summary.created} created, 🔗 ${data.summary.linked} linked, ❌ ${data.summary.failed} failed`);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
     },
     onError: (error: Error) => {

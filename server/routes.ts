@@ -846,17 +846,25 @@ export function registerRoutes(app: Express): Server {
 
       // Get all active employees/contractors
       const employees = await storage.getAllEmployees();
-      const activeContractors = employees.filter((emp: any) => emp.status === 'active');
+      const activeContractors = employees.filter((emp: any) => emp.isActive);
       
       const results = await quickbooksService.syncAllContractors(activeContractors);
       
       res.json({
-        message: `Synced ${activeContractors.length} contractors to QuickBooks`,
-        results
+        success: true,
+        message: `Sync completed: ${results.created} created, ${results.linked} linked, ${results.failed} failed`,
+        summary: {
+          total: results.total,
+          created: results.created,
+          linked: results.linked,
+          failed: results.failed
+        },
+        details: results.details
       });
     } catch (error: any) {
       console.error("Error syncing contractors to QuickBooks:", error);
       res.status(500).json({ 
+        success: false,
         message: "Failed to sync contractors", 
         error: error?.message || "Unknown error" 
       });

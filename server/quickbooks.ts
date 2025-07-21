@@ -442,24 +442,66 @@ export class QuickBooksService {
       
       for (const employee of employees) {
         try {
-          // Check if contractor already exists
-          const existingVendor = await this.findVendorByName(`${employee.firstName} ${employee.lastName}`);
+          // Enhanced vendor search with multiple matching strategies
+          const existingMatch = await this.findExistingVendor(employee);
           
-          if (existingVendor) {
-            console.log(`⏭️  Contractor ${employee.firstName} ${employee.lastName} already exists in QuickBooks`);
-            results.push({ employee: employee.id, status: 'exists', vendor: existingVendor });
+          if (existingMatch) {
+            const { vendor, matchType } = existingMatch as { vendor: any, matchType: string };
+            console.log(`⏭️  Contractor ${employee.firstName} ${employee.lastName} found as "${vendor.Name}" (${matchType} match)`);
+            
+            // Update our database with the QuickBooks vendor ID for future reference
+            await db.update(users)
+              .set({ 
+                quickbooksCustomerId: vendor.Id,
+                updatedAt: new Date()
+              })
+              .where(eq(users.id, employee.id));
+            
+            results.push({ 
+              employee: employee.id, 
+              status: 'linked', 
+              vendor: vendor,
+              matchType: matchType,
+              message: `Linked existing QB vendor "${vendor.Name}" via ${matchType} match`
+            });
           } else {
-            const vendor = await this.createContractor(employee);
-            results.push({ employee: employee.id, status: 'created', vendor });
+            console.log(`➕ Creating new vendor for ${employee.firstName} ${employee.lastName}`);
+            const vendor = await this.createContractor(employee) as any;
+            
+            // Update our database with the new QuickBooks vendor ID
+            await db.update(users)
+              .set({ 
+                quickbooksCustomerId: vendor.Id,
+                updatedAt: new Date()
+              })
+              .where(eq(users.id, employee.id));
+            
+            results.push({ 
+              employee: employee.id, 
+              status: 'created', 
+              vendor: vendor,
+              message: `Created new QB vendor "${vendor.Name}"`
+            });
           }
         } catch (error) {
           console.error(`❌ Failed to sync contractor ${employee.firstName} ${employee.lastName}:`, error);
-          results.push({ employee: employee.id, status: 'failed', error: (error as Error).message });
+          results.push({ 
+            employee: employee.id, 
+            status: 'failed', 
+            error: (error as Error).message,
+            message: `Failed to sync: ${(error as Error).message}`
+          });
         }
       }
       
       console.log('📤 Contractor sync completed:', results);
-      return results;
+      return {
+        total: employees.length,
+        created: results.filter(r => r.status === 'created').length,
+        linked: results.filter(r => r.status === 'linked').length,
+        failed: results.filter(r => r.status === 'failed').length,
+        details: results
+      };
     } catch (error) {
       console.error('Error syncing contractors:', error);
       throw error;
@@ -483,6 +525,76 @@ export class QuickBooksService {
       });
     } catch (error) {
       console.error('Error finding vendor:', error);
+      return null;
+    }
+  }
+
+  // Enhanced vendor search with multiple matching strategies
+  private async findExistingVendor(employee: any) {
+    try {
+      const qbo = await this.initializeClient();
+      const fullName = `${employee.firstName} ${employee.lastName}`.trim();
+      
+      return new Promise((resolve, reject) => {
+        // Search for all vendors to do comprehensive matching
+        qbo.findVendors({}, (err: any, vendors: any) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          const allVendors = vendors?.QueryResponse?.Vendor || [];
+          
+          // Strategy 1: Exact name match
+          let match = allVendors.find((v: any) => v.Name === fullName);
+          if (match) {
+            console.log(`✅ Found exact name match: ${fullName}`);
+            resolve({ vendor: match, matchType: 'exact_name' });
+            return;
+          }
+          
+          // Strategy 2: Case-insensitive name match
+          match = allVendors.find((v: any) => 
+            v.Name?.toLowerCase() === fullName.toLowerCase()
+          );
+          if (match) {
+            console.log(`✅ Found case-insensitive name match: ${fullName}`);
+            resolve({ vendor: match, matchType: 'name_case_insensitive' });
+            return;
+          }
+          
+          // Strategy 3: Email match (if employee has email)
+          if (employee.email) {
+            match = allVendors.find((v: any) => 
+              v.PrimaryEmailAddr?.Address?.toLowerCase() === employee.email.toLowerCase()
+            );
+            if (match) {
+              console.log(`✅ Found email match: ${employee.email} -> ${match.Name}`);
+              resolve({ vendor: match, matchType: 'email' });
+              return;
+            }
+          }
+          
+          // Strategy 4: Fuzzy name matching (handles "John Smith" vs "John A Smith")
+          match = allVendors.find((v: any) => {
+            const vendorName = v.Name?.toLowerCase() || '';
+            const firstName = employee.firstName?.toLowerCase() || '';
+            const lastName = employee.lastName?.toLowerCase() || '';
+            
+            return vendorName.includes(firstName) && vendorName.includes(lastName);
+          });
+          if (match) {
+            console.log(`✅ Found fuzzy name match: ${fullName} -> ${match.Name}`);
+            resolve({ vendor: match, matchType: 'fuzzy_name' });
+            return;
+          }
+          
+          // No match found
+          resolve(null);
+        });
+      });
+    } catch (error) {
+      console.error('Error finding existing vendor:', error);
       return null;
     }
   }
