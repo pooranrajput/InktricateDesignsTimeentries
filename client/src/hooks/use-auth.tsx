@@ -50,6 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false,
     staleTime: 0,
     refetchOnWindowFocus: false,
+    initialData: () => {
+      // Try to get user from localStorage as fallback
+      const stored = localStorage.getItem('currentUser');
+      return stored ? JSON.parse(stored) : undefined;
+    },
   });
 
   const loginMutation = useMutation({
@@ -59,6 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Force refetch after successful login
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // Store user in localStorage for persistence
+      localStorage.setItem('currentUser', JSON.stringify(user));
     },
     onError: (error: Error) => {
       toast({
