@@ -204,6 +204,27 @@ export default function QuickBooksIntegration() {
                   This will create all active contractors as vendors in QuickBooks for billing and 1099 reporting.
                 </AlertDescription>
               </Alert>
+              
+              {/* 1099 Setup Guide */}
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription>
+                  <div className="space-y-3">
+                    <div className="font-medium text-blue-900">📋 Complete 1099 Setup in QuickBooks</div>
+                    <div className="text-sm text-blue-800">
+                      After syncing contractors, complete these steps in QuickBooks to see "Track payments for 1099" checkboxes checked:
+                    </div>
+                    <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+                      <li>Go to <strong>Taxes → 1099 filings</strong> in QuickBooks</li>
+                      <li>Complete the 1099 setup wizard through "Step 2 - Accounts"</li>
+                      <li><strong>Critical:</strong> Check "Box 7: Nonemployee Compensation" and map your contractor expense accounts</li>
+                      <li>Click "Save & Finish Later" (filing not required for sandbox)</li>
+                    </ol>
+                    <div className="text-xs text-blue-700">
+                      💡 The API correctly sets Vendor1099=true, but QuickBooks only shows checkboxes after account mapping is complete.
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
