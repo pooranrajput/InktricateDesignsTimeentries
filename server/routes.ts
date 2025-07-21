@@ -974,36 +974,44 @@ export function registerRoutes(app: Express): Server {
       
       console.log('💰 Creating payroll bill:', JSON.stringify(bill, null, 2));
       
+      console.log('💰 About to create payroll bill...');
+      
+      // Try direct callback approach first
       qbo.createBill(bill, async (err: any, createdBill: any) => {
+        console.log('💰 createBill callback executed');
         if (err) {
-          console.error('❌ Payroll bill creation failed:', err);
-          res.status(500).json({ 
+          console.error('❌ PAYROLL BILL CREATION FAILED:');
+          console.error('❌ Error details:', JSON.stringify(err, null, 2));
+          return res.status(500).json({ 
             success: false, 
-            error: err?.message || 'Bill creation failed',
-            details: err
-          });
-        } else {
-          console.log('✅ PAYROLL BILL CREATED!');
-          console.log('✅ Bill ID:', createdBill?.Id);
-          console.log('✅ Amount:', createdBill?.TotalAmt);
-          
-          // Update payroll record with QB bill ID
-          try {
-            await storage.updateMonthlyPayroll(payrollRecord.id, {
-              quickbooksBillId: createdBill.Id.toString()
-            });
-            console.log('💾 Updated payroll record with QB bill ID');
-          } catch (updateErr) {
-            console.error('⚠️ Failed to update payroll record:', updateErr);
-          }
-          
-          res.json({ 
-            success: true, 
-            bill: createdBill, 
-            payroll: payrollRecord,
-            message: `Payroll bill created! ID: ${createdBill?.Id} for ${user.firstName} ${user.lastName}` 
+            error: err instanceof Error ? err.message : 'Bill creation failed',
+            details: err,
+            billData: bill
           });
         }
+        
+        console.log('✅ PAYROLL BILL CREATED SUCCESSFULLY!');
+        console.log('✅ Bill ID:', createdBill?.Id);
+        console.log('✅ Amount:', createdBill?.TotalAmt);
+        console.log('✅ Vendor:', createdBill?.VendorRef);
+        console.log('✅ Full response:', JSON.stringify(createdBill, null, 2));
+        
+        // Update payroll record with QB bill ID
+        try {
+          await storage.updateMonthlyPayroll(payrollRecord.id, {
+            quickbooksBillId: createdBill.Id.toString()
+          });
+          console.log('💾 Updated payroll record with QB bill ID:', createdBill.Id);
+        } catch (updateErr) {
+          console.error('⚠️ Failed to update payroll record:', updateErr);
+        }
+        
+        res.json({ 
+          success: true, 
+          bill: createdBill, 
+          payroll: payrollRecord,
+          message: `Payroll bill created! QB ID: ${createdBill?.Id} for ${user.firstName} ${user.lastName} ($${createdBill?.TotalAmt})` 
+        });
       });
       
     } catch (error) {
