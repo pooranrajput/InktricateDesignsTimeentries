@@ -461,7 +461,7 @@ export class QuickBooksService {
     const results = [];
     
     for (const employee of employees) {
-      console.log(`\n🔍 Processing: ${employee.firstName || employee.first_name} ${employee.lastName || employee.last_name}`);
+      console.log(`\n🔍 Processing employee:`, employee);
       
       try {
         // Map database fields correctly - database returns snake_case field names
@@ -470,6 +470,7 @@ export class QuickBooksService {
         console.log('🔍 Employee field mapping:', { firstName, lastName, email: employee.email });
         
         if (!firstName || !lastName) {
+          console.log(`⚠️  Employee has missing name data: firstName="${firstName}", lastName="${lastName}"`);
           console.log(`⚠️  Skipping employee with incomplete name data`);
           results.push({
             employee: employee.id,
@@ -480,7 +481,19 @@ export class QuickBooksService {
           continue;
         }
         
-        // Try creating contractor directly (simplified approach)
+        // Check if already exists in our database first
+        if (employee.quickbooksCustomerId || employee.quickbooks_customer_id) {
+          console.log(`✅ Contractor ${firstName} ${lastName} already synced (QB ID: ${employee.quickbooksCustomerId || employee.quickbooks_customer_id})`);
+          results.push({
+            employee: employee.id,
+            status: 'linked',
+            message: `Already synced to QuickBooks`,
+            quickbooksId: employee.quickbooksCustomerId || employee.quickbooks_customer_id
+          });
+          continue;
+        }
+        
+        // Try creating contractor
         console.log(`➕ Creating vendor for ${firstName} ${lastName}`);
         const vendor = await this.createContractor(employee) as any;
         
