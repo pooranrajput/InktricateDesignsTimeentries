@@ -404,7 +404,7 @@ export class QuickBooksService {
     try {
       const qbo = await this.initializeClient();
       
-      // Create vendor object with careful data validation
+      // Create vendor object with careful data validation - use correct field mapping
       const firstName = employee.first_name || employee.firstName || 'Unknown';
       const lastName = employee.last_name || employee.lastName || 'Unknown';
       const fullName = `${firstName} ${lastName}`.trim();
@@ -465,9 +465,10 @@ export class QuickBooksService {
       console.log(`\n🔍 Processing: ${employee.firstName || employee.first_name} ${employee.lastName || employee.last_name}`);
       
       try {
-        // Skip employees without proper names
-        const firstName = employee.firstName || employee.first_name;
-        const lastName = employee.lastName || employee.last_name;
+        // Map database fields correctly - database returns snake_case field names
+        const firstName = employee.first_name || employee.firstName;
+        const lastName = employee.last_name || employee.lastName;
+        console.log('🔍 Employee field mapping:', { firstName, lastName, email: employee.email });
         
         if (!firstName || !lastName) {
           console.log(`⚠️  Skipping employee with incomplete name data`);
