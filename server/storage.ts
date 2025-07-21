@@ -37,6 +37,7 @@ export interface IStorage {
   updateTimeEntry(id: number, updates: Partial<InsertTimeEntry>): Promise<TimeEntry>;
   deleteTimeEntry(id: number): Promise<void>;
   getUserTimeEntries(userId: string, startDate?: Date, endDate?: Date): Promise<TimeEntry[]>;
+  getAllTimeEntries(startDate?: Date, endDate?: Date): Promise<TimeEntry[]>;
   getAllTimeEntriesWithUsers(startDate?: Date, endDate?: Date): Promise<TimeEntryWithUser[]>;
   
   // Monthly report operations
@@ -269,6 +270,29 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(timeEntries)
       .where(eq(timeEntries.userId, userId))
+      .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
+  }
+
+  async getAllTimeEntries(startDate?: Date, endDate?: Date): Promise<TimeEntry[]> {
+    if (startDate && endDate) {
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+      
+      return await db
+        .select()
+        .from(timeEntries)
+        .where(
+          and(
+            gte(timeEntries.date, startStr),
+            lte(timeEntries.date, endStr)
+          )
+        )
+        .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
+    }
+    
+    return await db
+      .select()
+      .from(timeEntries)
       .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
   }
 

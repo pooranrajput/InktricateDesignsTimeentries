@@ -272,6 +272,34 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Admin-only route to view ALL time entries across all employees
+  app.get('/api/admin/time-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      // Only admins can view all time entries
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+      
+      const { startDate, endDate } = req.query;
+      
+      let start: Date | undefined;
+      let end: Date | undefined;
+      
+      if (startDate) start = new Date(startDate as string);
+      if (endDate) end = new Date(endDate as string);
+      
+      // Get all time entries across all users
+      const allTimeEntries = await storage.getAllTimeEntries(start, end);
+      res.json(allTimeEntries);
+    } catch (error) {
+      console.error("Error fetching all time entries:", error);
+      res.status(500).json({ message: "Failed to fetch all time entries" });
+    }
+  });
+
   // Admin-only route to view specific employee time entries
   app.get('/api/time-entries/:userId', isAuthenticated, async (req: any, res) => {
     try {
