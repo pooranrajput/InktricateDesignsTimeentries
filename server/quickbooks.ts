@@ -1,4 +1,6 @@
+// @ts-ignore
 import OAuthClient from 'intuit-oauth';
+// @ts-ignore
 import QuickBooks from 'node-quickbooks';
 import { db } from './db';
 import { quickbooksConfig, users, timeEntries } from '../shared/schema';
@@ -57,7 +59,7 @@ export class QuickBooksService {
   }
 
   // Initialize QuickBooks client with stored tokens
-  async initializeClient(companyId?: string) {
+  async initializeClient(companyId?: string): Promise<any> {
     try {
       const config = await db.query.quickbooksConfig.findFirst({
         where: companyId ? eq(quickbooksConfig.companyId, companyId) : undefined,
@@ -283,7 +285,7 @@ export class QuickBooksService {
           console.error(`Error creating invoice for contractor ${contractor.id}:`, error);
           results.push({
             contractor: contractor,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -315,7 +317,7 @@ export class QuickBooksService {
       const companyInfo = await this.getCompanyInfo();
       return { success: true, companyInfo };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 }
