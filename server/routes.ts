@@ -328,10 +328,11 @@ export function registerRoutes(app: Express): Server {
       const diffMs = endTime.getTime() - startTime.getTime();
       const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
       
+      // Create the time entry with properly typed totalHours
       const timeEntry = await storage.createTimeEntry({
         ...timeEntryData,
         totalHours: totalHours.toFixed(2),
-      });
+      } as any);
       
       res.json(timeEntry);
     } catch (error) {
@@ -365,7 +366,7 @@ export function registerRoutes(app: Express): Server {
         const endTime = new Date(`2024-01-01 ${updateData.endTime}`);
         const diffMs = endTime.getTime() - startTime.getTime();
         const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
-        updateData.totalHours = totalHours.toFixed(2);
+        (updateData as any).totalHours = totalHours.toFixed(2);
       }
       
       const timeEntry = await storage.updateTimeEntry(parseInt(id), updateData);
@@ -661,11 +662,11 @@ export function registerRoutes(app: Express): Server {
       
       const authUrl = quickbooksService.getAuthorizationUrl('timetracking-setup');
       res.json({ authUrl, debug: { configured: true } });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting QuickBooks auth URL:", error);
       res.status(500).json({ 
         message: "Failed to get authorization URL", 
-        error: error.message,
+        error: error?.message || "Unknown error",
         debug: {
           hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
           hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI
@@ -702,7 +703,7 @@ export function registerRoutes(app: Express): Server {
       
       const result = await quickbooksService.testConnection();
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error testing QuickBooks connection:", error);
       res.status(500).json({ message: "Failed to test connection" });
     }
@@ -725,7 +726,7 @@ export function registerRoutes(app: Express): Server {
       const contractor = await quickbooksService.createContractor(user);
       
       // Update user with QuickBooks contractor ID
-      await storage.updateUserQuickBooksInfo(userId, contractor.Id, contractor.ItemRef?.value);
+      await storage.updateUserQuickBooksInfo(userId, (contractor as any).Id, (contractor as any).ItemRef?.value);
       
       res.json({ contractor, message: "Contractor created successfully in QuickBooks" });
     } catch (error) {
@@ -781,7 +782,7 @@ export function registerRoutes(app: Express): Server {
       const timeActivity = await quickbooksService.createTimeActivity(timeEntry, user);
       
       // Update time entry with QuickBooks ID
-      await storage.updateTimeEntryQuickBooksInfo(timeEntryId, timeActivity.Id);
+      await storage.updateTimeEntryQuickBooksInfo(timeEntryId, (timeActivity as any).Id);
       
       res.json({ timeActivity, message: "Time entry synced to QuickBooks successfully" });
     } catch (error) {

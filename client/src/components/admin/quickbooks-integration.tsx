@@ -17,7 +17,12 @@ export default function QuickBooksIntegration() {
   const queryClient = useQueryClient();
 
   // Test QuickBooks connection
-  const { data: connectionTest, isLoading: isTestingConnection } = useQuery({
+  const { data: connectionTest, isLoading: isTestingConnection } = useQuery<{
+    success: boolean;
+    companyInfo?: {
+      CompanyName: string;
+    };
+  }>({
     queryKey: ['/api/quickbooks/test'],
     enabled: true,
   });
