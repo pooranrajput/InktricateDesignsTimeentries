@@ -438,10 +438,19 @@ export class QuickBooksService {
   async syncAllContractors(employees: any[]) {
     try {
       console.log(`📤 Syncing ${employees.length} contractors to QuickBooks...`);
+      console.log('👥 Employee data preview:', employees.slice(0, 2));
       const results = [];
       
       for (const employee of employees) {
         try {
+          console.log(`🔍 Processing employee: ${JSON.stringify({
+            id: employee.id,
+            first_name: employee.first_name,
+            last_name: employee.last_name,
+            email: employee.email,
+            is_active: employee.is_active
+          })}`);
+          
           // Enhanced vendor search with multiple matching strategies
           const existingMatch = await this.findExistingVendor(employee);
           

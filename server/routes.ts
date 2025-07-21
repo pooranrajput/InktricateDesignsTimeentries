@@ -846,7 +846,9 @@ export function registerRoutes(app: Express): Server {
 
       // Get all active employees/contractors
       const employees = await storage.getAllEmployees();
-      const activeContractors = employees.filter((emp: any) => emp.isActive);
+      console.log('🔍 All employees from storage:', employees.slice(0, 2));
+      const activeContractors = employees.filter((emp: any) => emp.isActive || emp.is_active);
+      console.log('✅ Active contractors filtered:', activeContractors.length, 'out of', employees.length);
       
       const results = await quickbooksService.syncAllContractors(activeContractors);
       
