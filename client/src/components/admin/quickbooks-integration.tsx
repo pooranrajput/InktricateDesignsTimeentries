@@ -25,7 +25,7 @@ export default function QuickBooksIntegration() {
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('/api/quickbooks/auth');
+      const response = await apiRequest('POST', '/api/quickbooks/setup');
       return response.json();
     },
     onSuccess: (data) => {
@@ -48,11 +48,7 @@ export default function QuickBooksIntegration() {
   // Generate monthly contractor bills
   const generateBillsMutation = useMutation({
     mutationFn: async (data: { year: number; month: number }) => {
-      const response = await apiRequest('/api/quickbooks/generate-bills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/quickbooks/generate-bills', data);
       return response.json();
     },
     onSuccess: (data) => {
@@ -74,11 +70,7 @@ export default function QuickBooksIntegration() {
   // Create contractor in QuickBooks
   const createContractorMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('/api/quickbooks/create-contractor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
+      const response = await apiRequest('POST', '/api/quickbooks/create-contractor', { userId });
       return response.json();
     },
     onSuccess: (data) => {
