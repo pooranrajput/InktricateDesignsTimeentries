@@ -837,6 +837,97 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Test Track1099 update for a specific vendor
+  app.post('/api/quickbooks/test-track1099', isAuthenticated, async (req: any, res) => {
+    try {
+      const { vendorName } = req.body;
+      if (!vendorName) {
+        return res.status(400).json({ success: false, error: 'Vendor name required' });
+      }
+
+      console.log(`🧪 Testing Track1099 update for vendor: ${vendorName}`);
+      
+      const quickbooks = new QuickBooksService();
+      const qbo = await quickbooks.initializeClient();
+      
+      // Search for the vendor using SQL query
+      const query = `SELECT * FROM Vendor WHERE Name = '${vendorName.replace(/'/g, "\\'")}'`;
+      console.log(`🔍 Search query: ${query}`);
+      
+      const result = await new Promise((resolve, reject) => {
+        qbo.findVendors(query, (err, vendors) => {
+          if (err) {
+            console.error(`❌ Search failed:`, err);
+            reject(err);
+            return;
+          }
+          
+          const foundVendors = vendors?.QueryResponse?.Vendor || [];
+          console.log(`📋 Found ${foundVendors.length} vendors`);
+          
+          if (foundVendors.length === 0) {
+            resolve({ success: false, message: `Vendor "${vendorName}" not found` });
+            return;
+          }
+          
+          const vendor = foundVendors[0];
+          console.log(`✅ Found vendor:`, {
+            Id: vendor.Id,
+            Name: vendor.Name,
+            Track1099: vendor.Track1099,
+            SyncToken: vendor.SyncToken
+          });
+          
+          if (vendor.Track1099) {
+            resolve({ 
+              success: true, 
+              message: `Vendor "${vendorName}" already has Track1099 enabled`,
+              vendor: vendor 
+            });
+            return;
+          }
+          
+          // Update the vendor to enable Track1099
+          console.log(`🔄 Updating vendor to enable Track1099...`);
+          const updateData = {
+            Id: vendor.Id,
+            SyncToken: vendor.SyncToken,
+            Name: vendor.Name,
+            Track1099: true,
+            sparse: true
+          };
+          
+          console.log(`📤 Update data:`, updateData);
+          
+          qbo.updateVendor(updateData, (updateErr, updatedVendor) => {
+            if (updateErr) {
+              console.error(`❌ Update failed:`, updateErr);
+              if (updateErr.Fault && updateErr.Fault.Error) {
+                console.error(`❌ QB Error Details:`, updateErr.Fault.Error);
+              }
+              reject(updateErr);
+            } else {
+              console.log(`✅ Track1099 update successful!`);
+              resolve({ 
+                success: true, 
+                message: `Successfully enabled Track1099 for "${vendorName}"`,
+                vendor: updatedVendor 
+              });
+            }
+          });
+        });
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Track1099 test failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Track1099 test failed' 
+      });
+    }
+  });
+
   // Test endpoint for QuickBooks sync debugging
   app.post('/api/quickbooks/debug-sync', async (req: any, res) => {
     try {

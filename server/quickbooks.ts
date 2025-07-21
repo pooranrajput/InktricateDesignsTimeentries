@@ -265,16 +265,19 @@ export class QuickBooksService {
   // Find existing vendor by name in QuickBooks
   async findExistingVendor(qbo: any, vendorName: string) {
     return new Promise((resolve, reject) => {
-      // Query vendors by name
+      // Use SQL-like query which is more reliable for name searches
       const query = `SELECT * FROM Vendor WHERE Name = '${vendorName.replace(/'/g, "\\'")}'`;
-      qbo.findVendors({ Name: vendorName }, (err: any, vendors: any) => {
+      console.log(`🔍 Searching for vendor with query: ${query}`);
+      
+      qbo.findVendors(query, (err: any, vendors: any) => {
         if (err) {
           console.log(`⚠️ Error searching for vendor "${vendorName}":`, err);
           resolve(null); // Return null if search fails, don't reject
         } else {
           const foundVendors = vendors?.QueryResponse?.Vendor || [];
+          console.log(`🔍 Search results for "${vendorName}":`, foundVendors.length, 'vendors found');
           if (foundVendors.length > 0) {
-            console.log(`✅ Found existing vendor: ${foundVendors[0].Name} (ID: ${foundVendors[0].Id})`);
+            console.log(`✅ Found existing vendor: ${foundVendors[0].Name} (ID: ${foundVendors[0].Id}, Track1099: ${foundVendors[0].Track1099})`);
             resolve(foundVendors[0]);
           } else {
             console.log(`ℹ️ No existing vendor found for "${vendorName}"`);
@@ -516,21 +519,33 @@ export class QuickBooksService {
           // Check if we need to enable 1099 tracking
           if (!existingVendor.Track1099) {
             console.log(`🔄 Updating vendor "${fullName}" to enable 1099 tracking...`);
+            console.log(`🔧 Current vendor data before update:`, JSON.stringify({
+              Id: existingVendor.Id,
+              Name: existingVendor.Name,
+              Track1099: existingVendor.Track1099,
+              SyncToken: existingVendor.SyncToken
+            }, null, 2));
+            
             try {
               const qbo = await this.initializeClient();
               const updateData = {
-                ...existingVendor,
+                Id: existingVendor.Id,
+                SyncToken: existingVendor.SyncToken,
+                Name: existingVendor.Name,
                 Track1099: true,
                 sparse: true
               };
               
+              console.log(`🔧 Update data being sent:`, JSON.stringify(updateData, null, 2));
+              
               await new Promise((resolve, reject) => {
                 qbo.updateVendor(updateData, (err: any, updatedVendor: any) => {
                   if (err) {
-                    console.error(`❌ Failed to update 1099 tracking for ${fullName}:`, err);
+                    console.error(`❌ Failed to update 1099 tracking for ${fullName}:`, JSON.stringify(err, null, 2));
                     reject(err);
                   } else {
-                    console.log(`✅ Updated ${fullName} with 1099 tracking enabled`);
+                    console.log(`✅ Successfully updated ${fullName} with 1099 tracking enabled`);
+                    console.log(`✅ Updated vendor result:`, JSON.stringify(updatedVendor?.Name, null, 2));
                     resolve(updatedVendor);
                   }
                 });
@@ -538,6 +553,8 @@ export class QuickBooksService {
             } catch (updateError) {
               console.error(`⚠️ Update failed for ${fullName}:`, updateError);
             }
+          } else {
+            console.log(`✅ Vendor "${fullName}" already has 1099 tracking enabled`);
           }
           
           // Update our database with QB vendor ID if not set
