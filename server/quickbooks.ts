@@ -416,7 +416,8 @@ export class QuickBooksService {
       
       // Create vendor object with correct QuickBooks API structure
       const vendor: any = {
-        DisplayName: fullName  // QuickBooks requires DisplayName, not Name
+        DisplayName: fullName,  // QuickBooks requires DisplayName, not Name
+        Track1099: true        // Make them appear as contractors by enabling 1099 tracking
       };
       
       // Add optional fields only if they exist and are valid
@@ -424,7 +425,7 @@ export class QuickBooksService {
         vendor.PrimaryEmailAddr = { Address: employee.email.trim() };
       }
       
-      console.log('🔧 Creating vendor with structure:', vendor);
+      console.log('🔧 Creating contractor-vendor with structure:', vendor);
 
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
       
