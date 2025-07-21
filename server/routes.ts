@@ -904,107 +904,91 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Create a test bill in QuickBooks
+  // Create a test bill in QuickBooks - SIMPLE VERSION
   app.post('/api/quickbooks/create-test-bill', isAuthenticated, async (req: any, res) => {
     try {
-      console.log('🧾 Test bill creation endpoint called');
+      console.log('🧾 === BILL CREATION DEBUG START ===');
       console.log('🧾 Request body:', req.body);
-      console.log('🧾 User role:', req.user.role);
       
       if (req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only admins can create test bills" });
       }
       
-      const { vendorName, amount, description } = req.body;
-      console.log(`🧾 Creating test bill for vendor: ${vendorName}, amount: $${amount}`);
+      const { amount = 60.00 } = req.body;
+      console.log(`🧾 Creating bill for amount: $${amount}`);
       
       const qbo = await quickbooksService.initializeClient();
-      console.log('🧾 QuickBooks client initialized');
+      console.log('🧾 QuickBooks client initialized successfully');
       
-      // Let's use a simple approach - try to create vendor directly, ignore if it exists
-      console.log(`🔨 Creating vendor: ${vendorName}`);
-      
-      const vendorData = {
-        Name: vendorName,
-        Active: true
-      };
-      
-      let vendorRef;
-      
-      try {
-        const newVendor = await new Promise((resolve, reject) => {
-          qbo.createVendor(vendorData, (err: any, vendor: any) => {
-            if (err) {
-              console.log('⚠️ Vendor creation failed (may already exist):', err.message);
-              // If vendor already exists, try to find it
-              qbo.findVendors(`SELECT * FROM Vendor WHERE Name = '${vendorName}'`, (findErr: any, vendors: any) => {
-                if (findErr) {
-                  reject(findErr);
-                } else {
-                  const vendorList = vendors?.QueryResponse?.Vendor || [];
-                  if (vendorList.length > 0) {
-                    console.log(`✅ Found existing vendor ID: ${vendorList[0].Id}`);
-                    resolve(vendorList[0]);
-                  } else {
-                    reject(new Error('Vendor not found'));
-                  }
-                }
-              });
-            } else {
-              console.log('✅ Vendor created successfully:', vendor.Id);
-              resolve(vendor);
-            }
-          });
-        });
-        
-        vendorRef = { value: (newVendor as any).Id };
-      } catch (error) {
-        throw new Error(`Failed to create or find vendor: ${(error as Error).message}`);
-      }
-      
-      // Create a bill using the correct QuickBooks API structure
-      const billDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-      
-      const bill = {
-        VendorRef: vendorRef,
-        TxnDate: billDate,
-        DueDate: billDate,
-        TotalAmt: amount,
-        Line: [{
-          Id: "1",
-          Amount: amount,
-          DetailType: "AccountBasedExpenseLineDetail",
-          AccountBasedExpenseLineDetail: {
-            AccountRef: {
-              value: "1", // Use a basic expense account
-              name: "Advertising"
-            }
-          },
-          Description: description || "Contractor payment"
-        }]
-      };
-      
-      console.log('📤 Creating bill with data:', JSON.stringify(bill, null, 2));
-      
-      const result = await new Promise((resolve, reject) => {
-        qbo.createBill(bill, (err: any, createdBill: any) => {
+      // First get available accounts to use correct account reference
+      console.log('🔍 Getting chart of accounts...');
+      const accounts = await new Promise((resolve, reject) => {
+        qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 5", (err: any, accounts: any) => {
           if (err) {
-            console.error('❌ Bill creation failed:', err);
-            console.error('❌ Full error:', JSON.stringify(err, null, 2));
-            reject(err);
+            console.log('⚠️ Account search failed, using default');
+            resolve([]);
           } else {
-            console.log('✅ Bill created successfully with ID:', createdBill.Id);
-            resolve(createdBill);
+            const accountList = accounts?.QueryResponse?.Account || [];
+            console.log(`🔍 Found ${accountList.length} expense accounts`);
+            accountList.forEach((a: any) => console.log(`  - ID: ${a.Id}, Name: ${a.Name}, Type: ${a.AccountType}`));
+            resolve(accountList);
           }
         });
       });
       
-      res.json({ success: true, bill: result, message: "Test bill created successfully" });
+      // Use first expense account or default to "1"
+      const accountRef = (accounts as any[]).length > 0 
+        ? { value: (accounts as any[])[0].Id, name: (accounts as any[])[0].Name }
+        : { value: "1", name: "Default" };
+      console.log(`🧾 Using account ID: ${accountRef.value}, Name: ${accountRef.name}`);
+      
+      // Use hardcoded vendor ID 59 (we know this exists from our previous sync)
+      const vendorRef = { value: "59" };
+      console.log('🧾 Using hardcoded vendor ID: 59');
+      
+      // Updated bill structure with proper account reference
+      const bill = {
+        VendorRef: vendorRef,
+        Line: [{
+          Amount: amount,
+          DetailType: "AccountBasedExpenseLineDetail",
+          AccountBasedExpenseLineDetail: {
+            AccountRef: accountRef
+          }
+        }]
+      };
+      
+      console.log('📤 Bill structure:', JSON.stringify(bill, null, 2));
+      
+      console.log('📤 Calling qbo.createBill()...');
+      qbo.createBill(bill, (err: any, createdBill: any) => {
+        if (err) {
+          console.error('❌ BILL CREATION ERROR:', err);
+          console.error('❌ Error message:', err?.message);
+          console.error('❌ Error fault:', err?.Fault);
+          console.error('❌ Full error:', JSON.stringify(err, null, 2));
+          res.status(500).json({ 
+            success: false, 
+            error: err?.message || 'Bill creation failed',
+            details: err
+          });
+        } else {
+          console.log('✅ BILL CREATION SUCCESS!');
+          console.log('✅ Bill ID:', createdBill?.Id);
+          console.log('✅ Bill data:', JSON.stringify(createdBill, null, 2));
+          res.json({ 
+            success: true, 
+            bill: createdBill, 
+            message: `Bill created with ID: ${createdBill?.Id}` 
+          });
+        }
+      });
+      
     } catch (error) {
-      console.error('❌ Test bill creation failed:', error);
+      console.error('❌ Outer error:', error);
       res.status(500).json({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Bill creation failed' 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
   });
