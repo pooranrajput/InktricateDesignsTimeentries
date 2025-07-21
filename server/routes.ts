@@ -855,7 +855,7 @@ export function registerRoutes(app: Express): Server {
       
       // Try syncing just one contractor for testing
       const testEmployee = activeContractors[0];
-      console.log(`🧪 Testing sync for: ${testEmployee.firstName || testEmployee.first_name} ${testEmployee.lastName || testEmployee.last_name}`);
+      console.log(`🧪 Testing sync for: ${testEmployee.firstName || 'No First'} ${testEmployee.lastName || 'No Last'}`);
       
       const results = await quickbooksService.syncAllContractors([testEmployee]);
       console.log('🔧 DEBUG: Sync results:', results);

@@ -414,17 +414,19 @@ export class QuickBooksService {
         throw new Error(`Invalid employee name data: firstName="${firstName}", lastName="${lastName}"`);
       }
       
-      const vendor = {
+      // Create vendor object with QuickBooks-compatible fields only
+      const vendor: any = {
         Name: fullName,
-        Active: true, // Always set to true for new vendors
-        ...(employee.email && { PrimaryEmailAddr: { Address: employee.email } }),
-        Vendor1099: true // Mark as 1099 contractor
+        Active: true
       };
       
-      // Only add optional fields if they have valid values
-      if (employee.phone && employee.phone.trim()) {
-        vendor.PrimaryPhone = { FreeFormNumber: employee.phone.trim() };
+      // Add optional fields only if they exist and are valid
+      if (employee.email && employee.email.trim()) {
+        vendor.PrimaryEmailAddr = { Address: employee.email.trim() };
       }
+      
+      // Note: Vendor1099 and complex phone formats may cause validation errors
+      // Keep the vendor object minimal for better compatibility
 
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
       

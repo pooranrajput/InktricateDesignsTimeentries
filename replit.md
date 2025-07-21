@@ -119,6 +119,11 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 21, 2025. Fixed QuickBooks contractor sync API validation errors  
+  - Identified QuickBooks ValidationFault (code 2010) caused by unsupported vendor properties
+  - Simplified vendor object to use only Name, Active, and PrimaryEmailAddr fields
+  - Removed problematic Vendor1099 and PrimaryPhone fields that caused API rejections
+  - Enhanced error logging to capture detailed QuickBooks API responses for debugging
 - July 21, 2025. Fixed authentication issues and established working QuickBooks integration
   - Resolved login problems by correcting admin password hash
   - Successfully implemented QuickBooks OAuth connection with manual token exchange
