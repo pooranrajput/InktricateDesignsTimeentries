@@ -40,7 +40,15 @@ export class QuickBooksService {
   // Step 2: Handle OAuth callback and store tokens
   async handleCallback(code: string, state: string, realmId: string) {
     try {
+      console.log('🔍 QuickBooks Debug - Handling OAuth callback');
+      console.log('🔍 QuickBooks Debug - Code:', !!code, 'State:', state, 'RealmId:', realmId);
+      
       const authResponse = await this.oauthClient.createToken(code);
+      console.log('🔍 QuickBooks Debug - Auth response received:', {
+        hasAccessToken: !!authResponse.access_token,
+        hasRefreshToken: !!authResponse.refresh_token,
+        expiresIn: authResponse.expires_in
+      });
       
       // Store tokens in database
       await db.insert(quickbooksConfig).values({
@@ -59,10 +67,11 @@ export class QuickBooksService {
         },
       });
 
+      console.log('🔍 QuickBooks Debug - Tokens stored in database successfully');
       this.companyId = realmId;
       return { success: true, companyId: realmId };
     } catch (error) {
-      console.error('QuickBooks OAuth callback error:', error);
+      console.error('🔍 QuickBooks Debug - OAuth callback error:', error);
       throw new Error('Failed to authenticate with QuickBooks');
     }
   }
@@ -70,9 +79,21 @@ export class QuickBooksService {
   // Initialize QuickBooks client with stored tokens
   async initializeClient(companyId?: string): Promise<any> {
     try {
+      console.log('🔍 QuickBooks Debug - Initializing client with companyId:', companyId);
+      
       const config = await db.query.quickbooksConfig.findFirst({
         where: companyId ? eq(quickbooksConfig.companyId, companyId) : undefined,
       });
+
+      console.log('🔍 QuickBooks Debug - Config found:', !!config);
+      console.log('🔍 QuickBooks Debug - Config details:', config ? {
+        companyId: config.companyId,
+        hasAccessToken: !!config.accessToken,
+        hasRefreshToken: !!config.refreshToken,
+        tokenExpiry: config.tokenExpiry,
+        isExpired: config.tokenExpiry ? new Date() >= config.tokenExpiry : 'unknown',
+        sandbox: config.sandbox
+      } : 'No config');
 
       if (!config) {
         throw new Error('QuickBooks not configured. Please complete OAuth setup first.');
@@ -322,10 +343,14 @@ export class QuickBooksService {
   // Test connection
   async testConnection() {
     try {
+      console.log('🔍 QuickBooks Debug - Starting connection test');
       await this.initializeClient();
+      console.log('🔍 QuickBooks Debug - Client initialized successfully');
       const companyInfo = await this.getCompanyInfo();
+      console.log('🔍 QuickBooks Debug - Company info retrieved:', companyInfo);
       return { success: true, companyInfo };
     } catch (error) {
+      console.log('🔍 QuickBooks Debug - Connection test failed:', error);
       return { success: false, error: (error as Error).message };
     }
   }

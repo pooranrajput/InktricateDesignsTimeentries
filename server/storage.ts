@@ -4,6 +4,7 @@ import {
   taskCategories,
   userTaskAssignments,
   monthlyPayroll,
+  quickbooksConfig,
   type User,
   type UpsertUser,
   type InsertTimeEntry,
@@ -67,6 +68,7 @@ export interface IStorage {
   updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User>;
   updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry>;
   getTimeEntry(id: number): Promise<TimeEntry | undefined>;
+  getAllQuickBooksConfigs(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -623,6 +625,11 @@ export class DatabaseStorage implements IStorage {
     });
     
     return timeEntry;
+  }
+
+  async getAllQuickBooksConfigs(): Promise<any[]> {
+    const configs = await db.select().from(quickbooksConfig);
+    return configs;
   }
 }
 

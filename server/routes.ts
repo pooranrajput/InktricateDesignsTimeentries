@@ -694,6 +694,41 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Check QuickBooks database configuration
+  app.get('/api/quickbooks/debug', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can access QuickBooks debug info" });
+      }
+      
+      // Check database for any QB configurations
+      const configs = await storage.getAllQuickBooksConfigs();
+      
+      res.json({
+        configCount: configs.length,
+        configs: configs.map((config: any) => ({
+          companyId: config.companyId,
+          hasAccessToken: !!config.accessToken,
+          hasRefreshToken: !!config.refreshToken,
+          tokenExpiry: config.tokenExpiry,
+          isExpired: config.tokenExpiry ? new Date() >= config.tokenExpiry : null,
+          sandbox: config.sandbox,
+          createdAt: config.createdAt,
+          updatedAt: config.updatedAt
+        })),
+        envVars: {
+          hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
+          hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
+          redirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
+          sandbox: process.env.QUICKBOOKS_SANDBOX
+        }
+      });
+    } catch (error: any) {
+      console.error("Error getting QuickBooks debug info:", error);
+      res.status(500).json({ message: "Failed to get debug info", error: error.message });
+    }
+  });
+
   // Test QuickBooks connection
   app.get('/api/quickbooks/test', isAuthenticated, async (req: any, res) => {
     try {
