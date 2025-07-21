@@ -12,11 +12,24 @@ export class QuickBooksService {
   private companyId: string | null = null;
 
   constructor() {
+    // Clean and validate environment variables
+    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+    const redirectUri = (process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`).trim();
+    
+    console.log('🔧 QuickBooks Init Debug:', {
+      clientIdLength: clientId.length,
+      clientIdStart: clientId.substring(0, 10),
+      hasClientSecret: !!clientSecret,
+      redirectUri,
+      sandbox: process.env.QUICKBOOKS_SANDBOX
+    });
+    
     this.oauthClient = new OAuthClient({
-      clientId: process.env.QUICKBOOKS_CLIENT_ID || '',
-      clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET || '',
+      clientId,
+      clientSecret,
       sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
-      redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`,
+      redirectUri,
     });
   }
 

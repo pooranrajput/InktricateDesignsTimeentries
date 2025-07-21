@@ -2,11 +2,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-// Set QuickBooks environment variables
-process.env.QUICKBOOKS_CLIENT_ID = "ABaKTqyicUxJpHGpqnvo3oAgfxRS06tf7ibyK7nyVumSgjtIRi";
-process.env.QUICKBOOKS_CLIENT_SECRET = "kQOA4rosWKKDpyloWdsUwTlX9MXSmu6wfM2deZAr";
+// Set QuickBooks environment variables - cleaned and trimmed
+process.env.QUICKBOOKS_CLIENT_ID = "ABaKTqyicUxJpHGpqnvo3oAgfxRS06tf7ibyK7nyVumSgjtIRi".trim();
+process.env.QUICKBOOKS_CLIENT_SECRET = "kQOA4rosWKKDpyloWdsUwTlX9MXSmu6wfM2deZAr".trim();
 process.env.QUICKBOOKS_SANDBOX = "true";
-process.env.QUICKBOOKS_REDIRECT_URI = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}/api/quickbooks/callback`;
+process.env.QUICKBOOKS_REDIRECT_URI = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}/api/quickbooks/callback`.trim();
 
 const app = express();
 app.use(express.json());
