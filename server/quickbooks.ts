@@ -22,6 +22,12 @@ export class QuickBooksService {
 
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
+    console.log('QuickBooks OAuth Config:', {
+      clientId: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 8) + '...',
+      redirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
+      sandbox: process.env.QUICKBOOKS_SANDBOX
+    });
+    
     return this.oauthClient.authorizeUri({
       scope: [OAuthClient.scopes.Accounting],
       state: state || 'state',
