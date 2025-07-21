@@ -262,6 +262,29 @@ export class QuickBooksService {
     });
   }
 
+  // Find existing vendor by name in QuickBooks
+  async findExistingVendor(qbo: any, vendorName: string) {
+    return new Promise((resolve, reject) => {
+      // Query vendors by name
+      const query = `SELECT * FROM Vendor WHERE Name = '${vendorName.replace(/'/g, "\\'")}'`;
+      qbo.findVendors({ Name: vendorName }, (err: any, vendors: any) => {
+        if (err) {
+          console.log(`⚠️ Error searching for vendor "${vendorName}":`, err);
+          resolve(null); // Return null if search fails, don't reject
+        } else {
+          const foundVendors = vendors?.QueryResponse?.Vendor || [];
+          if (foundVendors.length > 0) {
+            console.log(`✅ Found existing vendor: ${foundVendors[0].Name} (ID: ${foundVendors[0].Id})`);
+            resolve(foundVendors[0]);
+          } else {
+            console.log(`ℹ️ No existing vendor found for "${vendorName}"`);
+            resolve(null);
+          }
+        }
+      });
+    });
+  }
+
   // Convert time entries to invoice for a contractor
   async createInvoiceFromTimeEntries(contractorId: string, timeEntryIds: number[], invoiceData: any) {
     await this.initializeClient();
@@ -481,20 +504,63 @@ export class QuickBooksService {
           continue;
         }
         
-        // Check if already exists in our database first
-        if (employee.quickbooksCustomerId || employee.quickbooks_customer_id) {
-          console.log(`✅ Contractor ${firstName} ${lastName} already synced (QB ID: ${employee.quickbooksCustomerId || employee.quickbooks_customer_id})`);
+        // Check if vendor already exists in QuickBooks by searching for the name
+        const fullName = `${firstName} ${lastName}`.trim();
+        console.log(`🔍 Checking if vendor "${fullName}" already exists in QuickBooks...`);
+        
+        const existingVendor = await this.findExistingVendor(await this.initializeClient(), fullName);
+        
+        if (existingVendor) {
+          console.log(`✅ Vendor "${fullName}" already exists (QB ID: ${existingVendor.Id})`);
+          
+          // Check if we need to enable 1099 tracking
+          if (!existingVendor.Track1099) {
+            console.log(`🔄 Updating vendor "${fullName}" to enable 1099 tracking...`);
+            try {
+              const qbo = await this.initializeClient();
+              const updateData = {
+                ...existingVendor,
+                Track1099: true,
+                sparse: true
+              };
+              
+              await new Promise((resolve, reject) => {
+                qbo.updateVendor(updateData, (err: any, updatedVendor: any) => {
+                  if (err) {
+                    console.error(`❌ Failed to update 1099 tracking for ${fullName}:`, err);
+                    reject(err);
+                  } else {
+                    console.log(`✅ Updated ${fullName} with 1099 tracking enabled`);
+                    resolve(updatedVendor);
+                  }
+                });
+              });
+            } catch (updateError) {
+              console.error(`⚠️ Update failed for ${fullName}:`, updateError);
+            }
+          }
+          
+          // Update our database with QB vendor ID if not set
+          if (!employee.quickbooksCustomerId && !employee.quickbooks_customer_id) {
+            await db.update(users)
+              .set({ 
+                quickbooksCustomerId: existingVendor.Id,
+                updatedAt: new Date()
+              })
+              .where(eq(users.id, employee.id));
+          }
+          
           results.push({
             employee: employee.id,
             status: 'linked',
-            message: `Already synced to QuickBooks`,
-            quickbooksId: employee.quickbooksCustomerId || employee.quickbooks_customer_id
+            message: `Already exists in QuickBooks, updated for 1099 tracking`,
+            quickbooksId: existingVendor.Id
           });
           continue;
         }
         
-        // Try creating contractor
-        console.log(`➕ Creating vendor for ${firstName} ${lastName}`);
+        // Create new vendor if not found
+        console.log(`➕ Creating new vendor for ${firstName} ${lastName}`);
         const vendor = await this.createContractor(employee) as any;
         
         // Update our database with the new QuickBooks vendor ID
