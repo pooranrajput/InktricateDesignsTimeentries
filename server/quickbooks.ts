@@ -176,14 +176,21 @@ export class QuickBooksService {
         return this.initializeClient(config.companyId);
       }
 
+      // Initialize QuickBooks client for OAuth 2.0
       this.qbo = new QuickBooks(
-        process.env.QUICKBOOKS_CLIENT_ID,
-        process.env.QUICKBOOKS_CLIENT_SECRET,
-        config.accessToken,
-        false, // Use token (not consumer key/secret)
-        config.companyId,
-        config.sandbox
+        process.env.QUICKBOOKS_CLIENT_ID,   // consumerKey (Client ID)
+        process.env.QUICKBOOKS_CLIENT_SECRET, // consumerSecret (Client Secret)
+        config.accessToken,                 // accessToken
+        false,                             // No token secret for OAuth 2.0
+        config.companyId,                  // realmId
+        config.sandbox,                    // use sandbox
+        true,                             // enable debugging
+        null,                             // minor version (latest)
+        "2.0",                            // OAuth version 2.0
+        config.refreshToken               // refresh token for auto-renewal
       );
+      
+      console.log('🔍 QuickBooks Debug - Client initialized successfully with OAuth 2.0');
 
       this.companyId = config.companyId;
       return this.qbo;
