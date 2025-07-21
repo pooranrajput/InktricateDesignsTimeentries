@@ -25,7 +25,7 @@ export default function QuickBooksIntegration() {
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/quickbooks/setup');
+      const response = await apiRequest('GET', '/api/quickbooks/auth');
       return response.json();
     },
     onSuccess: (data) => {
