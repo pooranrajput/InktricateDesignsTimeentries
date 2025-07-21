@@ -417,14 +417,22 @@ export class QuickBooksService {
         AcctNum: employee.id // Use our employee ID as account number for reference
       };
 
+      console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
+      
       return new Promise((resolve, reject) => {
-        qbo.createVendor(vendor, (err: any, vendor: any) => {
+        qbo.createVendor(vendor, (err: any, createdVendor: any) => {
           if (err) {
-            console.error('Error creating contractor in QuickBooks:', err);
+            console.error('❌ QuickBooks vendor creation failed:', JSON.stringify(err, null, 2));
+            console.error('❌ Error details:', {
+              message: err.message,
+              code: err.code,
+              status: err.status,
+              response: err.response?.body || err.response
+            });
             reject(err);
           } else {
-            console.log('✅ Contractor created in QuickBooks:', vendor.Id);
-            resolve(vendor);
+            console.log('✅ Contractor created in QuickBooks successfully:', createdVendor.Id);
+            resolve(createdVendor);
           }
         });
       });
