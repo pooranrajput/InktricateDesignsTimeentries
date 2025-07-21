@@ -56,7 +56,7 @@ export class QuickBooksService {
       console.log('🔍 QuickBooks Debug - Handling OAuth callback');
       console.log('🔍 QuickBooks Debug - Code:', !!code, 'State:', state, 'RealmId:', realmId);
       
-      const authResponse = await this.oauthClient.createToken(code);
+      const authResponse = await this.oauthClient.createToken(code, realmId);
       console.log('🔍 QuickBooks Debug - Auth response received:', {
         hasAccessToken: !!authResponse.access_token,
         hasRefreshToken: !!authResponse.refresh_token,
