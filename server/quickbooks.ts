@@ -51,38 +51,40 @@ export class QuickBooksService {
   }
 
   // Step 2: Handle OAuth callback and store tokens
-  async handleCallback(code: string, state: string, realmId: string) {
+  async handleCallback(fullCallbackUrl: string) {
     try {
       console.log('🔍 QuickBooks Debug - Handling OAuth callback');
-      console.log('🔍 QuickBooks Debug - Code:', !!code, 'State:', state, 'RealmId:', realmId);
+      console.log('🔍 QuickBooks Debug - Full callback URL:', fullCallbackUrl);
       
-      const authResponse = await this.oauthClient.createToken(code, realmId);
+      const authResponse = await this.oauthClient.createToken(fullCallbackUrl);
+      const tokens = authResponse.getJson();
       console.log('🔍 QuickBooks Debug - Auth response received:', {
-        hasAccessToken: !!authResponse.access_token,
-        hasRefreshToken: !!authResponse.refresh_token,
-        expiresIn: authResponse.expires_in
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        expiresIn: tokens.expires_in,
+        realmId: tokens.realmId
       });
       
       // Store tokens in database
       await db.insert(quickbooksConfig).values({
-        companyId: realmId,
-        accessToken: authResponse.access_token,
-        refreshToken: authResponse.refresh_token,
-        tokenExpiry: new Date(Date.now() + authResponse.expires_in * 1000),
+        companyId: tokens.realmId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
         sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
       }).onConflictDoUpdate({
         target: quickbooksConfig.companyId,
         set: {
-          accessToken: authResponse.access_token,
-          refreshToken: authResponse.refresh_token,
-          tokenExpiry: new Date(Date.now() + authResponse.expires_in * 1000),
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
           updatedAt: new Date(),
         },
       });
 
       console.log('🔍 QuickBooks Debug - Tokens stored in database successfully');
-      this.companyId = realmId;
-      return { success: true, companyId: realmId };
+      this.companyId = tokens.realmId;
+      return { success: true, companyId: tokens.realmId };
     } catch (error) {
       console.error('🔍 QuickBooks Debug - OAuth callback error:', error);
       throw new Error('Failed to authenticate with QuickBooks');

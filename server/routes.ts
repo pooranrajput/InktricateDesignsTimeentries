@@ -693,7 +693,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Missing authorization code or company ID" });
       }
 
-      const result = await quickbooksService.handleCallback(code, state, realmId);
+      // Pass the full callback URL to the service
+      const fullCallbackUrl = req.url;
+      const result = await quickbooksService.handleCallback(fullCallbackUrl);
       console.log('🔍 QuickBooks Callback Debug - Success result:', result);
       
       // Redirect to admin dashboard with success message
