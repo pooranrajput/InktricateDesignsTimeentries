@@ -651,12 +651,26 @@ export function registerRoutes(app: Express): Server {
   // Get QuickBooks authorization URL  
   app.get('/api/quickbooks/auth', async (req: any, res) => {
     try {
-      // For demo purposes, temporarily bypass auth check
+      // Debug environment variables
+      console.log('Environment check:', {
+        hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
+        hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
+        hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI,
+        sandbox: process.env.QUICKBOOKS_SANDBOX
+      });
+      
       const authUrl = quickbooksService.getAuthorizationUrl('timetracking-setup');
-      res.json({ authUrl });
+      res.json({ authUrl, debug: { configured: true } });
     } catch (error) {
       console.error("Error getting QuickBooks auth URL:", error);
-      res.status(500).json({ message: "Failed to get authorization URL", error: error.message });
+      res.status(500).json({ 
+        message: "Failed to get authorization URL", 
+        error: error.message,
+        debug: {
+          hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
+          hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI
+        }
+      });
     }
   });
 

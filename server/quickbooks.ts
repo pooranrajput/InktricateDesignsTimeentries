@@ -28,10 +28,13 @@ export class QuickBooksService {
       sandbox: process.env.QUICKBOOKS_SANDBOX
     });
     
-    return this.oauthClient.authorizeUri({
+    const authUrl = this.oauthClient.authorizeUri({
       scope: [OAuthClient.scopes.Accounting],
       state: state || 'state',
     });
+    
+    console.log('Generated auth URL:', authUrl.substring(0, 100) + '...');
+    return authUrl;
   }
 
   // Step 2: Handle OAuth callback and store tokens
