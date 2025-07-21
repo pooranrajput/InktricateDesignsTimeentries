@@ -921,38 +921,35 @@ export function registerRoutes(app: Express): Server {
       const qbo = await quickbooksService.initializeClient();
       console.log('🧾 QuickBooks client initialized');
       
-      // First, try to find or create the vendor
-      const vendors = await new Promise((resolve, reject) => {
-        qbo.findVendors(`SELECT * FROM Vendor WHERE Name = '${vendorName}'`, (err: any, vendors: any) => {
-          if (err) {
-            console.log('⚠️ Vendor search failed, will create new vendor');
-            resolve([]);
-          } else {
-            const vendorList = vendors?.QueryResponse?.Vendor || [];
-            console.log(`🔍 Found ${vendorList.length} vendors matching "${vendorName}"`);
-            resolve(vendorList);
-          }
-        });
-      });
+      // Let's use a simple approach - try to create vendor directly, ignore if it exists
+      console.log(`🔨 Creating vendor: ${vendorName}`);
+      
+      const vendorData = {
+        Name: vendorName,
+        Active: true
+      };
       
       let vendorRef;
-      if ((vendors as any[]).length > 0) {
-        vendorRef = { value: (vendors as any[])[0].Id };
-        console.log(`✅ Using existing vendor ID: ${(vendors as any[])[0].Id}`);
-      } else {
-        // Create vendor first
-        console.log(`🔨 Creating new vendor: ${vendorName}`);
+      
+      try {
         const newVendor = await new Promise((resolve, reject) => {
-          const vendorData = {
-            DisplayName: vendorName,
-            Vendor1099: true,
-            Active: true
-          };
-          
           qbo.createVendor(vendorData, (err: any, vendor: any) => {
             if (err) {
-              console.error('❌ Vendor creation failed:', err);
-              reject(err);
+              console.log('⚠️ Vendor creation failed (may already exist):', err.message);
+              // If vendor already exists, try to find it
+              qbo.findVendors(`SELECT * FROM Vendor WHERE Name = '${vendorName}'`, (findErr: any, vendors: any) => {
+                if (findErr) {
+                  reject(findErr);
+                } else {
+                  const vendorList = vendors?.QueryResponse?.Vendor || [];
+                  if (vendorList.length > 0) {
+                    console.log(`✅ Found existing vendor ID: ${vendorList[0].Id}`);
+                    resolve(vendorList[0]);
+                  } else {
+                    reject(new Error('Vendor not found'));
+                  }
+                }
+              });
             } else {
               console.log('✅ Vendor created successfully:', vendor.Id);
               resolve(vendor);
@@ -961,19 +958,26 @@ export function registerRoutes(app: Express): Server {
         });
         
         vendorRef = { value: (newVendor as any).Id };
+      } catch (error) {
+        throw new Error(`Failed to create or find vendor: ${(error as Error).message}`);
       }
       
-      // Create a bill for the vendor
+      // Create a bill using the correct QuickBooks API structure
+      const billDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      
       const bill = {
         VendorRef: vendorRef,
+        TxnDate: billDate,
+        DueDate: billDate,
         TotalAmt: amount,
         Line: [{
+          Id: "1",
           Amount: amount,
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: {
-              value: "67", // Try Contractors expense account
-              name: "Contractors"
+              value: "1", // Use a basic expense account
+              name: "Advertising"
             }
           },
           Description: description || "Contractor payment"
