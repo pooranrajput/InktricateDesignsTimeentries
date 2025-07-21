@@ -552,9 +552,15 @@ export class QuickBooksService {
           
           results.push({
             employee: employee.id,
+            employeeName: fullName,
             status: 'linked',
-            message: `Already exists in QuickBooks, updated for 1099 tracking`,
-            quickbooksId: existingVendor.Id
+            message: `Successfully linked and configured as contractor`,
+            quickbooksId: existingVendor.Id,
+            actions: [
+              'Found existing vendor in QuickBooks',
+              existingVendor.Track1099 ? 'Already set up for 1099 tracking' : 'Enabled 1099 tracking - now appears in contractors section',
+              'Linked to employee database record'
+            ]
           });
           continue;
         }
@@ -572,10 +578,17 @@ export class QuickBooksService {
           .where(eq(users.id, employee.id));
         
         results.push({ 
-          employee: employee.id, 
+          employee: employee.id,
+          employeeName: fullName,
           status: 'created', 
           vendor: vendor,
-          message: `Created QB vendor "${vendor.Name}"`
+          message: `Successfully created new contractor`,
+          quickbooksId: vendor.Id,
+          actions: [
+            'Created new vendor in QuickBooks',
+            'Enabled 1099 tracking - appears in contractors section',
+            'Linked to employee database record'
+          ]
         });
         
       } catch (error) {
@@ -590,11 +603,22 @@ export class QuickBooksService {
     }
     
     console.log('📤 Contractor sync completed:', results);
+    
+    const created = results.filter(r => r.status === 'created');
+    const linked = results.filter(r => r.status === 'linked');
+    const failed = results.filter(r => r.status === 'failed');
+    
     return {
       total: employees.length,
-      created: results.filter(r => r.status === 'created').length,
-      linked: results.filter(r => r.status === 'linked').length,
-      failed: results.filter(r => r.status === 'failed').length,
+      created: created.length,
+      linked: linked.length,
+      failed: failed.length,
+      summary: {
+        successful: created.length + linked.length,
+        createdContractors: created.map(r => r.employeeName).join(', '),
+        linkedContractors: linked.map(r => r.employeeName).join(', '),
+        failedContractors: failed.map(r => r.employeeName || r.employee).join(', ')
+      },
       details: results
     };
   }
