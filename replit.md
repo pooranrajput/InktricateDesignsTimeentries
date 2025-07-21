@@ -119,6 +119,10 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 21, 2025. FIXED: Time entry update validation error for admin portal
+  - Resolved schema validation issue where updateTimeEntrySchema incorrectly required 'id' field in request body
+  - Time entry ID should come from URL parameter, not request body during updates
+  - Admin can now successfully edit time entries including task assignments
 - July 21, 2025. COMPLETED: QuickBooks 1099 tracking implementation and user guidance
   - Discovered the correct field is "Vendor1099" (not "Track1099") per official QuickBooks API documentation
   - Updated all contractor sync logic to use proper Vendor1099 boolean field and TaxIdentifier

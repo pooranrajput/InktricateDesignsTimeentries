@@ -184,9 +184,7 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
   totalHours: true,
 });
 
-export const updateTimeEntrySchema = insertTimeEntrySchema.partial().extend({
-  id: z.number(),
-});
+export const updateTimeEntrySchema = insertTimeEntrySchema.partial();
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
