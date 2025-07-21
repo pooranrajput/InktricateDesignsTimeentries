@@ -840,8 +840,7 @@ export function registerRoutes(app: Express): Server {
   // List all vendors to debug Track1099 status
   app.get('/api/quickbooks/list-vendors', isAuthenticated, async (req: any, res) => {
     try {
-      const quickbooks = new QuickBooksService();
-      const qbo = await quickbooks.initializeClient();
+      const qbo = await quickbooksService.initializeClient();
       
       console.log(`🔍 Listing all vendors to check Track1099 status...`);
       
