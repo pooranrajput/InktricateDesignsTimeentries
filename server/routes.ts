@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema } from "@shared/schema";
+import { quickbooksService } from "./quickbooks";
 import { z } from "zod";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
@@ -642,6 +643,139 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error marking payroll as paid:", error);
       res.status(500).json({ message: "Failed to mark payroll as paid" });
+    }
+  });
+
+  // QuickBooks Integration Routes
+  
+  // Get QuickBooks authorization URL
+  app.get('/api/quickbooks/auth', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can setup QuickBooks integration" });
+      }
+      
+      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-setup');
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("Error getting QuickBooks auth URL:", error);
+      res.status(500).json({ message: "Failed to get authorization URL" });
+    }
+  });
+
+  // Handle QuickBooks OAuth callback
+  app.get('/api/quickbooks/callback', async (req: any, res) => {
+    try {
+      const { code, state, realmId } = req.query;
+      
+      if (!code || !realmId) {
+        return res.status(400).json({ message: "Missing authorization code or company ID" });
+      }
+
+      const result = await quickbooksService.handleCallback(code, state, realmId);
+      
+      // Redirect to admin dashboard with success message
+      res.redirect('/?quickbooks=success');
+    } catch (error) {
+      console.error("Error handling QuickBooks callback:", error);
+      res.redirect('/?quickbooks=error');
+    }
+  });
+
+  // Test QuickBooks connection
+  app.get('/api/quickbooks/test', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can test QuickBooks connection" });
+      }
+      
+      const result = await quickbooksService.testConnection();
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing QuickBooks connection:", error);
+      res.status(500).json({ message: "Failed to test connection" });
+    }
+  });
+
+  // Create contractor in QuickBooks
+  app.post('/api/quickbooks/create-contractor', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can create contractors in QuickBooks" });
+      }
+      
+      const { userId } = req.body;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const contractor = await quickbooksService.createContractor(user);
+      
+      // Update user with QuickBooks contractor ID
+      await storage.updateUserQuickBooksInfo(userId, contractor.Id, contractor.ItemRef?.value);
+      
+      res.json({ contractor, message: "Contractor created successfully in QuickBooks" });
+    } catch (error) {
+      console.error("Error creating contractor:", error);
+      res.status(500).json({ message: "Failed to create contractor in QuickBooks" });
+    }
+  });
+
+  // Generate monthly contractor bills
+  app.post('/api/quickbooks/generate-bills', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can generate contractor bills" });
+      }
+      
+      const { year, month } = req.body;
+      
+      if (!year || !month) {
+        return res.status(400).json({ message: "Year and month are required" });
+      }
+
+      const results = await quickbooksService.generateMonthlyContractorBills(year, month);
+      
+      res.json({
+        results,
+        message: `Generated ${results.filter(r => !r.error).length} contractor bills for ${month}/${year}`
+      });
+    } catch (error) {
+      console.error("Error generating contractor bills:", error);
+      res.status(500).json({ message: "Failed to generate contractor bills" });
+    }
+  });
+
+  // Sync time entry to QuickBooks
+  app.post('/api/quickbooks/sync-time-entry', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can sync time entries to QuickBooks" });
+      }
+      
+      const { timeEntryId } = req.body;
+      
+      const timeEntry = await storage.getTimeEntry(timeEntryId);
+      if (!timeEntry) {
+        return res.status(404).json({ message: "Time entry not found" });
+      }
+
+      const user = await storage.getUser(timeEntry.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const timeActivity = await quickbooksService.createTimeActivity(timeEntry, user);
+      
+      // Update time entry with QuickBooks ID
+      await storage.updateTimeEntryQuickBooksInfo(timeEntryId, timeActivity.Id);
+      
+      res.json({ timeActivity, message: "Time entry synced to QuickBooks successfully" });
+    } catch (error) {
+      console.error("Error syncing time entry:", error);
+      res.status(500).json({ message: "Failed to sync time entry to QuickBooks" });
     }
   });
 

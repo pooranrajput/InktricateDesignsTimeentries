@@ -44,6 +44,9 @@ export const users = pgTable("users", {
   mustResetPassword: boolean("must_reset_password").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // QuickBooks integration fields
+  quickbooksCustomerId: varchar("quickbooks_customer_id"), // QB Customer/Vendor ID
+  quickbooksItemId: varchar("quickbooks_item_id"), // QB Service Item ID
 });
 
 // Task categories table
@@ -94,6 +97,23 @@ export const timeEntries = pgTable("time_entries", {
   taskCategoryId: integer("task_category_id").references(() => taskCategories.id),
   notes: text("notes"),
   totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  // QuickBooks integration fields
+  quickbooksTimeActivityId: varchar("quickbooks_time_activity_id"), // QB Time Activity ID
+  quickbooksInvoiceId: varchar("quickbooks_invoice_id"), // QB Invoice ID if billed
+  isQuickbooksBillable: boolean("is_quickbooks_billable").default(true),
+  quickbooksStatus: varchar("quickbooks_status").default("unbilled"), // 'unbilled', 'billed', 'paid'
+});
+
+// QuickBooks integration configuration
+export const quickbooksConfig = pgTable("quickbooks_config", {
+  id: serial("id").primaryKey(),
+  companyId: varchar("company_id").notNull().unique(), // QB Company ID
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+  sandbox: boolean("sandbox").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

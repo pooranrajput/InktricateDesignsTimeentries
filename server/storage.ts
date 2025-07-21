@@ -62,6 +62,11 @@ export interface IStorage {
   getMonthlyPayrollRecords(year: number, month: number): Promise<any[]>;
   generateMonthlyPayroll(year: number, month: number): Promise<any[]>;
   markPayrollAsPaid(payrollId: number, paidBy: string): Promise<any>;
+  
+  // QuickBooks integration operations
+  updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User>;
+  updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry>;
+  getTimeEntry(id: number): Promise<TimeEntry | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -573,6 +578,51 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return record;
+  }
+
+  // QuickBooks integration methods
+  async updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        quickbooksCustomerId,
+        quickbooksItemId,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
+  }
+
+  async updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry> {
+    const [timeEntry] = await db
+      .update(timeEntries)
+      .set({
+        quickbooksTimeActivityId,
+        quickbooksStatus: 'billed',
+        updatedAt: new Date(),
+      })
+      .where(eq(timeEntries.id, timeEntryId))
+      .returning();
+    
+    if (!timeEntry) {
+      throw new Error("Time entry not found");
+    }
+    
+    return timeEntry;
+  }
+
+  async getTimeEntry(id: number): Promise<TimeEntry | undefined> {
+    const timeEntry = await db.query.timeEntries.findFirst({
+      where: eq(timeEntries.id, id),
+    });
+    
+    return timeEntry;
   }
 }
 
