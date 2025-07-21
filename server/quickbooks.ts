@@ -51,23 +51,23 @@ export class QuickBooksService {
   }
 
   // Step 2: Handle OAuth callback and store tokens
-  async handleCallback(fullCallbackUrl: string) {
+  async handleCallback(code: string, state: string, realmId: string) {
     try {
-      console.log('🔍 QuickBooks Debug - Handling OAuth callback');
-      console.log('🔍 QuickBooks Debug - Full callback URL:', fullCallbackUrl);
+      console.log('🔍 QuickBooks Debug - Handling OAuth callback with manual token exchange');
+      console.log('🔍 QuickBooks Debug - Code:', !!code, 'State:', state, 'RealmId:', realmId);
       
-      const authResponse = await this.oauthClient.createToken(fullCallbackUrl);
-      const tokens = authResponse.getJson();
-      console.log('🔍 QuickBooks Debug - Auth response received:', {
+      // Manual token exchange as fallback to intuit-oauth createToken issues
+      const tokens = await this.exchangeCodeForTokens(code, realmId);
+      console.log('🔍 QuickBooks Debug - Manual token exchange successful:', {
         hasAccessToken: !!tokens.access_token,
         hasRefreshToken: !!tokens.refresh_token,
         expiresIn: tokens.expires_in,
         realmId: tokens.realmId
       });
       
-      // Store tokens in database
+      // Store tokens in database  
       await db.insert(quickbooksConfig).values({
-        companyId: tokens.realmId,
+        companyId: realmId,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
@@ -83,11 +83,67 @@ export class QuickBooksService {
       });
 
       console.log('🔍 QuickBooks Debug - Tokens stored in database successfully');
-      this.companyId = tokens.realmId;
-      return { success: true, companyId: tokens.realmId };
+      this.companyId = realmId;
+      return { success: true, companyId: realmId };
     } catch (error) {
       console.error('🔍 QuickBooks Debug - OAuth callback error:', error);
       throw new Error('Failed to authenticate with QuickBooks');
+    }
+  }
+
+  // Manual token exchange method
+  private async exchangeCodeForTokens(authCode: string, realmId: string) {
+    const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+    const redirectUri = (process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`).trim();
+    
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    
+    console.log('🔍 Manual Token Exchange Debug:', {
+      tokenEndpoint,
+      hasAuthCode: !!authCode,
+      authCodeLength: authCode.length,
+      realmId,
+      redirectUri,
+      credentialsLength: credentials.length
+    });
+    
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: authCode,
+      redirect_uri: redirectUri
+    });
+    
+    try {
+      const response = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: params.toString()
+      });
+      
+      const responseText = await response.text();
+      console.log('🔍 Token Exchange Response Status:', response.status);
+      console.log('🔍 Token Exchange Response:', responseText);
+      
+      if (!response.ok) {
+        throw new Error(`Token exchange failed: ${response.status} - ${responseText}`);
+      }
+      
+      const tokenData = JSON.parse(responseText);
+      
+      // Add realmId to the token data since it's not returned by the API
+      return {
+        ...tokenData,
+        realmId: realmId
+      };
+    } catch (error) {
+      console.error('🚨 Manual token exchange failed:', error);
+      throw error;
     }
   }
 
