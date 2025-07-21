@@ -56,6 +56,9 @@ function Router() {
       </Route>
       <Route path="/profile" component={UserProfile} />
       <Route path="/time-tracking" component={EmployeeDashboard} />
+      <Route path="/admin">
+        {isAdmin ? <AdminDashboard /> : <EmployeeDashboard />}
+      </Route>
       <Route path="/">
         {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
       </Route>

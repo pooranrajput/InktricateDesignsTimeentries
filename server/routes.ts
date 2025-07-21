@@ -837,6 +837,46 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // List all vendors to debug Track1099 status
+  app.get('/api/quickbooks/list-vendors', isAuthenticated, async (req: any, res) => {
+    try {
+      const quickbooks = new QuickBooksService();
+      const qbo = await quickbooks.initializeClient();
+      
+      console.log(`🔍 Listing all vendors to check Track1099 status...`);
+      
+      const result = await new Promise((resolve, reject) => {
+        qbo.findVendors("SELECT * FROM Vendor", (err, vendors) => {
+          if (err) {
+            console.error(`❌ Vendor listing failed:`, err);
+            reject(err);
+          } else {
+            const vendorList = vendors?.QueryResponse?.Vendor || [];
+            console.log(`📋 Found ${vendorList.length} total vendors`);
+            
+            const vendorSummary = vendorList.map(v => ({
+              Id: v.Id,
+              Name: v.Name,
+              Track1099: v.Track1099,
+              SyncToken: v.SyncToken
+            }));
+            
+            console.log(`📋 Vendor summary:`, vendorSummary);
+            resolve({ vendors: vendorSummary, total: vendorList.length });
+          }
+        });
+      });
+      
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error('❌ Vendor listing failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Vendor listing failed' 
+      });
+    }
+  });
+
   // Test Track1099 update for a specific vendor
   app.post('/api/quickbooks/test-track1099', isAuthenticated, async (req: any, res) => {
     try {
