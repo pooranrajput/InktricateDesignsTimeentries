@@ -904,6 +904,61 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Create a test bill in QuickBooks
+  app.post('/api/quickbooks/create-test-bill', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can create test bills" });
+      }
+      
+      const { vendorName, amount, description } = req.body;
+      const qbo = await quickbooksService.initializeClient();
+      
+      console.log(`🧾 Creating test bill for vendor: ${vendorName}, amount: $${amount}`);
+      
+      // Create a bill for the vendor
+      const bill = {
+        VendorRef: {
+          name: vendorName
+        },
+        TotalAmt: amount,
+        Line: [{
+          Amount: amount,
+          DetailType: "AccountBasedExpenseLineDetail",
+          AccountBasedExpenseLineDetail: {
+            AccountRef: {
+              value: "7", // Professional Services expense account
+              name: "Professional Services"
+            }
+          },
+          Description: description || "Contractor payment"
+        }]
+      };
+      
+      console.log('📤 Creating bill with data:', JSON.stringify(bill, null, 2));
+      
+      const result = await new Promise((resolve, reject) => {
+        qbo.createBill(bill, (err: any, createdBill: any) => {
+          if (err) {
+            console.error('❌ Bill creation failed:', err);
+            reject(err);
+          } else {
+            console.log('✅ Bill created successfully:', createdBill.Id);
+            resolve(createdBill);
+          }
+        });
+      });
+      
+      res.json({ success: true, bill: result, message: "Test bill created successfully" });
+    } catch (error) {
+      console.error('❌ Test bill creation failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Bill creation failed' 
+      });
+    }
+  });
+
   // Test Track1099 update for a specific vendor
   app.post('/api/quickbooks/test-track1099', isAuthenticated, async (req: any, res) => {
     try {
