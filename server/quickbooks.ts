@@ -404,34 +404,41 @@ export class QuickBooksService {
     try {
       const qbo = await this.initializeClient();
       
+      // Create vendor object with careful data validation
+      const firstName = employee.first_name || employee.firstName || 'Unknown';
+      const lastName = employee.last_name || employee.lastName || 'Unknown';
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      // Basic validation to prevent API errors
+      if (!fullName || fullName === 'Unknown Unknown') {
+        throw new Error(`Invalid employee name data: firstName="${firstName}", lastName="${lastName}"`);
+      }
+      
       const vendor = {
-        Name: `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`,
-        CompanyName: employee.companyName || `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName} Services`,
-        PrintOnCheckName: `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`,
-        Active: employee.is_active || employee.isActive || employee.status === 'active',
-        PrimaryEmailAddr: employee.email ? { Address: employee.email } : undefined,
-        WebAddr: employee.website ? { URI: employee.website } : undefined,
-        PrimaryPhone: employee.phone ? { FreeFormNumber: employee.phone } : undefined,
-        Vendor1099: true, // Mark as 1099 contractor
-        TaxIdentifier: employee.taxId || undefined,
-        AcctNum: employee.id // Use our employee ID as account number for reference
+        Name: fullName,
+        Active: true, // Always set to true for new vendors
+        ...(employee.email && { PrimaryEmailAddr: { Address: employee.email } }),
+        Vendor1099: true // Mark as 1099 contractor
       };
+      
+      // Only add optional fields if they have valid values
+      if (employee.phone && employee.phone.trim()) {
+        vendor.PrimaryPhone = { FreeFormNumber: employee.phone.trim() };
+      }
 
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
       
       return new Promise((resolve, reject) => {
         qbo.createVendor(vendor, (err: any, createdVendor: any) => {
           if (err) {
-            console.error('❌ QuickBooks vendor creation failed:', JSON.stringify(err, null, 2));
-            console.error('❌ Error details:', {
-              message: err.message,
-              code: err.code,
-              status: err.status,
-              response: err.response?.body || err.response
-            });
+            console.error('❌ QuickBooks vendor creation failed for:', vendor.Name);
+            console.error('❌ Vendor data sent:', JSON.stringify(vendor, null, 2));
+            console.error('❌ Full error:', JSON.stringify(err, null, 2));
+            console.error('❌ Error message:', err.message);
+            console.error('❌ Error fault:', err.Fault);
             reject(err);
           } else {
-            console.log('✅ Contractor created in QuickBooks successfully:', createdVendor.Id);
+            console.log('✅ Contractor created in QuickBooks successfully:', createdVendor.Id, 'Name:', createdVendor.Name);
             resolve(createdVendor);
           }
         });
@@ -444,85 +451,71 @@ export class QuickBooksService {
 
   // Sync all active contractors to QuickBooks
   async syncAllContractors(employees: any[]) {
-    try {
-      console.log(`📤 Syncing ${employees.length} contractors to QuickBooks...`);
-      console.log('👥 Employee data preview:', employees.slice(0, 2));
-      const results = [];
-      
-      for (const employee of employees) {
-        try {
-          console.log(`🔍 Processing employee: ${JSON.stringify({
-            id: employee.id,
-            first_name: employee.first_name,
-            last_name: employee.last_name,
-            email: employee.email,
-            is_active: employee.is_active
-          })}`);
-          
-          // Enhanced vendor search with multiple matching strategies
-          const existingMatch = await this.findExistingVendor(employee);
-          
-          if (existingMatch) {
-            const { vendor, matchType } = existingMatch as { vendor: any, matchType: string };
-            console.log(`⏭️  Contractor ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName} found as "${vendor.Name}" (${matchType} match)`);
-            
-            // Update our database with the QuickBooks vendor ID for future reference
-            await db.update(users)
-              .set({ 
-                quickbooksCustomerId: vendor.Id,
-                updatedAt: new Date()
-              })
-              .where(eq(users.id, employee.id));
-            
-            results.push({ 
-              employee: employee.id, 
-              status: 'linked', 
-              vendor: vendor,
-              matchType: matchType,
-              message: `Linked existing QB vendor "${vendor.Name}" via ${matchType} match`
-            });
-          } else {
-            console.log(`➕ Creating new vendor for ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`);
-            const vendor = await this.createContractor(employee) as any;
-            
-            // Update our database with the new QuickBooks vendor ID
-            await db.update(users)
-              .set({ 
-                quickbooksCustomerId: vendor.Id,
-                updatedAt: new Date()
-              })
-              .where(eq(users.id, employee.id));
-            
-            results.push({ 
-              employee: employee.id, 
-              status: 'created', 
-              vendor: vendor,
-              message: `Created new QB vendor "${vendor.Name}"`
-            });
-          }
-        } catch (error) {
-          console.error(`❌ Failed to sync contractor ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}:`, error);
-          results.push({ 
-            employee: employee.id, 
-            status: 'failed', 
-            error: (error as Error).message,
-            message: `Failed to sync: ${(error as Error).message}`
-          });
-        }
-      }
-      
-      console.log('📤 Contractor sync completed:', results);
-      return {
-        total: employees.length,
-        created: results.filter(r => r.status === 'created').length,
-        linked: results.filter(r => r.status === 'linked').length,
-        failed: results.filter(r => r.status === 'failed').length,
-        details: results
-      };
-    } catch (error) {
-      console.error('Error syncing contractors:', error);
-      throw error;
+    console.log(`🚀 Starting contractor sync for ${employees.length} employees`);
+    
+    if (!this.oauthClient || !this.companyId) {
+      throw new Error('QuickBooks not properly initialized');
     }
+
+    const results = [];
+    
+    for (const employee of employees) {
+      console.log(`\n🔍 Processing: ${employee.firstName || employee.first_name} ${employee.lastName || employee.last_name}`);
+      
+      try {
+        // Skip employees without proper names
+        const firstName = employee.firstName || employee.first_name;
+        const lastName = employee.lastName || employee.last_name;
+        
+        if (!firstName || !lastName) {
+          console.log(`⚠️  Skipping employee with incomplete name data`);
+          results.push({
+            employee: employee.id,
+            status: 'failed',
+            error: 'Missing name data',
+            message: 'Skipped due to missing first or last name'
+          });
+          continue;
+        }
+        
+        // Try creating contractor directly (simplified approach)
+        console.log(`➕ Creating vendor for ${firstName} ${lastName}`);
+        const vendor = await this.createContractor(employee) as any;
+        
+        // Update our database with the new QuickBooks vendor ID
+        await db.update(users)
+          .set({ 
+            quickbooksCustomerId: vendor.Id,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, employee.id));
+        
+        results.push({ 
+          employee: employee.id, 
+          status: 'created', 
+          vendor: vendor,
+          message: `Created QB vendor "${vendor.Name}"`
+        });
+        
+      } catch (error) {
+        console.error(`❌ Failed to sync contractor ${employee.firstName || employee.first_name} ${employee.lastName || employee.last_name}:`, error);
+        results.push({ 
+          employee: employee.id, 
+          status: 'failed', 
+          error: (error as Error).message,
+          message: `Failed to sync: ${(error as Error).message}`
+        });
+      }
+    }
+    
+    console.log('📤 Contractor sync completed:', results);
+    return {
+      total: employees.length,
+      created: results.filter(r => r.status === 'created').length,
+      linked: results.filter(r => r.status === 'linked').length,
+      failed: results.filter(r => r.status === 'failed').length,
+      details: results
+    };
   }
 
   // Find vendor by name
