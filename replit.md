@@ -119,6 +119,12 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 21, 2025. Enhanced contractor sync with Track1099 flag management for QuickBooks contractors
+  - Implemented vendor search and duplicate detection to prevent re-creating existing vendors
+  - Added Track1099 flag updates to convert vendors to contractors in QuickBooks
+  - Created diagnostic endpoints for vendor listing and Track1099 status verification
+  - Enhanced sync messaging to show detailed actions taken per contractor (6 contractors successfully linked)
+  - Resolved vendor update process to properly enable 1099 tracking for tax reporting
 - July 21, 2025. Fixed QuickBooks contractor sync API validation errors  
   - Identified QuickBooks ValidationFault (code 2010) caused by unsupported vendor properties
   - Simplified vendor object to use only Name, Active, and PrimaryEmailAddr fields
