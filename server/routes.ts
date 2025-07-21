@@ -837,6 +837,32 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Sync contractors to QuickBooks
+  app.post('/api/quickbooks/sync-contractors', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can sync contractors" });
+      }
+
+      // Get all active employees/contractors
+      const employees = await storage.getAllEmployees();
+      const activeContractors = employees.filter((emp: any) => emp.status === 'active');
+      
+      const results = await quickbooksService.syncAllContractors(activeContractors);
+      
+      res.json({
+        message: `Synced ${activeContractors.length} contractors to QuickBooks`,
+        results
+      });
+    } catch (error: any) {
+      console.error("Error syncing contractors to QuickBooks:", error);
+      res.status(500).json({ 
+        message: "Failed to sync contractors", 
+        error: error?.message || "Unknown error" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

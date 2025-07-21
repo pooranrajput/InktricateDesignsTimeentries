@@ -72,6 +72,28 @@ export default function QuickBooksIntegration() {
     },
   });
 
+  // Sync contractors to QuickBooks
+  const syncContractorsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/quickbooks/sync-contractors');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Contractors Synced",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Sync Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Create contractor in QuickBooks
   const createContractorMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -150,6 +172,32 @@ export default function QuickBooksIntegration() {
                 Connected to <strong>{connectionTest.companyInfo.CompanyName}</strong>
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Contractor Management */}
+          {isConnected && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <h3 className="text-lg font-medium">Contractor Management</h3>
+                </div>
+                <Button
+                  onClick={() => syncContractorsMutation.mutate()}
+                  disabled={syncContractorsMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  {syncContractorsMutation.isPending ? 'Syncing...' : 'Sync Contractors'}
+                </Button>
+              </div>
+              
+              <Alert>
+                <AlertDescription>
+                  This will create all active contractors as vendors in QuickBooks for billing and 1099 reporting.
+                </AlertDescription>
+              </Alert>
+            </div>
           )}
 
           <Separator />

@@ -228,41 +228,7 @@ export class QuickBooksService {
     }
   }
 
-  // Create a contractor (vendor) in QuickBooks
-  async createContractor(userData: any) {
-    await this.initializeClient();
-    
-    return new Promise((resolve, reject) => {
-      const vendor = {
-        Name: `${userData.firstName} ${userData.lastName}`,
-        CompanyName: userData.companyName || `${userData.firstName} ${userData.lastName}`,
-        VendorPaymentBankAccount: {
-          BankName: userData.bankName,
-          AccountNumber: userData.accountNumber,
-          RoutingNumber: userData.routingNumber,
-        },
-        BillAddr: {
-          Line1: userData.homeAddress,
-        },
-        PrimaryEmailAddr: {
-          Address: userData.email,
-        },
-        PrimaryPhone: {
-          FreeFormNumber: userData.phone,
-        },
-        Vendor1099: true, // Mark as 1099 contractor
-      };
 
-      this.qbo!.createVendor(vendor, (err: any, vendor: any) => {
-        if (err) {
-          console.error('Error creating vendor:', err);
-          reject(err);
-        } else {
-          resolve(vendor.QueryResponse?.Vendor?.[0] || vendor);
-        }
-      });
-    });
-  }
 
   // Create billable time entry in QuickBooks
   async createTimeActivity(timeEntry: any, user: any) {
@@ -430,6 +396,94 @@ export class QuickBooksService {
     } catch (error) {
       console.log('🔍 QuickBooks Debug - Connection test failed:', error);
       return { success: false, error: (error as Error).message };
+    }
+  }
+
+  // Create contractor as vendor in QuickBooks
+  async createContractor(employee: any) {
+    try {
+      const qbo = await this.initializeClient();
+      
+      const vendor = {
+        Name: `${employee.firstName} ${employee.lastName}`,
+        CompanyName: employee.companyName || `${employee.firstName} ${employee.lastName} Services`,
+        PrintOnCheckName: `${employee.firstName} ${employee.lastName}`,
+        Active: employee.status === 'active',
+        PrimaryEmailAddr: employee.email ? { Address: employee.email } : undefined,
+        WebAddr: employee.website ? { URI: employee.website } : undefined,
+        PrimaryPhone: employee.phone ? { FreeFormNumber: employee.phone } : undefined,
+        Vendor1099: true, // Mark as 1099 contractor
+        TaxIdentifier: employee.taxId || undefined,
+        AcctNum: employee.id // Use our employee ID as account number for reference
+      };
+
+      return new Promise((resolve, reject) => {
+        qbo.createVendor(vendor, (err: any, vendor: any) => {
+          if (err) {
+            console.error('Error creating contractor in QuickBooks:', err);
+            reject(err);
+          } else {
+            console.log('✅ Contractor created in QuickBooks:', vendor.Id);
+            resolve(vendor);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error creating contractor:', error);
+      throw error;
+    }
+  }
+
+  // Sync all active contractors to QuickBooks
+  async syncAllContractors(employees: any[]) {
+    try {
+      console.log(`📤 Syncing ${employees.length} contractors to QuickBooks...`);
+      const results = [];
+      
+      for (const employee of employees) {
+        try {
+          // Check if contractor already exists
+          const existingVendor = await this.findVendorByName(`${employee.firstName} ${employee.lastName}`);
+          
+          if (existingVendor) {
+            console.log(`⏭️  Contractor ${employee.firstName} ${employee.lastName} already exists in QuickBooks`);
+            results.push({ employee: employee.id, status: 'exists', vendor: existingVendor });
+          } else {
+            const vendor = await this.createContractor(employee);
+            results.push({ employee: employee.id, status: 'created', vendor });
+          }
+        } catch (error) {
+          console.error(`❌ Failed to sync contractor ${employee.firstName} ${employee.lastName}:`, error);
+          results.push({ employee: employee.id, status: 'failed', error: (error as Error).message });
+        }
+      }
+      
+      console.log('📤 Contractor sync completed:', results);
+      return results;
+    } catch (error) {
+      console.error('Error syncing contractors:', error);
+      throw error;
+    }
+  }
+
+  // Find vendor by name
+  private async findVendorByName(name: string) {
+    try {
+      const qbo = await this.initializeClient();
+      
+      return new Promise((resolve, reject) => {
+        qbo.findVendors({ Name: name }, (err: any, vendors: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            const vendor = vendors?.QueryResponse?.Vendor?.find((v: any) => v.Name === name);
+            resolve(vendor || null);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error finding vendor:', error);
+      return null;
     }
   }
 }
