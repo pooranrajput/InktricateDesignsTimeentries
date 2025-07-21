@@ -405,10 +405,10 @@ export class QuickBooksService {
       const qbo = await this.initializeClient();
       
       const vendor = {
-        Name: `${employee.firstName} ${employee.lastName}`,
-        CompanyName: employee.companyName || `${employee.firstName} ${employee.lastName} Services`,
-        PrintOnCheckName: `${employee.firstName} ${employee.lastName}`,
-        Active: employee.status === 'active',
+        Name: `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`,
+        CompanyName: employee.companyName || `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName} Services`,
+        PrintOnCheckName: `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`,
+        Active: employee.is_active || employee.isActive || employee.status === 'active',
         PrimaryEmailAddr: employee.email ? { Address: employee.email } : undefined,
         WebAddr: employee.website ? { URI: employee.website } : undefined,
         PrimaryPhone: employee.phone ? { FreeFormNumber: employee.phone } : undefined,
@@ -447,7 +447,7 @@ export class QuickBooksService {
           
           if (existingMatch) {
             const { vendor, matchType } = existingMatch as { vendor: any, matchType: string };
-            console.log(`⏭️  Contractor ${employee.firstName} ${employee.lastName} found as "${vendor.Name}" (${matchType} match)`);
+            console.log(`⏭️  Contractor ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName} found as "${vendor.Name}" (${matchType} match)`);
             
             // Update our database with the QuickBooks vendor ID for future reference
             await db.update(users)
@@ -465,7 +465,7 @@ export class QuickBooksService {
               message: `Linked existing QB vendor "${vendor.Name}" via ${matchType} match`
             });
           } else {
-            console.log(`➕ Creating new vendor for ${employee.firstName} ${employee.lastName}`);
+            console.log(`➕ Creating new vendor for ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`);
             const vendor = await this.createContractor(employee) as any;
             
             // Update our database with the new QuickBooks vendor ID
@@ -484,7 +484,7 @@ export class QuickBooksService {
             });
           }
         } catch (error) {
-          console.error(`❌ Failed to sync contractor ${employee.firstName} ${employee.lastName}:`, error);
+          console.error(`❌ Failed to sync contractor ${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}:`, error);
           results.push({ 
             employee: employee.id, 
             status: 'failed', 
@@ -533,7 +533,7 @@ export class QuickBooksService {
   private async findExistingVendor(employee: any) {
     try {
       const qbo = await this.initializeClient();
-      const fullName = `${employee.firstName} ${employee.lastName}`.trim();
+      const fullName = `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`.trim();
       
       return new Promise((resolve, reject) => {
         // Search for all vendors to do comprehensive matching
@@ -578,8 +578,8 @@ export class QuickBooksService {
           // Strategy 4: Fuzzy name matching (handles "John Smith" vs "John A Smith")
           match = allVendors.find((v: any) => {
             const vendorName = v.Name?.toLowerCase() || '';
-            const firstName = employee.firstName?.toLowerCase() || '';
-            const lastName = employee.lastName?.toLowerCase() || '';
+            const firstName = (employee.first_name || employee.firstName)?.toLowerCase() || '';
+            const lastName = (employee.last_name || employee.lastName)?.toLowerCase() || '';
             
             return vendorName.includes(firstName) && vendorName.includes(lastName);
           });
