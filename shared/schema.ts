@@ -47,6 +47,7 @@ export const users = pgTable("users", {
   // QuickBooks integration fields
   quickbooksCustomerId: varchar("quickbooks_customer_id"), // QB Customer/Vendor ID
   quickbooksItemId: varchar("quickbooks_item_id"), // QB Service Item ID
+  quickbooksVendorId: varchar("quickbooks_vendor_id"), // QB Vendor ID for bill creation
 });
 
 // Task categories table

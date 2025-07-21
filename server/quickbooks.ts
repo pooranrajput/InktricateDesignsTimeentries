@@ -472,6 +472,16 @@ export class QuickBooksService {
             reject(err);
           } else {
             console.log('✅ Contractor created in QuickBooks successfully:', createdVendor.Id, 'Name:', createdVendor.Name);
+            
+            // Store QB vendor ID in our database for future bill creation
+            this.storage.updateUser(employee.id, { 
+              quickbooksVendorId: createdVendor.Id.toString() 
+            }).then(() => {
+              console.log(`💾 Stored QB vendor ID ${createdVendor.Id} for user ${employee.id}`);
+            }).catch(err => {
+              console.error(`⚠️ Failed to store QB vendor ID: ${err.message}`);
+            });
+            
             resolve(createdVendor);
           }
         });

@@ -119,6 +119,11 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 21, 2025. OPTIMIZATION: Database integration with stored QuickBooks vendor IDs for efficient bill creation
+  - Added quickbooks_vendor_id column to users table and quickbooks_bill_id to monthly_payroll table
+  - Stored all contractor QB vendor IDs locally (Alysha: 59, Anjali: 60, Madhuri: 62, Rhea: 63, Yesha: 64, Pooran: 68)
+  - Created optimized /api/quickbooks/create-payroll-bill endpoint using stored IDs (no lookup needed)
+  - Manual bill creation successful (Bill ID 145) - now implementing automated payroll bill generation
 - July 21, 2025. BREAKTHROUGH: Manual QuickBooks bill creation successful - debugging automated API
   - User manually created Bill ID 145 for "Pooran Rajput" vendor with "Professional Services" category
   - Manual bill structure: $60, description "July 2025 - Pooran Rajput Payroll"
