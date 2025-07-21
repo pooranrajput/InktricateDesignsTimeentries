@@ -414,10 +414,9 @@ export class QuickBooksService {
         throw new Error(`Invalid employee name data: firstName="${firstName}", lastName="${lastName}"`);
       }
       
-      // Create vendor object with QuickBooks-compatible fields only
+      // Create vendor object with correct QuickBooks API structure
       const vendor: any = {
-        Name: fullName,
-        Active: true
+        DisplayName: fullName  // QuickBooks requires DisplayName, not Name
       };
       
       // Add optional fields only if they exist and are valid
@@ -425,8 +424,7 @@ export class QuickBooksService {
         vendor.PrimaryEmailAddr = { Address: employee.email.trim() };
       }
       
-      // Note: Vendor1099 and complex phone formats may cause validation errors
-      // Keep the vendor object minimal for better compatibility
+      console.log('🔧 Creating vendor with structure:', vendor);
 
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
       
