@@ -109,10 +109,21 @@ The application is configured for deployment on Replit with the following setup:
    - `SESSION_SECRET`: Session encryption key
    - Additional variables for email integration (SendGrid/Gmail)
 
+## Authentication Credentials
+
+**Admin Access:**
+- Username: `admin`
+- Password: `admin123`
+
 ## Changelog
 
 ```
 Changelog:
+- July 21, 2025. Fixed authentication issues and established working QuickBooks integration
+  - Resolved login problems by correcting admin password hash
+  - Successfully implemented QuickBooks OAuth connection with manual token exchange
+  - Added contractor sync functionality to create vendors in QuickBooks
+  - Fixed session handling and authentication middleware conflicts
 - July 3, 2025. Fixed critical timezone issue with date display across all timesheet components
 - June 13, 2025. Initial setup
 ```
