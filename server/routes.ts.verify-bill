@@ -1,0 +1,35 @@
+// Quick bill verification endpoint
+app.get('/api/quickbooks/verify-bill/:billId', isAuthenticated, async (req: any, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin only" });
+    }
+    
+    const { billId } = req.params;
+    const qbo = await quickbooksService.initializeClient();
+    
+    // Find the specific bill
+    const bills = await new Promise((resolve, reject) => {
+      qbo.findBills(`SELECT * FROM Bill WHERE Id = '${billId}'`, (err: any, bills: any) => {
+        if (err) reject(err);
+        else resolve(bills?.QueryResponse?.Bill || []);
+      });
+    });
+    
+    res.json({ 
+      success: true, 
+      billId, 
+      found: (bills as any[]).length > 0,
+      bill: (bills as any[])[0] || null
+    });
+    
+  } catch (error) {
+    console.error('Bill verification error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Verification failed' 
+    });
+  }
+});
+
+console.log('Verification endpoint added');

@@ -906,15 +906,28 @@ export function registerRoutes(app: Express): Server {
 
   // Create a payroll bill using stored QB vendor IDs (optimized)
   app.post('/api/quickbooks/create-payroll-bill', isAuthenticated, async (req: any, res) => {
+    console.log('💰 === PAYROLL BILL REQUEST RECEIVED ===');
+    console.log('💰 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('💰 User role:', req.user?.role);
+    console.log('💰 Headers:', req.headers);
+    
     try {
-      console.log('💰 === CREATING PAYROLL BILL ===');
-      
       if (req.user.role !== 'admin') {
+        console.log('💰 Access denied - user role:', req.user.role);
         return res.status(403).json({ message: "Admin only" });
       }
       
       const { userId, year, month } = req.body;
       console.log(`💰 Creating payroll bill for user ${userId}, ${year}-${month}`);
+      
+      // Validate required fields
+      if (!userId || !year || !month) {
+        console.log('💰 Missing required fields:', { userId, year, month });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: userId, year, month' 
+        });
+      }
       
       // Get payroll record
       const payrollRecord = await storage.getMonthlyPayroll(userId, year, month);
@@ -938,6 +951,7 @@ export function registerRoutes(app: Express): Server {
       // Use stored vendor ID directly (no lookup needed!)
       const vendorRef = { value: user.quickbooksVendorId };
       console.log(`💰 Using stored vendor ID: ${user.quickbooksVendorId} for ${user.firstName} ${user.lastName}`);
+      console.log('💰 Vendor ref object:', JSON.stringify(vendorRef, null, 2));
       
       // Find Professional Services account
       const accounts = await new Promise((resolve, reject) => {
@@ -959,12 +973,16 @@ export function registerRoutes(app: Express): Server {
       
       const accountRef = { value: (accounts as any[])[0].Id };
       
-      // Create bill for actual payroll
+      // Create bill for actual payroll (simplified structure like manual creation)
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+      
       const bill = {
         VendorRef: vendorRef,
+        TotalAmt: parseFloat(payrollRecord.grossPay.toString()),
         Line: [{
           Amount: parseFloat(payrollRecord.grossPay.toString()),
-          Description: `${year}-${String(month).padStart(2, '0')} payroll - ${user.firstName} ${user.lastName} (${payrollRecord.totalHours} hours)`,
+          Description: `${months[month-1]} ${year} - ${user.firstName} ${user.lastName} Payroll`,
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: accountRef
@@ -972,19 +990,44 @@ export function registerRoutes(app: Express): Server {
         }]
       };
       
+
+      
       console.log('💰 Creating payroll bill:', JSON.stringify(bill, null, 2));
       
       console.log('💰 About to create payroll bill...');
+      console.log('💰 QBO client ready:', !!qbo);
       
-      // Try direct callback approach first
+      // Add request timeout and logging
+      const startTime = Date.now();
+      console.log('💰 Starting bill creation at:', new Date().toISOString());
+      
+      // Set a 20 second timeout  
+      const timeout = setTimeout(() => {
+        console.log('⏰ Bill creation timed out after 20 seconds');
+        res.status(408).json({ 
+          success: false, 
+          error: 'Request timeout - QuickBooks API took too long',
+          billData: bill 
+        });
+      }, 20000);
+      
       qbo.createBill(bill, async (err: any, createdBill: any) => {
-        console.log('💰 createBill callback executed');
+        clearTimeout(timeout); // Clear timeout on response
+        const elapsed = Date.now() - startTime;
+        console.log(`💰 createBill callback executed after ${elapsed}ms`);
+        
         if (err) {
           console.error('❌ PAYROLL BILL CREATION FAILED:');
-          console.error('❌ Error details:', JSON.stringify(err, null, 2));
+          console.error('❌ Error message:', err?.message || 'Unknown error');
+          console.error('❌ Error code:', err?.code);
+          console.error('❌ Error fault:', err?.Fault);
+          console.error('❌ Full error:', JSON.stringify(err, null, 2));
+          
           return res.status(500).json({ 
             success: false, 
-            error: err instanceof Error ? err.message : 'Bill creation failed',
+            error: err?.message || 'Bill creation failed',
+            code: err?.code,
+            fault: err?.Fault,
             details: err,
             billData: bill
           });
@@ -1002,6 +1045,22 @@ export function registerRoutes(app: Express): Server {
             quickbooksBillId: createdBill.Id.toString()
           });
           console.log('💾 Updated payroll record with QB bill ID:', createdBill.Id);
+          
+          // Verify the bill was created in QuickBooks
+          setTimeout(async () => {
+            try {
+              const verification = await new Promise((resolve, reject) => {
+                qbo.findBills(`SELECT * FROM Bill WHERE Id = '${createdBill.Id}'`, (err: any, bills: any) => {
+                  if (err) reject(err);
+                  else resolve(bills?.QueryResponse?.Bill || []);
+                });
+              });
+              console.log('✅ BILL VERIFICATION:', JSON.stringify(verification, null, 2));
+            } catch (verifyErr) {
+              console.error('⚠️ Bill verification failed:', verifyErr);
+            }
+          }, 2000);
+          
         } catch (updateErr) {
           console.error('⚠️ Failed to update payroll record:', updateErr);
         }
@@ -1010,15 +1069,51 @@ export function registerRoutes(app: Express): Server {
           success: true, 
           bill: createdBill, 
           payroll: payrollRecord,
-          message: `Payroll bill created! QB ID: ${createdBill?.Id} for ${user.firstName} ${user.lastName} ($${createdBill?.TotalAmt})` 
+          message: `🎉 PAYROLL BILL CREATED! QB ID: ${createdBill?.Id} for ${user.firstName} ${user.lastName} ($${createdBill?.TotalAmt})` 
         });
       });
       
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('❌ Payroll bill creation error:', error);
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
       res.status(500).json({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error)
+      });
+    }
+  });
+
+  // Quick bill verification endpoint
+  app.get('/api/quickbooks/verify-bill/:billId', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin only" });
+      }
+      
+      const { billId } = req.params;
+      const qbo = await quickbooksService.initializeClient();
+      
+      // Find the specific bill
+      const bills = await new Promise((resolve, reject) => {
+        qbo.findBills(`SELECT * FROM Bill WHERE Id = '${billId}'`, (err: any, bills: any) => {
+          if (err) reject(err);
+          else resolve(bills?.QueryResponse?.Bill || []);
+        });
+      });
+      
+      res.json({ 
+        success: true, 
+        billId, 
+        found: (bills as any[]).length > 0,
+        bill: (bills as any[])[0] || null
+      });
+      
+    } catch (error) {
+      console.error('Bill verification error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Verification failed' 
       });
     }
   });
