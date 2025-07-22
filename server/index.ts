@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { backupService } from "./backup";
+import { changeMonitor } from "./protection";
 
 // Set QuickBooks environment variables - cleaned and trimmed
 process.env.QUICKBOOKS_CLIENT_ID = "ABaKTqyicUxJpHGpqnvo3oAgfxRS06tf7ibyK7nyVumSgjtIRi".trim();
@@ -72,5 +74,11 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start backup and protection systems
+    console.log('🛡️  INITIALIZING DATA PROTECTION SYSTEMS...');
+    backupService.startAutomaticBackups();
+    changeMonitor.startMonitoring();
+    console.log('✅ DATA PROTECTION ACTIVE - Multiple backup layers enabled');
   });
 })();

@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema } from "@shared/schema";
 import { quickbooksService } from "./quickbooks";
+import { backupService } from "./backup";
+import { protectData } from "./protection";
 import { z } from "zod";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
@@ -1480,6 +1482,41 @@ export function registerRoutes(app: Express): Server {
         message: "Failed to sync contractors", 
         error: error?.message || "Unknown error" 
       });
+    }
+  });
+
+  // BACKUP AND PROTECTION ROUTES - ADMIN ONLY
+  app.post('/api/admin/backup/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+
+      const backupPath = await backupService.createFullBackup('manual-admin');
+      res.json({ success: true, backupPath, message: 'Full backup created successfully' });
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  app.post('/api/admin/backup/emergency', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+
+      const backupPath = await protectData.emergencyBackup();
+      res.json({ success: true, backupPath, message: 'Emergency backup created successfully' });
+    } catch (error) {
+      console.error("Error creating emergency backup:", error);
+      res.status(500).json({ message: "Failed to create emergency backup" });
     }
   });
 

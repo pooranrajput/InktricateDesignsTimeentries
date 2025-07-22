@@ -10,6 +10,7 @@ import MonthlyReport from "@/components/admin/monthly-report";
 import TaskManagement from "@/components/admin/task-management";
 import PayrollManagement from "@/components/admin/payroll-management";
 import QuickBooksIntegration from "@/components/admin/quickbooks-integration";
+import { BackupControls } from "@/components/admin/backup-controls";
 import { Users, Clock, DollarSign, Calendar } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -96,6 +97,9 @@ export default function AdminDashboard() {
             />
           </div>
         </div>
+
+        {/* Data Protection & Backup Controls */}
+        <BackupControls />
 
         {/* Task Management */}
         <TaskManagement />
