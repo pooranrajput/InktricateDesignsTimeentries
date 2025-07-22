@@ -115,6 +115,16 @@ The application is configured for deployment on Replit with the following setup:
 - Username: `admin`
 - Password: `11111111`
 
+## Production QuickBooks Setup
+
+The application includes QuickBooks integration, but production setup requires:
+1. Creating production QuickBooks app credentials
+2. Setting production environment variables 
+3. Connecting to real QuickBooks company account
+4. Syncing employees as vendors for 1099 tracking
+
+See `PRODUCTION_QUICKBOOKS_SETUP_GUIDE.md` for detailed steps.
+
 ## Changelog
 
 ```
