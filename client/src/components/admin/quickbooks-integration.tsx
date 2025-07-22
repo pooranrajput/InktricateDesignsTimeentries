@@ -11,10 +11,22 @@ import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, ExternalLink, DollarSign, Clock, Users } from 'lucide-react';
 
 export default function QuickBooksIntegration() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(2025); // Use test data year
+  const [selectedMonth, setSelectedMonth] = useState(11); // Default to November (next available month)
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get months with existing QuickBooks bills to filter dropdown
+  const { data: existingBillMonths = [] } = useQuery<Array<{month: number, year: number}>>({
+    queryKey: ['/api/quickbooks/existing-bill-months', selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/quickbooks/existing-bill-months?year=${selectedYear}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch existing bill months');
+      return response.json();
+    },
+  });
 
   // Test QuickBooks connection
   const { data: connectionTest, isLoading: isTestingConnection } = useQuery<{
@@ -186,6 +198,16 @@ export default function QuickBooksIntegration() {
 
   const isConnected = connectionTest?.success;
 
+  // Generate available months (only show months that don't have bills yet)
+  const availableMonths = [
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
+  ].filter(month => !existingBillMonths.some(existing => existing.month === month.value));
+
   return (
     <div className="space-y-6">
       <Card>
@@ -300,10 +322,26 @@ export default function QuickBooksIntegration() {
 
           {/* Monthly Bill Generation */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              <h3 className="text-lg font-medium">Monthly Contractor Bills</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                <h3 className="text-lg font-medium">Monthly Contractor Bills</h3>
+              </div>
+              {availableMonths.length === 0 && (
+                <Badge variant="secondary" className="text-green-700 bg-green-50">
+                  All months completed
+                </Badge>
+              )}
             </div>
+            
+            {availableMonths.length === 0 && (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  <strong>All months processed!</strong> Bills have been generated for all available months in {selectedYear}.
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -322,30 +360,27 @@ export default function QuickBooksIntegration() {
               
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Month:</span>
-                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                <Select 
+                  value={selectedMonth.toString()} 
+                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                  disabled={availableMonths.length === 0}
+                >
                   <SelectTrigger className="w-32">
-                    <SelectValue />
+                    <SelectValue placeholder={availableMonths.length === 0 ? "No available months" : "Select month"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">January</SelectItem>
-                    <SelectItem value="2">February</SelectItem>
-                    <SelectItem value="3">March</SelectItem>
-                    <SelectItem value="4">April</SelectItem>
-                    <SelectItem value="5">May</SelectItem>
-                    <SelectItem value="6">June</SelectItem>
-                    <SelectItem value="7">July</SelectItem>
-                    <SelectItem value="8">August</SelectItem>
-                    <SelectItem value="9">September</SelectItem>
-                    <SelectItem value="10">October</SelectItem>
-                    <SelectItem value="11">November</SelectItem>
-                    <SelectItem value="12">December</SelectItem>
+                    {availableMonths.map(month => (
+                      <SelectItem key={month.value} value={month.value.toString()}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               
               <Button
                 onClick={handleGenerateBills}
-                disabled={!isConnected || generateBillsMutation.isPending}
+                disabled={!isConnected || generateBillsMutation.isPending || availableMonths.length === 0}
                 className="flex items-center gap-2"
               >
                 <DollarSign className="h-4 w-4" />

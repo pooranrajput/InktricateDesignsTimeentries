@@ -72,6 +72,7 @@ export interface IStorage {
   updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry>;
   getTimeEntry(id: number): Promise<TimeEntry | undefined>;
   getAllQuickBooksConfigs(): Promise<any[]>;
+  getExistingBillMonths(year: number): Promise<Array<{month: number, year: number}>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -684,6 +685,25 @@ export class DatabaseStorage implements IStorage {
   async getAllQuickBooksConfigs(): Promise<any[]> {
     const configs = await db.select().from(quickbooksConfig);
     return configs;
+  }
+
+  async getExistingBillMonths(year: number): Promise<Array<{month: number, year: number}>> {
+    const result = await db
+      .select({
+        month: monthlyPayroll.month,
+        year: monthlyPayroll.year,
+      })
+      .from(monthlyPayroll)
+      .where(
+        and(
+          eq(monthlyPayroll.year, year),
+          sql`${monthlyPayroll.quickbooksBillId} IS NOT NULL`
+        )
+      )
+      .groupBy(monthlyPayroll.month, monthlyPayroll.year)
+      .orderBy(monthlyPayroll.month);
+    
+    return result;
   }
 }
 

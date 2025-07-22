@@ -834,6 +834,23 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get months that already have generated QuickBooks bills
+  app.get('/api/quickbooks/existing-bill-months', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can view bill months" });
+      }
+      
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      
+      const existingBillMonths = await storage.getExistingBillMonths(year);
+      res.json(existingBillMonths);
+    } catch (error) {
+      console.error("Error fetching existing bill months:", error);
+      res.status(500).json({ message: "Failed to fetch existing bill months" });
+    }
+  });
+
   // Generate monthly contractor bills
   app.post('/api/quickbooks/generate-bills', isAuthenticated, async (req: any, res) => {
     try {
