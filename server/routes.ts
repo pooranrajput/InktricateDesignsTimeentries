@@ -953,22 +953,23 @@ export function registerRoutes(app: Express): Server {
       console.log(`💰 Using stored vendor ID: ${user.quickbooksVendorId} for ${user.firstName} ${user.lastName}`);
       console.log('💰 Vendor ref object:', JSON.stringify(vendorRef, null, 2));
       
-      // Account name configuration (can be changed for production)
+      // Account configuration - prioritize "Wages" for payroll expenses
       const PAYROLL_ACCOUNT_NAME = process.env.QB_PAYROLL_ACCOUNT || 'Wages';
       console.log('💰 Looking for payroll account:', PAYROLL_ACCOUNT_NAME);
       
-      // Find the specified payroll account (or fallback to expense account)
+      // Find "Wages" account first, then fallback to other expense accounts
       const accounts = await new Promise((resolve, reject) => {
-        qbo.findAccounts(`SELECT * FROM Account WHERE Name = '${PAYROLL_ACCOUNT_NAME}'`, (err: any, accounts: any) => {
-          if (err) {
-            console.log('⚠️ Payroll account not found, searching for expense accounts...');
-            // Fallback to any expense account if specified account not found
-            qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 5", (err2: any, accounts2: any) => {
+        // First try to find "Wages" or payroll-related accounts
+        qbo.findAccounts(`SELECT * FROM Account WHERE Name LIKE '%Wage%' OR Name LIKE '%Payroll%' OR Name = '${PAYROLL_ACCOUNT_NAME}'`, (err: any, accounts: any) => {
+          if (err || !accounts?.QueryResponse?.Account?.length) {
+            console.log('⚠️ Payroll/Wages account not found, searching for expense accounts...');
+            // Fallback to expense accounts
+            qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 10", (err2: any, accounts2: any) => {
               if (err2) reject(err2);
               else resolve(accounts2?.QueryResponse?.Account || []);
             });
           } else {
-            resolve(accounts?.QueryResponse?.Account || []);
+            resolve(accounts.QueryResponse.Account);
           }
         });
       });
