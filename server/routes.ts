@@ -10,7 +10,7 @@ import { z } from "zod";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import path from "path";
-import { db } from "./storage";
+import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
