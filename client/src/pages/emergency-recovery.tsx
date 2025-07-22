@@ -8,7 +8,14 @@ export function EmergencyRecoveryPage() {
   const { data: taskCategories, isLoading: categoriesLoading } = useQuery({ queryKey: ['/api/task-categories'] });
 
   // Debug what we're getting
-  console.log('Emergency Recovery Debug:', { user, taskCategories, userLoading, categoriesLoading });
+  console.log('Emergency Recovery Debug:', { 
+    user, 
+    taskCategories, 
+    userLoading, 
+    categoriesLoading,
+    taskCategoriesType: typeof taskCategories,
+    isArray: Array.isArray(taskCategories)
+  });
 
   if (userLoading || categoriesLoading) {
     return <div className="p-6">Loading user and categories...</div>;

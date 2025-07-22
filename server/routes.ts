@@ -528,6 +528,23 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Task categories endpoint for employees (emergency recovery and time entries)
+  app.get('/api/task-categories', isAuthenticated, async (req: any, res) => {
+    try {
+      const tasks = await storage.getAllTaskCategories();
+      // Return just basic info without sensitive data
+      const publicTasks = tasks.map(task => ({
+        id: task.id,
+        name: task.name,
+        description: task.description
+      }));
+      res.json(publicTasks);
+    } catch (error) {
+      console.error("Error fetching task categories:", error);
+      res.status(500).json({ message: "Failed to fetch task categories" });
+    }
+  });
+
   // Employee route to get their assigned tasks for time tracking
   app.get('/api/my-tasks', isAuthenticated, async (req: any, res) => {
     try {
