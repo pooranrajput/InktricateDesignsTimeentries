@@ -119,6 +119,13 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 22, 2025. ENHANCED: Bill date system updated to use payroll period end dates for accurate accounting
+  - Updated QuickBooks bill creation to use payroll period end dates instead of creation dates
+  - Bills now show last day of payroll month (e.g., July 2025 payroll → 2025-07-31 bill date)
+  - Fixed accounting accuracy: bills reflect when work was performed, not when bills were generated
+  - Example: July payroll generated on August 1st will show July 31st as bill date (not August 1st)
+  - Updated both API routes and bill creation logic with proper TxnDate and DueDate fields
+  - System ready for accurate payroll period tracking and financial reporting
 - July 22, 2025. BREAKTHROUGH: Complete end-to-end workflow with proper vendor mapping achieved
   - Created 842 comprehensive dummy timesheet entries across 6 employees for 6 months (July-December 2025)
   - Generated 40 payroll records totaling $52,048.32 with accurate hourly rate calculations

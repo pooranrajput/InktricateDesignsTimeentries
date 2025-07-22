@@ -988,8 +988,18 @@ export function registerRoutes(app: Express): Server {
       // Format: "Month Year - Employee Name Payroll" (e.g., "August 2025 - Pooran Rajput Payroll")
       const description = `${months[month-1]} ${year} - ${user.firstName} ${user.lastName} Payroll`;
       
+      // Calculate payroll period end date
+      function getPayrollPeriodEndDate(month: number, year: number): string {
+        const lastDay = new Date(year, month, 0);
+        return lastDay.toISOString().split('T')[0];
+      }
+      
+      const payrollEndDate = getPayrollPeriodEndDate(month, year);
+      
       const bill = {
         VendorRef: vendorRef,
+        TxnDate: payrollEndDate,  // Use payroll period end date instead of today
+        DueDate: payrollEndDate,  // Same as transaction date
         TotalAmt: parseFloat(payrollRecord.grossPay.toString()),
         Line: [{
           Amount: parseFloat(payrollRecord.grossPay.toString()),
@@ -1003,6 +1013,8 @@ export function registerRoutes(app: Express): Server {
       
       console.log('💰 Bill description format:', description);
       console.log('💰 Account category:', accountName);
+      console.log('💰 Payroll period end date:', payrollEndDate);
+      console.log('💰 Today\'s date:', new Date().toISOString().split('T')[0]);
       
 
       

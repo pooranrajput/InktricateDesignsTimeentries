@@ -1,116 +1,62 @@
-// Test creating bills with the working vendor ID we have
-const { quickbooksService } = require('./server/quickbooks');
-const { db } = require('./server/db');
+// Test the updated bill creation system with payroll period end dates
+import axios from 'axios';
 
-async function testAugustBills() {
-  console.log('🧪 TESTING BILL CREATION WITH EXISTING VENDOR ID 65');
-  console.log('================================================');
-  
-  // Create bills for all employees using the same vendor ID that works
-  // This simulates the full workflow even though it's not production-ready
+async function testAugustBill() {
+  console.log('📅 TESTING UPDATED BILL SYSTEM WITH PAYROLL PERIOD DATES');
+  console.log('=====================================================');
   
   try {
-    const qbo = await quickbooksService.initializeClient();
-    console.log('✅ QuickBooks client ready');
+    // Find a user without a QuickBooks bill for testing
+    const testData = {
+      userId: 1, // Admin user (Pooran)
+      year: 2025,
+      month: 8  // August
+    };
     
-    // Get all payroll records without bills
-    const result = await db.execute(`
-      SELECT 
-        mp.id as payroll_id,
-        mp.month,
-        mp.year,
-        mp.total_hours,
-        mp.gross_pay,
-        u.first_name,
-        u.last_name
-      FROM monthly_payroll mp
-      JOIN users u ON mp.user_id = u.id
-      WHERE mp.year = 2025 
-        AND mp.quickbooks_bill_id IS NULL
-        AND u.hourly_rate IS NOT NULL
-        AND mp.month = 8  -- August only for testing
-      ORDER BY u.first_name
-    `);
+    console.log('🧪 Test scenario:');
+    console.log('   Creating August 2025 payroll bill on July 22, 2025');
+    console.log('   Expected bill date: 2025-08-31 (August 31st)');
+    console.log('   Today\'s date: 2025-07-22');
+    console.log('   This demonstrates correct payroll period dating');
     
-    const records = result.rows || result;
-    console.log(`Found ${records.length} August payroll records`);
+    console.log('\n📋 Creating bill with updated date logic...');
     
-    const VENDOR_ID = '65'; // Use working vendor ID
-    const ACCOUNT_ID = '81'; // Professional Services
+    const response = await axios.post('http://localhost:5000/api/quickbooks/create-payroll-bill', testData, {
+      withCredentials: true,
+      timeout: 25000  // 25 second timeout
+    });
     
-    let billsCreated = 0;
-    const billDetails = [];
-    
-    for (const record of records) {
-      const description = `August 2025 - ${record.first_name} ${record.last_name} Payroll`;
-      console.log(`\nCreating bill: ${description} - $${record.gross_pay}`);
+    if (response.data.success) {
+      console.log('✅ SUCCESS: Bill created with payroll period end date!');
+      console.log('✅ Bill ID:', response.data.bill.Id);
+      console.log('✅ Transaction Date:', response.data.bill.TxnDate);
+      console.log('✅ Due Date:', response.data.bill.DueDate);
+      console.log('✅ Expected: 2025-08-31');
+      console.log('✅ Actual:', response.data.bill.TxnDate);
+      console.log('✅ Dates Match:', response.data.bill.TxnDate === '2025-08-31');
       
-      const bill = {
-        VendorRef: { value: VENDOR_ID },
-        TotalAmt: parseFloat(record.gross_pay),
-        Line: [{
-          Amount: parseFloat(record.gross_pay),
-          Description: description,
-          DetailType: "AccountBasedExpenseLineDetail", 
-          AccountBasedExpenseLineDetail: {
-            AccountRef: { value: ACCOUNT_ID }
-          }
-        }]
-      };
-      
-      try {
-        const result = await new Promise((resolve, reject) => {
-          qbo.createBill(bill, (err, createdBill) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(createdBill);
-            }
-          });
-        });
-        
-        const billId = result.Id;
-        console.log(`✅ Bill created: ID ${billId}`);
-        
-        // Update database
-        await db.execute(`
-          UPDATE monthly_payroll 
-          SET quickbooks_bill_id = '${billId}'
-          WHERE id = ${record.payroll_id}
-        `);
-        
-        billDetails.push({
-          employee: `${record.first_name} ${record.last_name}`,
-          amount: record.gross_pay,
-          billId: billId
-        });
-        
-        billsCreated++;
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-      } catch (error) {
-        console.log(`❌ Failed: ${error?.Fault?.Error?.[0]?.Message || error.message}`);
+      console.log('\n🎯 VERIFICATION:');
+      if (response.data.bill.TxnDate === '2025-08-31') {
+        console.log('✅ PERFECT: Bill shows August 31st (payroll period end)');
+        console.log('✅ System now uses payroll period dates instead of creation date');
+      } else {
+        console.log('❌ Issue: Bill date doesn\'t match expected payroll period end');
       }
-    }
-    
-    console.log(`\n🎉 AUGUST BILLS COMPLETE!`);
-    console.log(`✅ Bills created: ${billsCreated}`);
-    
-    if (billDetails.length > 0) {
-      console.log('\n📋 CREATED AUGUST BILLS:');
-      billDetails.forEach(bill => {
-        console.log(`✅ ${bill.employee}: $${bill.amount} (Bill ${bill.billId})`);
-      });
       
-      const totalAmount = billDetails.reduce((sum, bill) => sum + parseFloat(bill.amount), 0);
-      console.log(`💰 Total August bills: $${totalAmount.toFixed(2)}`);
+    } else {
+      console.log('❌ Bill creation failed:', response.data.error);
     }
     
   } catch (error) {
-    console.error('❌ Error:', error);
+    if (error.response) {
+      console.log('❌ API Error:', error.response.data.error);
+      console.log('❌ Status:', error.response.status);
+    } else if (error.code === 'ECONNREFUSED') {
+      console.log('❌ Connection error: Is the server running?');
+    } else {
+      console.log('❌ Error:', error.message);
+    }
   }
 }
 
-testAugustBills();
+testAugustBill();
