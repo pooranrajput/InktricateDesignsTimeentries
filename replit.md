@@ -113,7 +113,7 @@ The application is configured for deployment on Replit with the following setup:
 
 **Admin Access:**
 - Username: `admin`
-- Password: `admin123`
+- Password: `11111111`
 
 ## Changelog
 
