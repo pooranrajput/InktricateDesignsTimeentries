@@ -119,6 +119,12 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 22, 2025. FIXED: QuickBooks token expiration and authentication issues
+  - Added re-authentication functionality for expired QuickBooks tokens
+  - Fixed token refresh error with proper fallback values for expires_in
+  - Added "Re-authenticate" button in QuickBooks integration UI
+  - System now handles token expiration gracefully with clear user guidance
+  - Ready to re-establish QuickBooks connection for bill generation workflow
 - July 22, 2025. FIXED: UI workflow issues after QuickBooks integration
   - Restored missing "Generate Payroll" button visibility in admin dashboard
   - Fixed payroll management to show button when no payroll records exist for selected month

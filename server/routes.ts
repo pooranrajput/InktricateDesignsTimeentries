@@ -688,7 +688,7 @@ export function registerRoutes(app: Express): Server {
         sandbox: process.env.QUICKBOOKS_SANDBOX
       });
       
-      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-setup');
+      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');
       res.json({ authUrl, debug: { configured: true } });
     } catch (error: any) {
       console.error("Error getting QuickBooks auth URL:", error);
@@ -700,6 +700,31 @@ export function registerRoutes(app: Express): Server {
           hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI
         }
       });
+    }
+  });
+
+  // Force QuickBooks re-authentication by clearing expired tokens
+  app.post('/api/quickbooks/reauth', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can re-authenticate QuickBooks" });
+      }
+      
+      // Clear expired configuration
+      await db.delete(quickbooksConfig).where(eq(quickbooksConfig.companyId, '9341455047397094'));
+      console.log('🔄 Cleared expired QuickBooks tokens - ready for re-authentication');
+      
+      // Generate new auth URL
+      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');
+      
+      res.json({ 
+        message: "Expired tokens cleared. Please re-authenticate with QuickBooks.",
+        authUrl,
+        action: "redirect"
+      });
+    } catch (error: any) {
+      console.error("Error clearing QuickBooks tokens:", error);
+      res.status(500).json({ message: "Failed to clear tokens" });
     }
   });
 

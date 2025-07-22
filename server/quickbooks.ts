@@ -213,11 +213,15 @@ export class QuickBooksService {
 
       const authResponse = await this.oauthClient.refreshUsingToken(config.refreshToken);
       
+      // Calculate token expiry with fallback
+      const expiresIn = authResponse.expires_in || 3600; // Default to 1 hour if not provided
+      const tokenExpiry = new Date(Date.now() + (expiresIn * 1000));
+      
       await db.update(quickbooksConfig)
         .set({
           accessToken: authResponse.access_token,
           refreshToken: authResponse.refresh_token,
-          tokenExpiry: new Date(Date.now() + authResponse.expires_in * 1000),
+          tokenExpiry: tokenExpiry,
           updatedAt: new Date(),
         })
         .where(eq(quickbooksConfig.companyId, companyId));

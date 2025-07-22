@@ -50,6 +50,32 @@ export default function QuickBooksIntegration() {
     },
   });
 
+  // Re-authenticate QuickBooks (clear expired tokens)
+  const reauthMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/quickbooks/reauth');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Ready to Re-authenticate",
+        description: data.message,
+      });
+      // Auto-open the authorization URL
+      if (data.authUrl) {
+        window.open(data.authUrl, '_blank');
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Re-authentication Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Generate monthly contractor bills
   const generateBillsMutation = useMutation({
     mutationFn: async (data: { year: number; month: number }) => {
@@ -193,14 +219,25 @@ export default function QuickBooksIntegration() {
             </div>
             
             {!isConnected && (
-              <Button
-                onClick={() => authMutation.mutate()}
-                disabled={authMutation.isPending}
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Connect to QuickBooks
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => authMutation.mutate()}
+                  disabled={authMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Connect to QuickBooks
+                </Button>
+                <Button
+                  onClick={() => reauthMutation.mutate()}
+                  disabled={reauthMutation.isPending}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {reauthMutation.isPending ? 'Re-authenticating...' : 'Re-authenticate'}
+                </Button>
+              </div>
             )}
           </div>
 
