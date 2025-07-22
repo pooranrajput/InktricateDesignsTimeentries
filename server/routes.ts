@@ -719,7 +719,7 @@ export function registerRoutes(app: Express): Server {
         hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
         hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
         hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI,
-        sandbox: process.env.QUICKBOOKS_SANDBOX
+        sandbox: process.env.QUICKBOOKS_SANDBOX === 'true' ? 'true' : 'false'
       });
       
       const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');

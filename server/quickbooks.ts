@@ -10,6 +10,7 @@ export class QuickBooksService {
   private oauthClient: OAuthClient;
   private qbo: QuickBooks | null = null;
   private companyId: string | null = null;
+  private useSandbox: boolean;
 
   constructor() {
     // Clean and validate environment variables
@@ -17,18 +18,21 @@ export class QuickBooksService {
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
     const redirectUri = (process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`).trim();
     
+    this.useSandbox = process.env.QUICKBOOKS_SANDBOX === 'true';
+    
     console.log('🔧 QuickBooks Init Debug:', {
       clientIdLength: clientId.length,
       clientIdStart: clientId.substring(0, 10),
       hasClientSecret: !!clientSecret,
       redirectUri,
-      sandbox: process.env.QUICKBOOKS_SANDBOX
+      sandbox: process.env.QUICKBOOKS_SANDBOX,
+      useSandbox: this.useSandbox
     });
     
     this.oauthClient = new OAuthClient({
       clientId,
       clientSecret,
-      sandbox: false, // Use production mode with production credentials
+      sandbox: this.useSandbox, // Use environment variable
       redirectUri,
     });
   }
@@ -38,7 +42,7 @@ export class QuickBooksService {
     console.log('QuickBooks OAuth Config:', {
       clientId: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 8) + '...',
       redirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
-      sandbox: process.env.QUICKBOOKS_SANDBOX
+      sandbox: this.useSandbox
     });
     
     const authUrl = this.oauthClient.authorizeUri({
@@ -71,7 +75,7 @@ export class QuickBooksService {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
-        sandbox: false, // Production mode
+        sandbox: this.useSandbox, // Use environment variable
       }).onConflictDoUpdate({
         target: quickbooksConfig.companyId,
         set: {
