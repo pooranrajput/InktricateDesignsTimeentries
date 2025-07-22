@@ -23,19 +23,50 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // Handle new format: salt:hash
-  if (stored.includes(':')) {
-    const [salt, hash] = stored.split(':');
+  try {
+    console.log('🔐 comparePasswords called with:', { supplied: supplied.length + ' chars', stored: stored.substring(0, 20) + '...' });
+    
+    // Handle new format: salt:hash
+    if (stored.includes(':')) {
+      const parts = stored.split(':');
+      console.log('🔐 Split parts:', { count: parts.length, part1Length: parts[0]?.length, part2Length: parts[1]?.length });
+      
+      if (parts.length !== 2) {
+        console.error('Invalid password format (colon):', stored.substring(0, 20));
+        return false;
+      }
+      const [salt, hash] = parts;
+      console.log('🔐 Salt and hash extracted:', { saltLength: salt?.length, hashLength: hash?.length });
+      
+      if (!salt || !hash) {
+        console.error('Missing salt or hash in colon format');
+        return false;
+      }
+      
+      console.log('🔐 About to call scryptAsync with salt length:', salt.length);
+      const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+      const hashedBuf = Buffer.from(hash, 'hex');
+      return timingSafeEqual(hashedBuf, suppliedBuf);
+    }
+    
+    // Handle old format: hash.salt (fallback)
+    const parts = stored.split(".");
+    if (parts.length !== 2) {
+      console.error('Invalid password format (dot):', stored.substring(0, 20));
+      return false;
+    }
+    const [hashed, salt] = parts;
+    if (!hashed || !salt) {
+      console.error('Missing hash or salt in dot format');
+      return false;
+    }
+    const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const hashedBuf = Buffer.from(hash, 'hex');
     return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
   }
-  
-  // Handle old format: hash.salt (fallback)
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
 export function setupAuth(app: Express) {
@@ -75,14 +106,25 @@ export function setupAuth(app: Express) {
         }
         
         if (!user || !user.isActive) {
+          console.log('🔐 User not found or inactive:', { found: !!user, active: user?.isActive });
           return done(null, false);
         }
         
         if (!user.password) {
+          console.log('🔐 User has no password');
           return done(null, false);
         }
         
+        console.log('🔐 Comparing passwords for user:', user.username);
+        console.log('🔐 Password format check:', { 
+          hasColon: user.password.includes(':'), 
+          length: user.password.length,
+          firstChars: user.password.substring(0, 10)
+        });
+        
         const isValid = await comparePasswords(password, user.password);
+        console.log('🔐 Password valid:', isValid);
+        
         if (!isValid) {
           return done(null, false);
         }
