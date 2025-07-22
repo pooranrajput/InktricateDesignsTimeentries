@@ -28,6 +28,20 @@ export function registerRoutes(app: Express): Server {
   // Auth middleware
   setupAuth(app);
 
+  // Legal document routes (required for QuickBooks production)
+  app.get('/privacy-policy', (req, res) => {
+    res.sendFile('privacy-policy.html', { root: process.cwd() });
+  });
+
+  app.get('/terms-of-service', (req, res) => {
+    res.sendFile('terms-of-service.html', { root: process.cwd() });
+  });
+
+  // Alternative EULA route for QuickBooks
+  app.get('/eula', (req, res) => {
+    res.sendFile('terms-of-service.html', { root: process.cwd() });
+  });
+
   // Auth routes - SECURITY: Users can see their own data including hourly rate
   app.get('/api/user', isAuthenticated, async (req: any, res) => {
     try {
