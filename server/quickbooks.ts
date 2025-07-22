@@ -28,7 +28,7 @@ export class QuickBooksService {
     this.oauthClient = new OAuthClient({
       clientId,
       clientSecret,
-      sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
+      sandbox: false, // Use production mode with production credentials
       redirectUri,
     });
   }
@@ -71,7 +71,7 @@ export class QuickBooksService {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
-        sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
+        sandbox: false, // Production mode
       }).onConflictDoUpdate({
         target: quickbooksConfig.companyId,
         set: {
