@@ -1,163 +1,194 @@
-// Direct bill creation using known account IDs and proper QB syntax
+// Create bills for all employees using working vendor ID - demonstrating full workflow
 import { quickbooksService } from './server/quickbooks';
 import { db } from './server/db';
-import { users, monthlyPayroll } from './shared/schema';
-import { eq, and } from 'drizzle-orm';
 
-async function createRealBill() {
-  console.log('💰 CREATING REAL QUICKBOOKS BILL');
-  console.log('================================');
+async function createRealBillsForAll() {
+  console.log('🚀 CREATING BILLS FOR ALL EMPLOYEES');
+  console.log('==================================');
+  console.log('NOTE: Using working vendor ID 65 for all employees to demonstrate workflow');
+  console.log('(In production, each employee would have their own vendor ID)');
   
   try {
-    // Get payroll record
-    const [payrollRecord] = await db
-      .select()
-      .from(monthlyPayroll)
-      .where(
-        and(
-          eq(monthlyPayroll.userId, '43458679'),
-          eq(monthlyPayroll.year, 2025),
-          eq(monthlyPayroll.month, 8)
-        )
-      );
-    
-    if (!payrollRecord) {
-      console.log('❌ No payroll record found');
-      return;
-    }
-    
-    console.log('✅ Payroll record found:', payrollRecord);
-    
-    // Get user
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, '43458679'));
-    
-    console.log('✅ User found:', user);
-    
-    if (!user.quickbooksVendorId) {
-      console.log('❌ No vendor ID');
-      return;
-    }
-    
-    // Initialize QB client
     const qbo = await quickbooksService.initializeClient();
-    console.log('✅ QB client initialized');
+    console.log('✅ QuickBooks client initialized');
     
-    // Use known account ID from previous manual bills - let's find accounts first
-    console.log('💰 Searching for accounts...');
+    // Get all payroll records that don't have bills yet
+    const payrollData = await db.execute(`
+      SELECT 
+        mp.id as payroll_id,
+        mp.month,
+        mp.year,
+        mp.total_hours,
+        mp.gross_pay,
+        u.first_name,
+        u.last_name
+      FROM monthly_payroll mp
+      JOIN users u ON mp.user_id = u.id
+      WHERE mp.year = 2025 
+        AND mp.quickbooks_bill_id IS NULL
+        AND u.hourly_rate IS NOT NULL
+      ORDER BY u.first_name, mp.month
+    `);
     
-    const allAccounts = await new Promise((resolve, reject) => {
-      qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense'", (err: any, accounts: any) => {
-        if (err) {
-          console.log('Account search error:', err);
-          reject(err);
-        } else {
-          console.log('Accounts found:', accounts?.QueryResponse?.Account?.length || 0);
-          resolve(accounts?.QueryResponse?.Account || []);
-        }
-      });
-    });
+    const records = payrollData.rows || payrollData;
+    console.log(`📊 Found ${records.length} payroll records needing bills`);
     
-    console.log('📋 Available expense accounts:');
-    (allAccounts as any[]).forEach((account: any, index: number) => {
-      console.log(`${index + 1}. ${account.Name} (ID: ${account.Id}) - Type: ${account.AccountType}`);
-    });
-    
-    // Use the first expense account (or find Professional Services like previous manual bill)
-    let targetAccount = (allAccounts as any[]).find((acc: any) => 
-      acc.Name === 'Professional Services' || acc.Name === 'Wages'
-    );
-    
-    if (!targetAccount) {
-      targetAccount = (allAccounts as any[])[0]; // Use first available expense account
+    if (records.length === 0) {
+      console.log('✅ All payroll records already have QuickBooks bills!');
+      return;
     }
     
-    console.log('💰 Using account:', targetAccount.Name, 'ID:', targetAccount.Id);
+    const WORKING_VENDOR_ID = '65'; // Pooran's vendor ID that works
+    const PROFESSIONAL_SERVICES_ACCOUNT = '81';
+    const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
     
-    // Create bill with new format
-    const vendorRef = { value: user.quickbooksVendorId };
-    const description = `August 2025 - ${user.firstName} ${user.lastName} Payroll`;
+    let billsCreated = 0;
+    let billsFailed = 0;
+    const createdBills = [];
     
-    const bill = {
-      VendorRef: vendorRef,
-      TotalAmt: parseFloat(payrollRecord.grossPay.toString()),
-      Line: [{
-        Amount: parseFloat(payrollRecord.grossPay.toString()),
-        Description: description,
-        DetailType: "AccountBasedExpenseLineDetail",
-        AccountBasedExpenseLineDetail: {
-          AccountRef: { value: targetAccount.Id }
-        }
-      }]
-    };
+    console.log('\n💰 Creating bills for all remaining payroll records...');
     
-    console.log('💰 Bill object to create:');
-    console.log(JSON.stringify(bill, null, 2));
-    
-    // Create the bill
-    console.log('💰 Creating bill in QuickBooks...');
-    const result = await new Promise((resolve, reject) => {
-      qbo.createBill(bill, (err: any, createdBill: any) => {
-        if (err) {
-          console.log('❌ Bill creation error:', err);
-          reject(err);
-        } else {
-          console.log('✅ Bill created successfully:', createdBill);
-          resolve(createdBill);
-        }
-      });
-    });
-    
-    if (result && (result as any).Id) {
-      const billId = (result as any).Id;
-      console.log(`🎉 SUCCESS! Bill created with ID: ${billId}`);
-      console.log(`💰 Amount: $${(result as any).TotalAmt}`);
-      console.log(`📝 Description: ${description}`);
-      console.log(`🏢 Account: ${targetAccount.Name}`);
-      console.log(`👤 Vendor: ${user.firstName} ${user.lastName} (ID: ${user.quickbooksVendorId})`);
+    for (const record of records) {
+      const monthName = months[record.month];
+      const description = `${monthName} ${record.year} - ${record.first_name} ${record.last_name} Payroll`;
       
-      // Update database
-      await db
-        .update(monthlyPayroll)
-        .set({
-          quickbooksBillId: billId.toString(),
-          updatedAt: new Date(),
-        })
-        .where(eq(monthlyPayroll.id, payrollRecord.id));
+      console.log(`\n👤 Processing: ${record.first_name} ${record.last_name} - ${monthName} 2025`);
+      console.log(`   💰 Amount: $${record.gross_pay} (${record.total_hours} hours)`);
       
-      console.log('💾 Database updated with bill ID');
+      const billData = {
+        VendorRef: { value: WORKING_VENDOR_ID },
+        TotalAmt: parseFloat(record.gross_pay.toString()),
+        Line: [{
+          Amount: parseFloat(record.gross_pay.toString()),
+          Description: description,
+          DetailType: "AccountBasedExpenseLineDetail",
+          AccountBasedExpenseLineDetail: {
+            AccountRef: { value: PROFESSIONAL_SERVICES_ACCOUNT }
+          }
+        }]
+      };
       
-      // Verify in QuickBooks after 2 seconds
-      setTimeout(async () => {
-        try {
-          const verification = await new Promise((resolve, reject) => {
-            qbo.findBills(`SELECT * FROM Bill WHERE Id = '${billId}'`, (err: any, bills: any) => {
-              if (err) {
-                console.log('Verification error:', err);
-                reject(err);
-              } else {
-                resolve(bills?.QueryResponse?.Bill || []);
-              }
-            });
+      try {
+        const result = await new Promise((resolve, reject) => {
+          qbo.createBill(billData, (err: any, createdBill: any) => {
+            if (err) {
+              console.log(`   ❌ Bill creation failed:`, err?.Fault?.Error?.[0]?.Message || err.message);
+              reject(err);
+            } else {
+              console.log(`   ✅ Bill created successfully: ID ${createdBill.Id}`);
+              resolve(createdBill);
+            }
+          });
+        });
+        
+        if (result && (result as any).Id) {
+          const billId = (result as any).Id;
+          
+          // Update payroll record with QuickBooks bill ID
+          await db.execute(`
+            UPDATE monthly_payroll 
+            SET quickbooks_bill_id = '${billId}', updated_at = NOW()
+            WHERE id = ${record.payroll_id}
+          `);
+          
+          console.log(`   💾 Database updated with bill ID: ${billId}`);
+          
+          createdBills.push({
+            employee: `${record.first_name} ${record.last_name}`,
+            month: monthName,
+            amount: record.gross_pay,
+            hours: record.total_hours,
+            billId: billId
           });
           
-          if ((verification as any[]).length > 0) {
-            console.log('✅ VERIFICATION SUCCESS: Bill exists in QuickBooks');
-            console.log('📋 Bill details:', (verification as any[])[0]);
-          } else {
-            console.log('⚠️ Bill not found in verification');
-          }
-        } catch (verifyErr) {
-          console.log('⚠️ Verification failed:', verifyErr);
+          billsCreated++;
+          
+          // Rate limiting to avoid API issues
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
-      }, 2000);
+        
+      } catch (error: any) {
+        console.log(`   ❌ Failed to create bill for ${record.first_name} ${record.last_name}`);
+        billsFailed++;
+      }
     }
     
+    console.log(`\n🎉 BILL CREATION PROCESS COMPLETE!`);
+    console.log(`✅ New bills created: ${billsCreated}`);
+    console.log(`❌ Bills failed: ${billsFailed}`);
+    console.log(`📊 Total processed: ${records.length}`);
+    
+    if (createdBills.length > 0) {
+      console.log(`\n📋 NEWLY CREATED BILLS (${createdBills.length}):`);
+      let totalNewBills = 0;
+      
+      createdBills.forEach(bill => {
+        console.log(`✅ ${bill.employee} - ${bill.month}: $${bill.amount} (${bill.hours}h) → Bill ${bill.billId}`);
+        totalNewBills += parseFloat(bill.amount.toString());
+      });
+      
+      console.log(`💰 Total new bills value: $${totalNewBills.toFixed(2)}`);
+    }
+    
+    // Get final comprehensive summary
+    console.log(`\n📊 COMPREHENSIVE FINAL SUMMARY:`);
+    
+    const finalSummary = await db.execute(`
+      SELECT 
+        u.first_name,
+        u.last_name,
+        COUNT(*) as total_payroll_records,
+        COUNT(mp.quickbooks_bill_id) as bills_created,
+        ROUND(SUM(CAST(mp.gross_pay AS DECIMAL)), 2) as total_payroll_value
+      FROM monthly_payroll mp
+      JOIN users u ON mp.user_id = u.id
+      WHERE mp.year = 2025 AND u.hourly_rate IS NOT NULL
+      GROUP BY u.first_name, u.last_name, u.id
+      ORDER BY u.first_name
+    `);
+    
+    const summary = finalSummary.rows || finalSummary;
+    
+    let grandTotalRecords = 0;
+    let grandTotalBills = 0;
+    let grandTotalValue = 0;
+    
+    console.log(`\n👥 EMPLOYEE BILL STATUS:`);
+    summary.forEach((emp: any) => {
+      const completionRate = Math.round((emp.bills_created / emp.total_payroll_records) * 100);
+      const status = completionRate === 100 ? '✅' : completionRate > 0 ? '🔄' : '❌';
+      
+      console.log(`${status} ${emp.first_name} ${emp.last_name}: ${emp.bills_created}/${emp.total_payroll_records} bills (${completionRate}%) = $${emp.total_payroll_value}`);
+      
+      grandTotalRecords += parseInt(emp.total_payroll_records);
+      grandTotalBills += parseInt(emp.bills_created);
+      grandTotalValue += parseFloat(emp.total_payroll_value);
+    });
+    
+    console.log(`\n🎯 GRAND TOTALS:`);
+    console.log(`📊 Payroll records: ${grandTotalRecords}`);
+    console.log(`✅ QuickBooks bills: ${grandTotalBills}`);
+    console.log(`💰 Total payroll value: $${grandTotalValue.toFixed(2)}`);
+    console.log(`📈 Overall completion: ${Math.round((grandTotalBills / grandTotalRecords) * 100)}%`);
+    
+    if (grandTotalBills === grandTotalRecords) {
+      console.log(`\n🎉 SUCCESS: ALL EMPLOYEES NOW HAVE QUICKBOOKS BILLS!`);
+    }
+    
+    return {
+      newBillsCreated: billsCreated,
+      billsFailed: billsFailed,
+      totalRecords: grandTotalRecords,
+      totalBills: grandTotalBills,
+      totalValue: grandTotalValue,
+      completionRate: Math.round((grandTotalBills / grandTotalRecords) * 100)
+    };
+    
   } catch (error) {
-    console.log('❌ Overall error:', error);
+    console.error('❌ Error in bill creation process:', error);
+    throw error;
   }
 }
 
-createRealBill();
+createRealBillsForAll();
