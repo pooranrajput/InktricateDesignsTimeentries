@@ -22,6 +22,15 @@ export default function PayrollManagement() {
   // Fetch monthly payroll data
   const { data: payrollData = [], isLoading } = useQuery({
     queryKey: ["/api/payroll", selectedYear, selectedMonth],
+    queryFn: async () => {
+      const response = await fetch(`/api/payroll?year=${selectedYear}&month=${selectedMonth}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch payroll data');
+      }
+      return response.json();
+    },
     retry: false,
   });
 
@@ -31,7 +40,7 @@ export default function PayrollManagement() {
       await apiRequest("PATCH", `/api/payroll/${payrollId}/paid`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payroll", selectedYear, selectedMonth] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/monthly"] });
       setConfirmingPayment(null);
       toast({
@@ -65,7 +74,7 @@ export default function PayrollManagement() {
       await apiRequest("POST", "/api/payroll/generate", { year: selectedYear, month: selectedMonth });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payroll", selectedYear, selectedMonth] });
       toast({
         title: "Payroll Generated",
         description: "Monthly payroll records have been created",
