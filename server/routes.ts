@@ -890,6 +890,53 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // List all accounts to find the correct Wages account
+  app.get('/api/quickbooks/list-accounts', isAuthenticated, async (req: any, res) => {
+    try {
+      const qbo = await quickbooksService.initializeClient();
+      
+      console.log('🔍 Listing all accounts...');
+      
+      const result = await new Promise((resolve, reject) => {
+        qbo.findAccounts("SELECT * FROM Account", (err, accounts) => {
+          if (err) {
+            console.error('❌ Account listing failed:', err);
+            reject(err);
+          } else {
+            const accountList = accounts?.QueryResponse?.Account || [];
+            console.log(`📋 Found ${accountList.length} total accounts`);
+            
+            // Filter for expense accounts and look for Wages
+            const expenseAccounts = accountList.filter(a => 
+              a.AccountType === 'Expense' || 
+              a.Name.toLowerCase().includes('wage') ||
+              a.Name.toLowerCase().includes('payroll') ||
+              a.Name.toLowerCase().includes('contractor')
+            );
+            
+            const accountSummary = expenseAccounts.map(a => ({
+              Id: a.Id,
+              Name: a.Name,
+              AccountType: a.AccountType,
+              AccountSubType: a.AccountSubType
+            }));
+            
+            console.log('📋 Expense/Wage related accounts:', accountSummary);
+            resolve({ accounts: accountSummary, total: accountList.length });
+          }
+        });
+      });
+      
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error('❌ Account listing failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Account listing failed' 
+      });
+    }
+  });
+
   // List all vendors to debug Track1099 status
   app.get('/api/quickbooks/list-vendors', isAuthenticated, async (req: any, res) => {
     try {

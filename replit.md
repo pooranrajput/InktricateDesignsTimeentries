@@ -119,6 +119,11 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 22, 2025. CRITICAL FIX: Corrected bill categorization from "Equipment Rental" to "Wages"
+  - Identified root cause: hardcoded account ID "62" mapped to wrong expense category
+  - Fixed account ID to "1150040000" which is the correct "Wages" account (PayrollExpenses type)
+  - Bills will now be properly categorized for payroll accounting and 1099 reporting
+  - Cleared existing bill IDs from database to allow regeneration with correct categorization
 - July 22, 2025. SUCCESS: Complete QuickBooks bill generation workflow achieved
   - Successfully re-authenticated QuickBooks connection after token expiration
   - Generated 5 contractor bills for July 2025 payroll period

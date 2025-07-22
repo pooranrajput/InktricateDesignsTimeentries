@@ -316,7 +316,7 @@ export class QuickBooksService {
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: {
-              value: process.env.QB_PAYROLL_ACCOUNT || "62", // "Wages" account
+              value: process.env.QB_PAYROLL_ACCOUNT || "1150040000", // "Wages" account ID 
             },
           },
           Description: `${monthName} ${payrollRecord.year} - ${vendor.firstName} ${vendor.lastName} Payroll`,
