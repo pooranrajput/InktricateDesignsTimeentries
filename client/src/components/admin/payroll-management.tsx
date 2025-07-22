@@ -192,7 +192,7 @@ export default function PayrollManagement() {
               </div>
             </div>
           </div>
-          {(payrollData as any[]).length === 0 && (
+          {!isLoading && (payrollData as any[]).length === 0 && (
             <Button 
               onClick={() => generatePayrollMutation.mutate()}
               disabled={generatePayrollMutation.isPending}
@@ -206,7 +206,7 @@ export default function PayrollManagement() {
       </CardHeader>
 
       <CardContent className="p-4 sm:p-6">
-        {(payrollData as any[]).length === 0 ? (
+        {!isLoading && (payrollData as any[]).length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">No payroll records yet</h3>
@@ -221,7 +221,7 @@ export default function PayrollManagement() {
               Generate Payroll
             </Button>
           </div>
-        ) : (
+        ) : !isLoading && (payrollData as any[]).length > 0 ? (
           <div className="space-y-4">
             {(payrollData as any[]).map((record: any) => (
               <div key={record.id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -290,7 +290,12 @@ export default function PayrollManagement() {
               </div>
             ))}
           </div>
-        )}
+        ) : isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Loading payroll data...</p>
+          </div>
+        ) : null}
       </CardContent>
 
       {/* View Payroll Details Dialog */}
