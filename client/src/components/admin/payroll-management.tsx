@@ -23,16 +23,21 @@ export default function PayrollManagement() {
   const { data: payrollData = [], isLoading } = useQuery({
     queryKey: ["/api/payroll", selectedYear, selectedMonth],
     queryFn: async () => {
+      console.log(`🔍 Fetching payroll data for ${selectedYear}-${selectedMonth}`);
       const response = await fetch(`/api/payroll?year=${selectedYear}&month=${selectedMonth}`, {
         credentials: 'include'
       });
       if (!response.ok) {
         throw new Error('Failed to fetch payroll data');
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`📊 Payroll data received:`, data);
+      return data;
     },
     retry: false,
   });
+
+  console.log(`📋 Component state: month=${selectedMonth}, payrollData.length=${payrollData.length}, isLoading=${isLoading}`);
 
   // Mark employee as paid mutation
   const markAsPaidMutation = useMutation({
