@@ -4,17 +4,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AlertTriangle, Users, Clock, Calendar } from "lucide-react";
 
 export function EmergencyRecoveryPage() {
-  const { data: user } = useQuery({ queryKey: ['/api/user'] });
-  const { data: taskCategories } = useQuery({ queryKey: ['/api/task-categories'] });
+  const { data: user, isLoading: userLoading } = useQuery({ queryKey: ['/api/user'] });
+  const { data: taskCategories, isLoading: categoriesLoading } = useQuery({ queryKey: ['/api/task-categories'] });
 
-  if (!user || !taskCategories) {
-    return <div className="p-6">Loading...</div>;
+  // Debug what we're getting
+  console.log('Emergency Recovery Debug:', { user, taskCategories, userLoading, categoriesLoading });
+
+  if (userLoading || categoriesLoading) {
+    return <div className="p-6">Loading user and categories...</div>;
   }
 
-  // Type safety checks
-  if (!Array.isArray(taskCategories) || !user.id) {
-    return <div className="p-6">Error loading data. Please refresh the page.</div>;
+  if (!user) {
+    return <div className="p-6">User not found. Please log in again.</div>;
   }
+
+  if (!taskCategories || !Array.isArray(taskCategories)) {
+    return <div className="p-6">Task categories not available. Please refresh the page.</div>;
+  }
+  
+  // Handle user properties safely
+  const safeUser = {
+    id: user?.id || 0,
+    first_name: user?.firstName || user?.first_name || 'User',
+    last_name: user?.lastName || user?.last_name || ''
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -85,7 +98,7 @@ export function EmergencyRecoveryPage() {
       {/* Bulk Entry System */}
       <EmergencyRecovery 
         taskCategories={taskCategories} 
-        currentUser={user}
+        currentUser={safeUser}
       />
 
       {/* Contact Information */}
