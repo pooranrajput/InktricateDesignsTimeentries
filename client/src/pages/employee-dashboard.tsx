@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import NavigationHeader from "@/components/navigation-header";
 import TimeEntryForm from "@/components/employee/time-entry-form";
 import TimeEntriesList from "@/components/employee/time-entries-list";
+import Footer from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Calendar, TrendingUp } from "lucide-react";
 

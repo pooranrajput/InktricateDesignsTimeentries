@@ -9,6 +9,7 @@ import { protectData } from "./protection";
 import { z } from "zod";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
+import path from "path";
 
 const scryptAsync = promisify(scrypt);
 
@@ -1483,6 +1484,15 @@ export function registerRoutes(app: Express): Server {
         error: error?.message || "Unknown error" 
       });
     }
+  });
+
+  // Serve Terms of Service and Privacy Policy
+  app.get('/terms-of-service', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'terms-of-service.html'));
+  });
+
+  app.get('/privacy-policy', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'privacy-policy.html'));
   });
 
   // BACKUP AND PROTECTION ROUTES - ADMIN ONLY
