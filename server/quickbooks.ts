@@ -59,6 +59,11 @@ export class QuickBooksService {
     try {
       console.log('🔍 QuickBooks Debug - Handling OAuth callback with manual token exchange');
       console.log('🔍 QuickBooks Debug - Code:', !!code, 'State:', state, 'RealmId:', realmId);
+      console.log('🔍 QuickBooks Debug - Environment check during callback:', {
+        useSandbox: this.useSandbox,
+        sandboxEnv: process.env.QUICKBOOKS_SANDBOX,
+        realmId: realmId
+      });
       
       // Manual token exchange as fallback to intuit-oauth createToken issues
       const tokens = await this.exchangeCodeForTokens(code, realmId);
