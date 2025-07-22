@@ -936,7 +936,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Get user with QB vendor ID
-      const user = await storage.getUserById(userId);
+      const user = await storage.getUser(userId);
       if (!user) {
         throw new Error('User not found');
       }
@@ -1055,9 +1055,7 @@ export function registerRoutes(app: Express): Server {
         
         // Update payroll record with QB bill ID
         try {
-          await storage.updateMonthlyPayroll(payrollRecord.id, {
-            quickbooksBillId: createdBill.Id.toString()
-          });
+          await storage.updatePayrollQuickBooksInfo(payrollRecord.id, createdBill.Id.toString());
           console.log('💾 Updated payroll record with QB bill ID:', createdBill.Id);
           
           // Verify the bill was created in QuickBooks

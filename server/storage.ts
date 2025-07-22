@@ -64,6 +64,8 @@ export interface IStorage {
   getMonthlyPayrollRecords(year: number, month: number): Promise<any[]>;
   generateMonthlyPayroll(year: number, month: number): Promise<any[]>;
   markPayrollAsPaid(payrollId: number, paidBy: string): Promise<any>;
+  getMonthlyPayroll(userId: string, year: number, month: number): Promise<any>;
+  updatePayrollQuickBooksInfo(payrollId: number, quickbooksBillId: string): Promise<any>;
   
   // QuickBooks integration operations
   updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User>;
@@ -599,6 +601,34 @@ export class DatabaseStorage implements IStorage {
         status: 'paid',
         paidAt: new Date(),
         paidBy,
+      })
+      .where(eq(monthlyPayroll.id, payrollId))
+      .returning();
+    
+    return record;
+  }
+
+  async getMonthlyPayroll(userId: string, year: number, month: number): Promise<any> {
+    const [record] = await db
+      .select()
+      .from(monthlyPayroll)
+      .where(
+        and(
+          eq(monthlyPayroll.userId, userId),
+          eq(monthlyPayroll.year, year),
+          eq(monthlyPayroll.month, month)
+        )
+      );
+    
+    return record;
+  }
+
+  async updatePayrollQuickBooksInfo(payrollId: number, quickbooksBillId: string): Promise<any> {
+    const [record] = await db
+      .update(monthlyPayroll)
+      .set({
+        quickbooksBillId,
+        updatedAt: new Date(),
       })
       .where(eq(monthlyPayroll.id, payrollId))
       .returning();
