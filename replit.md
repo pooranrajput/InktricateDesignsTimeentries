@@ -119,6 +119,12 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 22, 2025. ENHANCED: Payroll bill format updated with proper categorization and description standards
+  - Updated bill category to use "Wages" account (configurable for production via QB_PAYROLL_ACCOUNT env var)
+  - Standardized description format: "Month Year - Employee Name Payroll" (e.g., "August 2025 - Pooran Rajput Payroll")
+  - Added production configuration support for different account names between sandbox and production
+  - Maintained all optimization benefits: stored vendor IDs, automated workflow, complete tracking
+  - System ready for production deployment with proper payroll categorization
 - July 21, 2025. COMPLETED: Automated payroll bill creation successfully implemented with QuickBooks integration
   - Successfully created QuickBooks bill ID 146 for Pooran Rajput ($60, 4 hours, July 2025)
   - Optimized system using stored vendor ID 65 (no API lookups needed for efficiency)

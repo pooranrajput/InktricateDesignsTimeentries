@@ -953,11 +953,17 @@ export function registerRoutes(app: Express): Server {
       console.log(`💰 Using stored vendor ID: ${user.quickbooksVendorId} for ${user.firstName} ${user.lastName}`);
       console.log('💰 Vendor ref object:', JSON.stringify(vendorRef, null, 2));
       
-      // Find Professional Services account
+      // Account name configuration (can be changed for production)
+      const PAYROLL_ACCOUNT_NAME = process.env.QB_PAYROLL_ACCOUNT || 'Wages';
+      console.log('💰 Looking for payroll account:', PAYROLL_ACCOUNT_NAME);
+      
+      // Find the specified payroll account (or fallback to expense account)
       const accounts = await new Promise((resolve, reject) => {
-        qbo.findAccounts("SELECT * FROM Account WHERE Name = 'Professional Services'", (err: any, accounts: any) => {
+        qbo.findAccounts(`SELECT * FROM Account WHERE Name = '${PAYROLL_ACCOUNT_NAME}'`, (err: any, accounts: any) => {
           if (err) {
-            qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 3", (err2: any, accounts2: any) => {
+            console.log('⚠️ Payroll account not found, searching for expense accounts...');
+            // Fallback to any expense account if specified account not found
+            qbo.findAccounts("SELECT * FROM Account WHERE AccountType = 'Expense' MAXRESULTS 5", (err2: any, accounts2: any) => {
               if (err2) reject(err2);
               else resolve(accounts2?.QueryResponse?.Account || []);
             });
@@ -972,23 +978,31 @@ export function registerRoutes(app: Express): Server {
       }
       
       const accountRef = { value: (accounts as any[])[0].Id };
+      const accountName = (accounts as any[])[0].Name;
+      console.log('💰 Using account:', accountName, 'ID:', accountRef.value);
       
-      // Create bill for actual payroll (simplified structure like manual creation)
+      // Create bill for actual payroll with proper description format
       const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                      'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      // Format: "Month Year - Employee Name Payroll" (e.g., "August 2025 - Pooran Rajput Payroll")
+      const description = `${months[month-1]} ${year} - ${user.firstName} ${user.lastName} Payroll`;
       
       const bill = {
         VendorRef: vendorRef,
         TotalAmt: parseFloat(payrollRecord.grossPay.toString()),
         Line: [{
           Amount: parseFloat(payrollRecord.grossPay.toString()),
-          Description: `${months[month-1]} ${year} - ${user.firstName} ${user.lastName} Payroll`,
+          Description: description,
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: accountRef
           }
         }]
       };
+      
+      console.log('💰 Bill description format:', description);
+      console.log('💰 Account category:', accountName);
       
 
       
