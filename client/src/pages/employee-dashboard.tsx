@@ -196,6 +196,9 @@ export default function EmployeeDashboard() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
