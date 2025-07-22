@@ -3,7 +3,7 @@ import OAuthClient from 'intuit-oauth';
 // @ts-ignore
 import QuickBooks from 'node-quickbooks';
 import { db } from './db';
-import { quickbooksConfig, users, timeEntries } from '../shared/schema';
+import { quickbooksConfig, users, timeEntries, monthlyPayroll } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 export class QuickBooksService {
@@ -292,55 +292,47 @@ export class QuickBooksService {
     });
   }
 
-  // Convert time entries to invoice for a contractor
-  async createInvoiceFromTimeEntries(contractorId: string, timeEntryIds: number[], invoiceData: any) {
+  // Create a QuickBooks bill for a contractor's payroll
+  async createContractorBill(payrollRecord: any, vendor: any) {
     await this.initializeClient();
     
-    const contractor = await db.query.users.findFirst({
-      where: eq(users.id, contractorId),
-    });
-
-    if (!contractor?.quickbooksCustomerId) {
-      throw new Error('Contractor not setup in QuickBooks');
-    }
-
-    const timeEntriesData = await db.query.timeEntries.findMany({
-      where: and(
-        eq(timeEntries.userId, contractorId),
-        // Add condition for timeEntryIds
-      ),
-      with: {
-        user: true,
-      },
-    });
-
+    // Calculate payroll period end date (last day of the month)
+    const payrollDate = new Date(payrollRecord.year, payrollRecord.month - 1 + 1, 0); // Last day of month
+    const formattedDate = payrollDate.toISOString().split('T')[0];
+    
+    // Get month name for description
+    const monthName = new Date(payrollRecord.year, payrollRecord.month - 1).toLocaleDateString('en-US', { month: 'long' });
+    
     return new Promise((resolve, reject) => {
-      const invoice = {
-        CustomerRef: {
-          value: contractor.quickbooksCustomerId,
+      const bill = {
+        VendorRef: {
+          value: vendor.vendorId || vendor.Id,
         },
-        Line: timeEntriesData.map((entry) => ({
-          DetailType: 'SalesItemLineDetail',
-          SalesItemLineDetail: {
-            ItemRef: {
-              value: contractor.quickbooksItemId || '1',
+        TxnDate: formattedDate, // Use payroll period end date
+        DueDate: formattedDate,
+        Line: [{
+          Id: "1",
+          Amount: parseFloat(payrollRecord.grossPay || payrollRecord.gross_pay || '0'),
+          DetailType: "AccountBasedExpenseLineDetail",
+          AccountBasedExpenseLineDetail: {
+            AccountRef: {
+              value: process.env.QB_PAYROLL_ACCOUNT || "62", // "Wages" account
             },
-            Qty: parseFloat(entry.totalHours),
-            UnitPrice: parseFloat(contractor.hourlyRate || '0'),
-            ServiceDate: entry.date,
           },
-          Description: `${entry.project} - ${entry.notes || 'Time entry'}`,
-        })),
-        DueDate: invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        PrivateNote: invoiceData.notes || 'Invoice generated from time tracking system',
+          Description: `${monthName} ${payrollRecord.year} - ${vendor.firstName} ${vendor.lastName} Payroll`,
+        }],
+        PrivateNote: `Payroll bill for ${monthName} ${payrollRecord.year}`,
       };
 
-      this.qbo!.createInvoice(invoice, (err: any, invoice: any) => {
+      console.log('🔧 Creating QuickBooks bill with data:', JSON.stringify(bill, null, 2));
+
+      this.qbo!.createBill(bill, (err: any, createdBill: any) => {
         if (err) {
-          console.error('Error creating invoice:', err);
+          console.error('❌ Error creating bill:', err);
           reject(err);
         } else {
-          resolve(invoice.QueryResponse?.Invoice?.[0] || invoice);
+          console.log('✅ Bill created successfully:', createdBill?.Bill?.Id);
+          resolve(createdBill?.Bill || createdBill);
         }
       });
     });
@@ -350,48 +342,80 @@ export class QuickBooksService {
   async generateMonthlyContractorBills(year: number, month: number) {
     await this.initializeClient();
     
-    // Get all contractors with time entries for the month
-    const contractors = await db.query.users.findMany({
-      where: and(
-        eq(users.role, 'employee'),
-        // Add condition for having QuickBooks setup
-      ),
-      with: {
-        timeEntries: {
-          where: and(
-            // Add date filtering for the specific month/year
-          ),
-        },
-      },
-    });
+    // Get payroll records for the specified month/year using correct field names
+    const payrollRecords = await db.select({
+      id: monthlyPayroll.id,
+      userId: monthlyPayroll.userId, 
+      year: monthlyPayroll.year,
+      month: monthlyPayroll.month,
+      totalHours: monthlyPayroll.totalHours,
+      grossPay: monthlyPayroll.grossPay,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      quickbooksVendorId: users.quickbooksVendorId,
+    })
+    .from(monthlyPayroll)
+    .innerJoin(users, eq(monthlyPayroll.userId, users.id))
+    .where(and(
+      eq(monthlyPayroll.year, year),
+      eq(monthlyPayroll.month, month),
+      eq(users.role, 'employee')
+    ));
+
+    console.log(`🔄 Found ${payrollRecords.length} payroll records for ${month}/${year}`);
 
     const results = [];
     
-    for (const contractor of contractors) {
-      if (contractor.timeEntries.length > 0 && contractor.quickbooksCustomerId) {
-        try {
-          const invoice = await this.createInvoiceFromTimeEntries(
-            contractor.id,
-            contractor.timeEntries.map(entry => entry.id),
-            {
-              dueDate: new Date(year, month, 15).toISOString().split('T')[0], // 15th of next month
-              notes: `Monthly time tracking invoice for ${new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-            }
-          );
-          
-          results.push({
-            contractor: contractor,
-            invoice: invoice,
-            totalHours: contractor.timeEntries.reduce((sum, entry) => sum + parseFloat(entry.totalHours), 0),
-            totalAmount: contractor.timeEntries.reduce((sum, entry) => sum + (parseFloat(entry.totalHours) * parseFloat(contractor.hourlyRate || '0')), 0),
+    for (const payrollRecord of payrollRecords) {
+      try {
+        console.log(`\n🔄 Processing payroll for ${payrollRecord.firstName} ${payrollRecord.lastName}...`);
+        
+        // Find or create vendor for this contractor
+        let vendor = null;
+        let vendorId = payrollRecord.quickbooksVendorId;
+        
+        if (vendorId) {
+          vendor = { vendorId, firstName: payrollRecord.firstName, lastName: payrollRecord.lastName };
+          console.log(`✅ Using existing vendor ID: ${vendorId}`);
+        } else {
+          // Create vendor if doesn't exist
+          const createdVendor = await this.createContractor({
+            id: payrollRecord.userId,
+            first_name: payrollRecord.firstName,
+            last_name: payrollRecord.lastName,
           });
-        } catch (error) {
-          console.error(`Error creating invoice for contractor ${contractor.id}:`, error);
-          results.push({
-            contractor: contractor,
-            error: (error as Error).message,
-          });
+          vendorId = createdVendor.Id;
+          vendor = { vendorId, firstName: payrollRecord.firstName, lastName: payrollRecord.lastName };
+          console.log(`✅ Created new vendor ID: ${vendorId}`);
         }
+        
+        // Create QuickBooks bill
+        const createdBill = await this.createContractorBill(payrollRecord, vendor);
+        
+        // Update payroll record with QuickBooks bill ID
+        await db.update(monthlyPayroll)
+          .set({ 
+            quickbooksBillId: createdBill.Id.toString() 
+          })
+          .where(eq(monthlyPayroll.id, payrollRecord.id));
+        
+        console.log(`✅ Bill ${createdBill.Id} created for ${payrollRecord.firstName} ${payrollRecord.lastName} - $${payrollRecord.grossPay}`);
+        
+        results.push({
+          contractor: `${payrollRecord.firstName} ${payrollRecord.lastName}`,
+          billId: createdBill.Id,
+          amount: payrollRecord.grossPay,
+          hours: payrollRecord.totalHours,
+          success: true
+        });
+        
+      } catch (error) {
+        console.error(`❌ Error creating bill for ${payrollRecord.firstName} ${payrollRecord.lastName}:`, error);
+        results.push({
+          contractor: `${payrollRecord.firstName} ${payrollRecord.lastName}`,
+          error: (error as Error).message,
+          success: false
+        });
       }
     }
 

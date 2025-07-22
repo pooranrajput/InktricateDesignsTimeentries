@@ -83,6 +83,7 @@ export const monthlyPayroll = pgTable("monthly_payroll", {
   status: varchar("status").notNull().default("pending"), // pending, paid
   paidAt: timestamp("paid_at"),
   paidBy: varchar("paid_by").references(() => users.id),
+  quickbooksBillId: varchar("quickbooks_bill_id"), // QB Bill ID for tracking
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
