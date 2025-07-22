@@ -72,6 +72,28 @@ export default function QuickBooksIntegration() {
     },
   });
 
+  // Create payroll bill for specific user
+  const createPayrollBillMutation = useMutation({
+    mutationFn: async (data: { userId: string; year: number; month: number }) => {
+      const response = await apiRequest('POST', '/api/quickbooks/create-payroll-bill', data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Payroll Bill Created",
+        description: `Successfully created QuickBooks bill ID ${data.bill?.Id} for $${data.bill?.TotalAmt}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Payroll Bill Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Sync contractors to QuickBooks
   const syncContractorsMutation = useMutation({
     mutationFn: async () => {
@@ -125,6 +147,15 @@ export default function QuickBooksIntegration() {
 
   const handleGenerateBills = () => {
     generateBillsMutation.mutate({ year: selectedYear, month: selectedMonth });
+  };
+
+  const handleCreatePayrollBill = () => {
+    // Using admin user ID for testing - you can modify this to select different users
+    createPayrollBillMutation.mutate({ 
+      userId: "43458679", // Admin user ID for testing
+      year: selectedYear, 
+      month: selectedMonth 
+    });
   };
 
   const isConnected = connectionTest?.success;
@@ -283,12 +314,23 @@ export default function QuickBooksIntegration() {
                 <DollarSign className="h-4 w-4" />
                 {generateBillsMutation.isPending ? 'Generating...' : 'Generate Bills'}
               </Button>
+              
+              <Button
+                onClick={handleCreatePayrollBill}
+                disabled={!isConnected || createPayrollBillMutation.isPending}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <DollarSign className="h-4 w-4" />
+                {createPayrollBillMutation.isPending ? 'Creating...' : 'Test Payroll Bill'}
+              </Button>
             </div>
 
             <Alert>
               <AlertDescription>
-                This will create invoices in QuickBooks for all contractors who have logged time in the selected month.
-                Make sure contractors are properly set up in QuickBooks first.
+                <div className="space-y-2">
+                  <div><strong>Generate Bills:</strong> Creates invoices for all contractors with logged time in the selected period.</div>
+                  <div><strong>Test Payroll Bill:</strong> Creates a single payroll bill using the new "Wages" category and "Month Year - Name Payroll" description format.</div>
+                </div>
               </AlertDescription>
             </Alert>
           </div>
