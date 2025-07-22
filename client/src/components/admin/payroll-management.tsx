@@ -17,7 +17,7 @@ export default function PayrollManagement() {
   // Month/year selector for payroll management
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(2025); // Default to our test data year
-  const [selectedMonth, setSelectedMonth] = useState(7); // Default to July (our first test month)
+  const [selectedMonth, setSelectedMonth] = useState(8); // Default to August for next testing
 
   // Fetch monthly payroll data
   const { data: payrollData = [], isLoading } = useQuery({
