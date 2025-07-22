@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema } from "@shared/schema";
+import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig } from "@shared/schema";
 import { quickbooksService } from "./quickbooks";
 import { backupService } from "./backup";
 import { protectData } from "./protection";
@@ -10,6 +10,8 @@ import { z } from "zod";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import path from "path";
+import { db } from "./storage";
+import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
