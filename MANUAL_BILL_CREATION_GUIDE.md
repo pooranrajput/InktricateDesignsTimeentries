@@ -1,72 +1,78 @@
-# Manual QuickBooks Bill Creation Guide
+# Manual Vendor Creation & Bill Mapping Fix Guide
 
-## Creating a Bill for Contractor Payment - Step by Step
+## Issue Identified ✅
+- All 34 bills (IDs 153-186) were incorrectly created under Pooran Rajput's vendor ID (65)
+- Each employee needs their own vendor in QuickBooks for proper contractor tracking
+- QuickBooks sandbox API is rejecting automated vendor creation attempts
 
-Based on your QuickBooks screenshot, here's how to manually create a bill for your $60 contractor payment:
+## Current Status:
+- **Pooran Rajput**: Has vendor ID 65 and 6 correct bills (147-152) ✅
+- **Other 5 employees**: No vendor IDs, bills incorrectly mapped to Pooran ❌
 
-### Step 1: Navigate to Bills
-1. Go to QuickBooks sandbox
-2. Click "Expenses" in left menu
-3. Click "Bills" 
-4. Click "New Bill" or "Create"
+## Solution: Manual Vendor Creation Required
 
-### Step 2: Fill Bill Form
-**Vendor Section:**
-- **Vendor**: Choose "Pooran Rajput" (if exists) or create new vendor
-  - If creating new: Name = "Pooran Rajput", Email = "pooran.rajput@gmail.com"
-  - Check "Track payments for 1099" if setting up as contractor
+### Step 1: Create Vendors Manually in QuickBooks
+You'll need to log into your QuickBooks sandbox and manually create vendors for:
 
-**Bill Details:**
-- **Terms**: Net 30 (default)
-- **Bill date**: 07/21/2025 (today's date)
-- **Due date**: 08/20/2025 (30 days from bill date)
-- **Bill no.**: Leave blank (auto-generated)
+1. **Alysha Mahagaonkar**
+   - Email: alyshamaha@gmail.com
+   - Needed for: 7 bills totaling $12,164.75
 
-### Step 3: Category Details (Line Items)
-In the category details section:
-- **Row 1:**
-  - **Category**: "Professional Services" or "Contractors" 
-  - **Description**: "July 2025 contractor payment - 4 hours wedding-invites project"
-  - **Amount**: $60.00
-  - **Billable**: Leave unchecked (this is an expense, not billable to customer)
-  - **Tax**: Leave blank
-  - **Customer**: Leave blank
+2. **Anjali Patel** 
+   - Email: anjalipatel0074@gmail.com
+   - Needed for: 7 bills totaling $7,318.84
 
-### Step 4: Item Details
-- **Memo**: "Contractor payment for time tracking - July 2025"
-- **Attachments**: None needed
+3. **Madhuri McCartney**
+   - Email: madhuri.mccartney@gmail.com
+   - Needed for: 7 bills totaling $7,528.28
 
-### Step 5: Save and Verify
-1. Click "Save and Close"
-2. Verify the bill appears in your Bills list
-3. Check total shows $60.00
+4. **Rhea Doshi**
+   - Email: rheadoshi94@gmail.com
+   - Needed for: 7 bills totaling $13,171.00
+
+5. **Yesha Patel**
+   - Email: Yeshap031@gmail.com
+   - Needed for: 6 bills totaling $6,795.30
+
+### Step 2: Manual Vendor Creation Process
+In QuickBooks sandbox:
+1. Go to Expenses → Vendors
+2. Click "New Vendor"
+3. Enter:
+   - **Display Name**: Full employee name (e.g., "Alysha Mahagaonkar")
+   - **Company**: Full employee name
+   - **Email**: Employee email address
+   - **Vendor Type**: Contractor (if available)
+4. Save vendor
+5. Note the Vendor ID assigned
+
+### Step 3: Update Our Database
+Once you create vendors, run this command to update our database with vendor IDs:
+
+```sql
+-- Update with actual vendor IDs from QuickBooks
+UPDATE users SET quickbooks_vendor_id = 'NEW_VENDOR_ID_1' WHERE first_name = 'Alysha' AND last_name = 'Mahagaonkar';
+UPDATE users SET quickbooks_vendor_id = 'NEW_VENDOR_ID_2' WHERE first_name = 'Anjali' AND last_name = 'Patel';
+UPDATE users SET quickbooks_vendor_id = 'NEW_VENDOR_ID_3' WHERE first_name = 'Madhuri' AND last_name = 'McCartney';
+UPDATE users SET quickbooks_vendor_id = 'NEW_VENDOR_ID_4' WHERE first_name = 'Rhea' AND last_name = 'Doshi';
+UPDATE users SET quickbooks_vendor_id = 'NEW_VENDOR_ID_5' WHERE first_name = 'Yesha' AND last_name = 'Patel';
+```
+
+### Step 4: Automated Bill Creation
+Once vendors are created and database is updated, I can run the automated script to:
+1. Clear incorrect bill mappings (bills 153-186)
+2. Create new bills with correct vendor assignments
+3. Update database with proper bill tracking
 
 ## Expected Result
-After saving, you should see:
-- New bill in Bills list
-- Vendor "Pooran Rajput" created/updated
-- Balance due of $60.00
-- Expense recorded in "Professional Services" category
+- **40 total bills** properly mapped to individual vendors
+- **Complete audit trail** for each contractor's payments
+- **Proper 1099 tracking** capability for each vendor
 
-## Next Steps for API Debug
-Once manual creation works, we'll compare the structure with our API calls to identify the exact issue.
+## Alternative Quick Fix
+If manual vendor creation is too time-consuming, we could:
+1. Delete the incorrectly mapped bills (153-186) from QuickBooks
+2. Keep only Pooran's 6 correct bills (147-152)
+3. Demonstrate the workflow with Pooran's data as proof of concept
 
-## Manual Creation Results ✅
-**Successfully Created:**
-- Bill ID: 145
-- Vendor: Pooran Rajput (created new)
-- Category: Professional Services (created new)
-- Amount: $60.00
-- Description: "July 2025 - Pooran Rajput Payroll"
-
-## API Debug Status
-- QuickBooks connection: ✅ Working
-- Vendor sync: ✅ Working (6 contractors synced)
-- Manual bill creation: ✅ Working (Bill ID 145)
-- Automated API bill creation: 🔧 Now debugging with exact manual structure
-
-## Next Steps
-1. API will find "Pooran Rajput" vendor (from manual creation)
-2. API will find "Professional Services" account (from manual creation)
-3. API will use exact same structure as manual bill
-4. Compare API result with manual Bill ID 145
+Would you like me to proceed with either approach?
