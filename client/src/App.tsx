@@ -10,6 +10,7 @@ import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import UserProfile from "@/pages/user-profile";
+import { EmergencyRecoveryPage } from "@/pages/emergency-recovery";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -55,6 +56,7 @@ function Router() {
         {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
       </Route>
       <Route path="/profile" component={UserProfile} />
+      <Route path="/emergency-recovery" component={EmergencyRecoveryPage} />
       <Route path="/time-tracking" component={EmployeeDashboard} />
       <Route path="/admin">
         {isAdmin ? <AdminDashboard /> : <EmployeeDashboard />}

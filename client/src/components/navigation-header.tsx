@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useViewToggle } from "@/hooks/use-view-toggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, BarChart3, Settings, LogOut, ToggleLeft, ToggleRight } from "lucide-react";
+import { Clock, BarChart3, Settings, LogOut, ToggleLeft, ToggleRight, AlertTriangle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function NavigationHeader() {
@@ -47,6 +47,17 @@ export default function NavigationHeader() {
           
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-4">
+              <Link href="/emergency-recovery">
+                <Button 
+                  variant="ghost" 
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Data Recovery</span>
+                  <span className="sm:hidden">Recovery</span>
+                </Button>
+              </Link>
+              
               <Link href="/">
                 <Button 
                   variant="ghost" 
