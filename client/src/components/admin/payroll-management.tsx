@@ -28,10 +28,17 @@ export default function PayrollManagement() {
         credentials: 'include'
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch payroll data');
+        console.error(`❌ Payroll fetch failed: ${response.status} ${response.statusText}`);
+        if (response.status === 401) {
+          console.log('🔄 Authentication required - redirecting to login');
+          window.location.href = '/login';
+          return [];
+        }
+        throw new Error(`Failed to fetch payroll data: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`📊 Payroll data received:`, data);
+      console.log(`📊 Payroll data received for ${selectedYear}-${selectedMonth}:`, data);
+      console.log(`📊 Data is array: ${Array.isArray(data)}, length: ${data.length}`);
       return data;
     },
     retry: false,
