@@ -14,14 +14,14 @@ export default function PayrollManagement() {
   const [viewingPayroll, setViewingPayroll] = useState<any>(null);
   const [confirmingPayment, setConfirmingPayment] = useState<any>(null);
 
-  // Get current month/year for payroll period
+  // Month/year selector for payroll management
   const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState(2025); // Default to our test data year
+  const [selectedMonth, setSelectedMonth] = useState(7); // Default to July (our first test month)
 
   // Fetch monthly payroll data
   const { data: payrollData = [], isLoading } = useQuery({
-    queryKey: ["/api/payroll", currentYear, currentMonth],
+    queryKey: ["/api/payroll", selectedYear, selectedMonth],
     retry: false,
   });
 
@@ -62,7 +62,7 @@ export default function PayrollManagement() {
   // Generate payroll records mutation
   const generatePayrollMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/payroll/generate", { year: currentYear, month: currentMonth });
+      await apiRequest("POST", "/api/payroll/generate", { year: selectedYear, month: selectedMonth });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
@@ -135,13 +135,43 @@ export default function PayrollManagement() {
     <Card className="border-0 shadow-sm mb-6 sm:mb-8">
       <CardHeader className="border-b border-border p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <div className="flex-1">
             <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">
-              Payroll Management - {getMonthName(currentMonth)} {currentYear}
+              Payroll Management - {getMonthName(selectedMonth)} {selectedYear}
             </CardTitle>
             <p className="text-muted-foreground text-sm">Review and process employee payments</p>
+            
+            {/* Month/Year Selector */}
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Month:</span>
+                <select 
+                  className="border border-border bg-background text-foreground rounded-lg px-2 py-1 text-sm"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                >
+                  <option value={7}>July</option>
+                  <option value={8}>August</option>
+                  <option value={9}>September</option>
+                  <option value={10}>October</option>
+                  <option value={11}>November</option>
+                  <option value={12}>December</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Year:</span>
+                <select 
+                  className="border border-border bg-background text-foreground rounded-lg px-2 py-1 text-sm"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                >
+                  <option value={2025}>2025</option>
+                </select>
+              </div>
+            </div>
           </div>
-          {payrollData.length === 0 && (
+          {(payrollData as any[]).length === 0 && (
             <Button 
               onClick={() => generatePayrollMutation.mutate()}
               disabled={generatePayrollMutation.isPending}
@@ -155,12 +185,12 @@ export default function PayrollManagement() {
       </CardHeader>
 
       <CardContent className="p-4 sm:p-6">
-        {payrollData.length === 0 ? (
+        {(payrollData as any[]).length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">No payroll records yet</h3>
             <p className="text-muted-foreground mb-4">
-              Generate payroll records for {getMonthName(currentMonth)} {currentYear} to start processing payments.
+              Generate payroll records for {getMonthName(selectedMonth)} {selectedYear} to start processing payments.
             </p>
             <Button 
               onClick={() => generatePayrollMutation.mutate()}
@@ -172,7 +202,7 @@ export default function PayrollManagement() {
           </div>
         ) : (
           <div className="space-y-4">
-            {payrollData.map((record: any) => (
+            {(payrollData as any[]).map((record: any) => (
               <div key={record.id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">

@@ -119,6 +119,13 @@ The application is configured for deployment on Replit with the following setup:
 
 ```
 Changelog:
+- July 22, 2025. FIXED: UI workflow issues after QuickBooks integration
+  - Restored missing "Generate Payroll" button visibility in admin dashboard
+  - Fixed payroll management to show button when no payroll records exist for selected month
+  - Added month/year selector to payroll management (July-December 2025 available)
+  - Updated Monthly Payroll Report dropdown to show all months with timesheet data (July-December 2025)
+  - Fixed TypeScript issues with payroll data type casting
+  - UI now properly supports end-to-end testing workflow: Generate Payroll → Sync Contractors → Create QB Bills
 - July 22, 2025. ENHANCED: Bill date system updated to use payroll period end dates for accurate accounting
   - Updated QuickBooks bill creation to use payroll period end dates instead of creation dates
   - Bills now show last day of payroll month (e.g., July 2025 payroll → 2025-07-31 bill date)
