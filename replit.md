@@ -233,3 +233,20 @@ Changelog:
 ```
 Preferred communication style: Simple, everyday language.
 ```
+
+## Critical Deployment Rules
+
+**⚠️ NEVER NEVER NEVER deploy dev time entries data to production ⚠️**
+
+When deploying from development to production:
+- ✅ DO: Move code, configs, schema changes
+- ❌ NEVER: Move time entry data from dev to production
+- ❌ NEVER: Overwrite production employee time records
+- ✅ DO: Only deploy application logic and database structure
+- ✅ DO: Keep production data separate and protected
+
+**Data Protection Policy:**
+- Production employee time entries are the system of record
+- Development data is for testing only
+- Always backup production before any deployment
+- Use schema migrations, never data migrations for production
