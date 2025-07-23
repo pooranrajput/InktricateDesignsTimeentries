@@ -74,6 +74,14 @@ export class QuickBooksService {
         realmId: tokens.realmId
       });
       
+      // CRITICAL CHECK: Prevent production/sandbox mismatch
+      if (!this.useSandbox && realmId === '9341455047397094') {
+        console.error('🚨 PRODUCTION/SANDBOX MISMATCH DETECTED!');
+        console.error('🚨 You connected to sandbox company 9341455047397094 with production credentials');
+        console.error('🚨 This will cause ApplicationAuthorizationFailed errors');
+        throw new Error('Production/Sandbox Mismatch: Connected to sandbox company with production app credentials. Please connect to your actual business QuickBooks account.');
+      }
+
       // Store tokens in database  
       await db.insert(quickbooksConfig).values({
         companyId: realmId,

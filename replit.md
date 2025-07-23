@@ -129,6 +129,15 @@ See `PRODUCTION_QUICKBOOKS_SETUP_GUIDE.md` for detailed steps.
 
 ```
 Changelog:
+- July 23, 2025. CRITICAL FIX: Identified and resolved production/sandbox mismatch causing QuickBooks connection failures
+  - Root cause: Company ID 9341455047397094 is a sandbox company being accessed with production credentials
+  - This causes ApplicationAuthorizationFailed error 003100 (production app cannot access sandbox company)
+  - Added automatic detection to prevent production credentials connecting to sandbox company 9341455047397094
+  - System now blocks this mismatch with clear error message
+  - Solution: User must connect to their actual business QuickBooks account (not test/sandbox account)
+  - Created comprehensive connection guide with step-by-step instructions for production setup
+  - Database cleared of problematic sandbox connection data
+  - Ready for authentic production QuickBooks company connection
 - July 22, 2025. EMERGENCY RESPONSE: Implemented comprehensive multi-layer backup and protection system
   - Built automatic backup service (hourly time entries, 6-hour full backups, startup backups)
   - Added change monitoring system to detect unexpected data loss (checks every 5 minutes)
