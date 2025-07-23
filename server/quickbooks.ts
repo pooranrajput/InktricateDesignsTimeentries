@@ -140,16 +140,27 @@ export class QuickBooksService {
 
   // Manual token exchange method
   private async exchangeCodeForTokens(authCode: string, realmId: string) {
-    // EARLY DETECTION: Check for sandbox/production mismatch before token exchange
+    // Check for sandbox/production compatibility
     const knownSandboxCompanyId = '9341455047397094';
+    
+    console.log('🔍 Sandbox/Production Check:', {
+      realmId,
+      isSandboxCompany: realmId === knownSandboxCompanyId,
+      useSandbox: this.useSandbox,
+      compatible: this.useSandbox === (realmId === knownSandboxCompanyId)
+    });
+    
     if (!this.useSandbox && realmId === knownSandboxCompanyId) {
-      console.error('🚨 EARLY DETECTION: SANDBOX/PRODUCTION MISMATCH!');
+      console.error('🚨 PRODUCTION/SANDBOX MISMATCH DETECTED!');
       console.error('🚨 Company ID:', realmId, '← This is a SANDBOX company');
       console.error('🚨 Production Mode:', !this.useSandbox, '← You are using PRODUCTION credentials');
-      console.error('🚨 QuickBooks will reject this with "invalid_client" error');
-      console.error('🚨 SOLUTION: Connect to your ACTUAL business QuickBooks account');
+      console.error('🚨 SOLUTION: Either switch to sandbox mode or connect to real business account');
       
-      throw new Error(`SANDBOX/PRODUCTION MISMATCH: You are connecting to sandbox company ${realmId} with production credentials. QuickBooks does not allow this. Please use the authorization URL again and select your ACTUAL business QuickBooks account instead of the sandbox demo account.`);
+      throw new Error(`SANDBOX/PRODUCTION MISMATCH: Connecting to sandbox company with production credentials is not allowed. Switch to sandbox mode (QUICKBOOKS_SANDBOX=true) or connect to your actual business QuickBooks account.`);
+    }
+    
+    if (this.useSandbox && realmId !== knownSandboxCompanyId) {
+      console.log('🔍 Sandbox mode with non-sandbox company - this should work for testing');
     }
     
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
