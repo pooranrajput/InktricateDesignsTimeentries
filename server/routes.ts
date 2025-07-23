@@ -768,29 +768,41 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/callback', async (req: any, res) => {
     try {
       console.log('🔍 QuickBooks Callback Debug - Full query params:', req.query);
-      const { code, state, realmId } = req.query;
+      console.log('🔍 QuickBooks Callback Debug - Full URL:', req.url);
+      const { code, state, realmId, error } = req.query;
       
       console.log('🔍 QuickBooks Callback Debug - Parsed params:', {
         hasCode: !!code,
         codeLength: code?.length,
         state,
-        realmId
+        realmId,
+        error: error
       });
+      
+      // Check for OAuth errors first
+      if (error) {
+        console.error('🚨 OAuth Error from QuickBooks:', error);
+        return res.redirect(`/?quickbooks=error&details=${encodeURIComponent(error)}`);
+      }
       
       if (!code || !realmId) {
         console.log('🚨 QuickBooks Callback Error - Missing required parameters');
-        return res.status(400).json({ message: "Missing authorization code or company ID" });
+        console.log('🚨 This suggests OAuth authorization was denied or failed');
+        return res.redirect('/?quickbooks=error&details=missing_params');
       }
 
       // Pass individual parameters to the service
+      console.log('🔍 Attempting to handle callback with QuickBooks service...');
       const result = await quickbooksService.handleCallback(code, state, realmId);
       console.log('🔍 QuickBooks Callback Debug - Success result:', result);
       
       // Redirect to admin dashboard with success message
       res.redirect('/?quickbooks=success');
-    } catch (error) {
+    } catch (error: any) {
       console.error("🚨 QuickBooks Callback Error - Full error details:", error);
-      res.redirect('/?quickbooks=error');
+      console.error("🚨 Error message:", error?.message);
+      console.error("🚨 Error stack:", error?.stack);
+      res.redirect(`/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
     }
   });
 
