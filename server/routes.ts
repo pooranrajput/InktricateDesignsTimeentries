@@ -803,9 +803,11 @@ export function registerRoutes(app: Express): Server {
       console.error("🚨 Error message:", error?.message);
       console.error("🚨 Error stack:", error?.stack);
       
-      // Check for sandbox/production mismatch error and provide helpful message
-      if (error?.message?.includes('SANDBOX/PRODUCTION MISMATCH')) {
-        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected the sandbox demo account (ID: 9341455047397094) instead of your real business QuickBooks account. Please use the authorization URL again and carefully select your ACTUAL business company, not the demo/sample account.')}`);
+      // Check for company selection errors and provide helpful message
+      if (error?.message?.includes('WRONG COMPANY SELECTED')) {
+        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected sandbox company (ID: 9341455047397094) instead of your production company (ID: 9130351530529746). Please use the authorization URL again and select your REAL business QuickBooks account with ID 9130351530529746.')}`);
+      } else if (error?.message?.includes('SANDBOX/PRODUCTION MISMATCH')) {
+        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected the sandbox demo account instead of your real business QuickBooks account. Please use the authorization URL again and select your production company (ID: 9130351530529746).')}`);
       } else {
         res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
       }

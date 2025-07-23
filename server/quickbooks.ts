@@ -142,21 +142,28 @@ export class QuickBooksService {
   private async exchangeCodeForTokens(authCode: string, realmId: string) {
     // Check for sandbox/production compatibility
     const knownSandboxCompanyId = '9341455047397094';
+    const expectedProductionCompanyId = '9130351530529746';
     
-    console.log('🔍 Sandbox/Production Check:', {
+    console.log('🔍 Company ID Check:', {
       realmId,
       isSandboxCompany: realmId === knownSandboxCompanyId,
+      isProductionCompany: realmId === expectedProductionCompanyId,
       useSandbox: this.useSandbox,
-      compatible: this.useSandbox === (realmId === knownSandboxCompanyId)
+      mode: this.useSandbox ? 'Sandbox' : 'Production'
     });
     
     if (!this.useSandbox && realmId === knownSandboxCompanyId) {
-      console.error('🚨 PRODUCTION/SANDBOX MISMATCH DETECTED!');
-      console.error('🚨 Company ID:', realmId, '← This is a SANDBOX company');
-      console.error('🚨 Production Mode:', !this.useSandbox, '← You are using PRODUCTION credentials');
-      console.error('🚨 SOLUTION: Either switch to sandbox mode or connect to real business account');
+      console.error('🚨 WRONG COMPANY SELECTED!');
+      console.error('🚨 You selected:', realmId, '← This is the SANDBOX demo company');
+      console.error('🚨 You should select:', expectedProductionCompanyId, '← This is your PRODUCTION company');
+      console.error('🚨 SOLUTION: Use authorization URL again and select your real business company');
       
-      throw new Error(`SANDBOX/PRODUCTION MISMATCH: Connecting to sandbox company with production credentials is not allowed. Switch to sandbox mode (QUICKBOOKS_SANDBOX=true) or connect to your actual business QuickBooks account.`);
+      throw new Error(`WRONG COMPANY SELECTED: You selected sandbox company ${realmId} but should select your production company ${expectedProductionCompanyId}. Please use the authorization URL again and select your actual business QuickBooks account.`);
+    }
+    
+    if (!this.useSandbox && realmId === expectedProductionCompanyId) {
+      console.log('✅ CORRECT PRODUCTION COMPANY SELECTED!');
+      console.log('✅ Company ID:', realmId, '← This is your real business QuickBooks account');
     }
     
     if (this.useSandbox && realmId !== knownSandboxCompanyId) {
