@@ -16,7 +16,7 @@ export class QuickBooksService {
     // Clean and validate environment variables
     const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
-    // Force the correct redirect URI - always use production app URI
+    // Always use the exact production URL to prevent any environment conflicts
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     this.useSandbox = process.env.QUICKBOOKS_SANDBOX === 'true';
@@ -27,13 +27,15 @@ export class QuickBooksService {
       hasClientSecret: !!clientSecret,
       redirectUri,
       sandbox: process.env.QUICKBOOKS_SANDBOX,
-      useSandbox: this.useSandbox
+      useSandbox: this.useSandbox,
+      replitDomains: process.env.REPLIT_DOMAINS,
+      envRedirectUri: process.env.QUICKBOOKS_REDIRECT_URI
     });
     
     this.oauthClient = new OAuthClient({
       clientId,
       clientSecret,
-      sandbox: this.useSandbox, // Use environment variable
+      sandbox: this.useSandbox,
       redirectUri,
     });
   }

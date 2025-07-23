@@ -4,8 +4,20 @@ import { setupVite, serveStatic, log } from "./vite";
 import { backupService } from "./backup";
 import { changeMonitor } from "./protection";
 
-// Override environment variables for QuickBooks
+// Load production environment overrides
+import { config } from 'dotenv';
+config({ path: '.env.production', override: true });
+
+// Force override environment variables for QuickBooks production setup
 process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
+
+console.log('🔧 Production Environment Override:', {
+  replotDomains: process.env.REPLIT_DOMAINS,
+  quickbooksRedirect: process.env.QUICKBOOKS_REDIRECT_URI,
+  quickbooksClient: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 10) + '...',
+  sandbox: process.env.QUICKBOOKS_SANDBOX
+});
 
 const app = express();
 app.use(express.json());

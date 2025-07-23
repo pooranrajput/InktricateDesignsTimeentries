@@ -746,9 +746,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Only admins can re-authenticate QuickBooks" });
       }
       
-      // Clear expired configuration
-      await db.delete(quickbooksConfig).where(eq(quickbooksConfig.companyId, '9341455047397094'));
-      console.log('🔄 Cleared expired QuickBooks tokens - ready for re-authentication');
+      // Clear ALL QuickBooks configurations to ensure clean state
+      await db.delete(quickbooksConfig);
+      console.log('🔄 Cleared ALL QuickBooks tokens - ready for fresh production authentication');
       
       // Generate new auth URL
       const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');
@@ -782,13 +782,13 @@ export function registerRoutes(app: Express): Server {
       // Check for OAuth errors first
       if (error) {
         console.error('🚨 OAuth Error from QuickBooks:', error);
-        return res.redirect(`/?quickbooks=error&details=${encodeURIComponent(error)}`);
+        return res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error)}`);
       }
       
       if (!code || !realmId) {
         console.log('🚨 QuickBooks Callback Error - Missing required parameters');
         console.log('🚨 This suggests OAuth authorization was denied or failed');
-        return res.redirect('/?quickbooks=error&details=missing_params');
+        return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
       }
 
       // Pass individual parameters to the service
@@ -796,13 +796,13 @@ export function registerRoutes(app: Express): Server {
       const result = await quickbooksService.handleCallback(code, state, realmId);
       console.log('🔍 QuickBooks Callback Debug - Success result:', result);
       
-      // Redirect to admin dashboard with success message
-      res.redirect('/?quickbooks=success');
+      // Redirect to production app URL with success message
+      res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=success');
     } catch (error: any) {
       console.error("🚨 QuickBooks Callback Error - Full error details:", error);
       console.error("🚨 Error message:", error?.message);
       console.error("🚨 Error stack:", error?.stack);
-      res.redirect(`/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
+      res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
     }
   });
 
