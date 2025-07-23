@@ -4,7 +4,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { backupService } from "./backup";
 import { changeMonitor } from "./protection";
 
-// QuickBooks environment variables loaded from .env.quickbooks file
+// Override environment variables for QuickBooks
+process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
 
 const app = express();
 app.use(express.json());

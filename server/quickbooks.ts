@@ -16,7 +16,8 @@ export class QuickBooksService {
     // Clean and validate environment variables
     const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
-    const redirectUri = (process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`).trim();
+    // Force the correct redirect URI - always use production app URI
+    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     this.useSandbox = process.env.QUICKBOOKS_SANDBOX === 'true';
     
@@ -40,7 +41,7 @@ export class QuickBooksService {
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
     const clientId = process.env.QUICKBOOKS_CLIENT_ID;
-    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI;
+    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     console.log('🔧 QuickBooks Authorization Debug:', {
       clientId: clientId?.substring(0, 8) + '...',
@@ -139,7 +140,7 @@ export class QuickBooksService {
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
     const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
-    const redirectUri = (process.env.QUICKBOOKS_REDIRECT_URI || `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/api/quickbooks/callback`).trim();
+    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     
