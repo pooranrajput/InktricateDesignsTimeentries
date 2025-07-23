@@ -39,19 +39,45 @@ export class QuickBooksService {
 
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
-    console.log('QuickBooks OAuth Config:', {
-      clientId: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 8) + '...',
-      redirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
-      sandbox: this.useSandbox
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI;
+    
+    console.log('🔧 QuickBooks Authorization Debug:', {
+      clientId: clientId?.substring(0, 8) + '...',
+      clientIdLength: clientId?.length,
+      redirectUri: redirectUri,
+      sandbox: this.useSandbox,
+      fullClientId: clientId // Log full client ID for debugging
     });
     
-    const authUrl = this.oauthClient.authorizeUri({
-      scope: [OAuthClient.scopes.Accounting],
-      state: state || 'state',
+    // Manual URL construction to bypass potential library issues
+    const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
+    const params = new URLSearchParams({
+      client_id: clientId || '',
+      scope: 'com.intuit.quickbooks.accounting',
+      redirect_uri: redirectUri || '',
+      response_type: 'code',
+      state: state || 'production-auth'
     });
     
-    console.log('Generated auth URL:', authUrl.substring(0, 100) + '...');
-    return authUrl;
+    const manualAuthUrl = `${baseUrl}?${params.toString()}`;
+    
+    // Also try the library method as backup
+    let libraryAuthUrl = '';
+    try {
+      libraryAuthUrl = this.oauthClient.authorizeUri({
+        scope: [OAuthClient.scopes.Accounting],
+        state: state || 'production-auth',
+      });
+    } catch (error) {
+      console.error('🚨 Library authorization URL generation failed:', error);
+    }
+    
+    console.log('🔧 Manual Auth URL:', manualAuthUrl.substring(0, 150) + '...');
+    console.log('🔧 Library Auth URL:', libraryAuthUrl.substring(0, 150) + '...');
+    
+    // Return manual URL as it's more reliable
+    return manualAuthUrl;
   }
 
   // Step 2: Handle OAuth callback and store tokens
