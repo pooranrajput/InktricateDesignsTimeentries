@@ -802,7 +802,13 @@ export function registerRoutes(app: Express): Server {
       console.error("🚨 QuickBooks Callback Error - Full error details:", error);
       console.error("🚨 Error message:", error?.message);
       console.error("🚨 Error stack:", error?.stack);
-      res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
+      
+      // Check for sandbox/production mismatch error and provide helpful message
+      if (error?.message?.includes('SANDBOX/PRODUCTION MISMATCH')) {
+        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('You connected to a sandbox demo account with production credentials. Please use the authorization URL again and select your ACTUAL business QuickBooks account instead of the sandbox/demo account.')}`);
+      } else {
+        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
+      }
     }
   });
 

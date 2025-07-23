@@ -108,7 +108,8 @@ export class QuickBooksService {
         console.error('🚨 PRODUCTION/SANDBOX MISMATCH DETECTED!');
         console.error('🚨 You connected to sandbox company 9341455047397094 with production credentials');
         console.error('🚨 This will cause ApplicationAuthorizationFailed errors');
-        throw new Error('Production/Sandbox Mismatch: Connected to sandbox company with production app credentials. Please connect to your actual business QuickBooks account.');
+        console.error('🚨 SOLUTION: You must connect to your ACTUAL business QuickBooks account');
+        throw new Error('SANDBOX/PRODUCTION MISMATCH: You are connecting to a sandbox QuickBooks company (ID: 9341455047397094) using production app credentials. This is not allowed by QuickBooks. Please use the authorization URL again and select your ACTUAL business QuickBooks account instead of the sandbox/demo account.');
       }
 
       // Store tokens in database  
