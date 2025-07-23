@@ -1,140 +1,50 @@
-# Production QuickBooks Integration Setup Guide
+# Production QuickBooks Setup Guide
 
-## Overview
-The QuickBooks integration code has been deployed to production, but it's currently configured for sandbox/development. You need to set up the production QuickBooks connection with your real company's QuickBooks Online account.
+## System Configuration
 
-## Prerequisites
-✅ Time tracking application deployed to production  
-✅ QuickBooks Online subscription (Plus or higher recommended)  
-✅ Admin access to your company's QuickBooks Online account  
-❌ Production QuickBooks app credentials (need to obtain)  
-❌ Production OAuth tokens (will generate during setup)  
+I've switched the system back to production mode for your real business QuickBooks account:
 
-## Step 1: Create Production QuickBooks App
+- QUICKBOOKS_SANDBOX=false (production mode)
+- Production app credentials active
+- All URL configurations optimized for production
 
-1. **Go to QuickBooks Developer Console**
-   - Visit: https://developer.intuit.com/
-   - Sign in with your Intuit account (same as QuickBooks account)
+## Authorization URL for Production
 
-2. **Create New App**
-   - Click "Create an app"
-   - Choose "QuickBooks Online Accounting"
-   - App Name: "Inktricate Designs Time Tracker"
-   - Description: "Time tracking and payroll management for Inktricate Designs"
+Use this URL to connect to your real business QuickBooks account:
 
-3. **Configure App Settings**
-   - **Redirect URI**: `https://[YOUR-PRODUCTION-URL]/api/quickbooks/callback`
-   - **Scope**: Accounting
-   - **Development vs Production**: Switch to PRODUCTION mode
-
-4. **Get Production Credentials**
-   - Copy the **Client ID** (production)
-   - Copy the **Client Secret** (production)
-   - Save these securely
-
-## Step 2: Update Production Environment Variables
-
-In your production Replit environment, set these variables:
-
-```bash
-QUICKBOOKS_CLIENT_ID=your_production_client_id
-QUICKBOOKS_CLIENT_SECRET=your_production_client_secret
-QUICKBOOKS_SANDBOX=false
-QUICKBOOKS_REDIRECT_URI=https://your-production-url/api/quickbooks/callback
+```
+https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-production
 ```
 
-## Step 3: Connect to Your Real QuickBooks Company
+## Critical: Company Selection
 
-1. **Access Production Admin Dashboard**
-   - Log into your production app: admin / 11111111
-   - Go to QuickBooks Integration section
+When QuickBooks shows company options:
 
-2. **Connect to QuickBooks**
-   - Click "Connect to QuickBooks"
-   - You'll be redirected to QuickBooks Online
-   - Sign in with your company's QuickBooks account
-   - Authorize the app to access your company data
+**✅ SELECT:**
+- Your actual business QuickBooks company
+- The account with your real business data
+- Your live operational QuickBooks account
 
-3. **Verify Connection**
-   - Should see your real company name instead of "Sandbox Company"
-   - Test connection should show your actual company info
+**❌ AVOID:**
+- Demo companies
+- Sandbox accounts
+- Sample data companies
 
-## Step 4: Sync Your Real Employees as Vendors
+## Expected Workflow
 
-1. **In Production Admin Dashboard**
-   - Go to QuickBooks Integration
-   - Click "Sync Contractors to QuickBooks"
-   - This creates vendor records for each employee in your real QB
+1. Click authorization URL
+2. Sign in to QuickBooks
+3. Select your real business company
+4. Grant permissions
+5. Successful redirect to production app
+6. QuickBooks integration ready for contractor bill creation
 
-2. **Verify in QuickBooks Online**
-   - Go to Expenses > Vendors
-   - Should see your employees listed as vendors
-   - Each should be marked for 1099 tracking
+## Post-Connection Features
 
-## Step 5: Test Payroll Bill Creation
+Once connected, you can:
+- Sync employees as QuickBooks vendors
+- Generate payroll bills for contractors
+- Track 1099 payments automatically
+- Complete end-to-end payroll workflow
 
-1. **Generate Test Payroll**
-   - In admin dashboard, generate payroll for a test period
-   - Click "Create QuickBooks Bills" for a small test amount
-
-2. **Verify in QuickBooks Online**
-   - Go to Expenses > Bills
-   - Should see bills created for your employees
-   - Bills should be categorized as "Wages" or appropriate payroll account
-
-## Step 6: Configure Chart of Accounts (If Needed)
-
-Your QuickBooks should have these accounts for proper payroll tracking:
-- **Wages** (Expense account for contractor payments)
-- **Payroll Liabilities** (if applicable)
-- **1099 Contractors** (for tax reporting)
-
-## Security Notes
-
-⚠️ **Important Security Considerations:**
-- Never share your production Client ID/Secret
-- Production tokens have access to real financial data
-- Test with small amounts first
-- Keep backup of your QuickBooks data
-- Monitor all transactions created by the app
-
-## Troubleshooting
-
-**"Connection Failed"**
-- Check environment variables are set correctly
-- Verify redirect URI matches exactly
-- Ensure QuickBooks app is in production mode
-
-**"No Accounts Found"**
-- Your QuickBooks may need expense accounts set up
-- Contact your accountant to configure proper chart of accounts
-
-**"Vendor Creation Failed"**
-- Check employee data has required fields (name, email)
-- Ensure QuickBooks subscription supports vendor features
-
-## Final Verification Checklist
-
-Before going live:
-- [ ] Connected to real QuickBooks company (not sandbox)
-- [ ] All employees synced as vendors with 1099 tracking
-- [ ] Test bill created successfully
-- [ ] Bills appear in correct expense category
-- [ ] Company financial data is accurate
-- [ ] Backup of QuickBooks data taken
-
-## Support
-
-If you encounter issues:
-1. Check the QuickBooks Integration status in admin dashboard
-2. Verify all environment variables are correct
-3. Test connection shows your real company name
-4. Contact Intuit support for QuickBooks-specific issues
-
----
-
-**Next Steps After Setup:**
-- Train employees on time entry system
-- Set up regular payroll processing schedule
-- Configure 1099 reporting for tax season
-- Monitor QuickBooks integration for accuracy
+The system is fully configured for production use with your real business data.
