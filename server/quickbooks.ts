@@ -44,23 +44,26 @@ export class QuickBooksService {
   getAuthorizationUrl(state?: string) {
     const clientId = process.env.QUICKBOOKS_CLIENT_ID;
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const expectedProductionCompanyId = '9130351530529746';
     
     console.log('🔧 QuickBooks Authorization Debug:', {
       clientId: clientId?.substring(0, 8) + '...',
       clientIdLength: clientId?.length,
       redirectUri: redirectUri,
       sandbox: this.useSandbox,
+      targetCompanyId: expectedProductionCompanyId,
       fullClientId: clientId // Log full client ID for debugging
     });
     
-    // Manual URL construction to bypass potential library issues
+    // Manual URL construction with pre-selected company ID
     const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
     const params = new URLSearchParams({
       client_id: clientId || '',
       scope: 'com.intuit.quickbooks.accounting',
       redirect_uri: redirectUri || '',
       response_type: 'code',
-      state: state || 'production-auth'
+      state: state || 'production-auth',
+      realmId: expectedProductionCompanyId // Pre-select production company
     });
     
     const manualAuthUrl = `${baseUrl}?${params.toString()}`;
@@ -76,10 +79,11 @@ export class QuickBooksService {
       console.error('🚨 Library authorization URL generation failed:', error);
     }
     
-    console.log('🔧 Manual Auth URL:', manualAuthUrl.substring(0, 150) + '...');
+    console.log('🔧 Manual Auth URL with company pre-selection:', manualAuthUrl.substring(0, 150) + '...');
     console.log('🔧 Library Auth URL:', libraryAuthUrl.substring(0, 150) + '...');
+    console.log('🎯 Target Company ID:', expectedProductionCompanyId);
     
-    // Return manual URL as it's more reliable
+    // Return manual URL with pre-selected company
     return manualAuthUrl;
   }
 
