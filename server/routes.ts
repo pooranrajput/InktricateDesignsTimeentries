@@ -805,7 +805,7 @@ export function registerRoutes(app: Express): Server {
       
       // Check for sandbox/production mismatch error and provide helpful message
       if (error?.message?.includes('SANDBOX/PRODUCTION MISMATCH')) {
-        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('You connected to a sandbox demo account with production credentials. Please use the authorization URL again and select your ACTUAL business QuickBooks account instead of the sandbox/demo account.')}`);
+        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected the sandbox demo account (ID: 9341455047397094) instead of your real business QuickBooks account. Please use the authorization URL again and carefully select your ACTUAL business company, not the demo/sample account.')}`);
       } else {
         res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error?.message || 'unknown')}`);
       }

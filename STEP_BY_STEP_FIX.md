@@ -1,49 +1,47 @@
-# Step-by-Step QuickBooks Fix Instructions
+# Step-by-Step QuickBooks Connection Fix
 
-## Step 1: Find Your App's Real URL
+## Current Status
+✅ QuickBooks app URLs updated to production  
+✅ System configured correctly  
+❌ Still selecting wrong company during authorization
 
-**Action:** Look at your browser address bar right now while you're using the app.
+## The Issue
+You updated the QuickBooks app URLs correctly, but you're still selecting the sandbox demo company (ID: 9341455047397094) during the authorization process instead of your real business QuickBooks account.
 
-**What to look for:** The URL should look something like:
-- `https://something-something-replit.dev` 
-- Copy this EXACT URL (everything before any `/` after the domain)
+## Solution: Careful Company Selection
 
-**Example:** If you see `https://xyz123-replit.dev/dashboard`, copy just `https://xyz123-replit.dev`
+When you click the authorization URL, QuickBooks will show you a list of companies. You MUST:
 
----
+### ❌ DO NOT SELECT:
+- Any company labeled "Sample" or "Demo"  
+- Company ID: 9341455047397094  
+- Any sandbox/test accounts
 
-## Step 2: Update QuickBooks App Settings
+### ✅ SELECT:
+- **Your actual business name**
+- **Your real QuickBooks company**  
+- **The account with your live business data**
 
-**Action:** Go to https://developer.intuit.com
+## Step-by-Step Process
 
-**Steps:**
-1. Click "Sign In" (top right)
-2. Sign in with your QuickBooks account
-3. Click "My Apps" 
-4. Find your app (should show the Client ID: AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA)
-5. Click on your app name
-6. Click "Keys & OAuth" (left sidebar)
-7. Scroll down to "Redirect URIs"
-8. Click "Add URI" or edit existing URI
-9. Enter: `[YOUR_REAL_URL]/api/quickbooks/callback`
-   - Replace [YOUR_REAL_URL] with what you copied in Step 1
-   - Example: `https://xyz123-replit.dev/api/quickbooks/callback`
-10. Click "Save"
+1. **Click the authorization URL**
+2. **Sign in to QuickBooks**
+3. **CAREFULLY look at the company list**
+4. **Find your real business name** (not demo/sample)
+5. **Click on your real business company**
+6. **Grant permissions**
+7. **Complete authorization**
 
----
+## How to Identify Your Real Business
+Look for:
+- Your actual business name
+- The company you use for real transactions  
+- The account that has your employees and vendors
+- NOT any demo/sample/sandbox accounts
 
-## Step 3: Tell Me Your Real URL
+## Authorization URL (Use This):
+```
+https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth
+```
 
-**Action:** Reply with the exact URL you copied from Step 1
-
-**Format:** Just paste the URL like: `https://your-real-url.replit.dev`
-
-**I will then:** Update our system to match your real URL
-
----
-
-## Why This Fixes It
-
-QuickBooks is very strict - the redirect URL in their system must match exactly where your app is actually running. Right now there's a mismatch causing the authentication to fail.
-
-**Next:** Please do Step 1 first and tell me your real URL.
+The key is company selection - make sure you select your real business, not the demo account.
