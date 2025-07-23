@@ -140,6 +140,18 @@ export class QuickBooksService {
 
   // Manual token exchange method
   private async exchangeCodeForTokens(authCode: string, realmId: string) {
+    // EARLY DETECTION: Check for sandbox/production mismatch before token exchange
+    const knownSandboxCompanyId = '9341455047397094';
+    if (!this.useSandbox && realmId === knownSandboxCompanyId) {
+      console.error('🚨 EARLY DETECTION: SANDBOX/PRODUCTION MISMATCH!');
+      console.error('🚨 Company ID:', realmId, '← This is a SANDBOX company');
+      console.error('🚨 Production Mode:', !this.useSandbox, '← You are using PRODUCTION credentials');
+      console.error('🚨 QuickBooks will reject this with "invalid_client" error');
+      console.error('🚨 SOLUTION: Connect to your ACTUAL business QuickBooks account');
+      
+      throw new Error(`SANDBOX/PRODUCTION MISMATCH: You are connecting to sandbox company ${realmId} with production credentials. QuickBooks does not allow this. Please use the authorization URL again and select your ACTUAL business QuickBooks account instead of the sandbox demo account.`);
+    }
+    
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
     const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
