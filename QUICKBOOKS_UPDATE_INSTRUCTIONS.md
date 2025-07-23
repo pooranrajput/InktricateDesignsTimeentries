@@ -1,50 +1,53 @@
-# QuickBooks Update Instructions - EXACT STEPS
+# QuickBooks Authentication Flow Analysis
 
-## Step 1: Go to QuickBooks Developer Dashboard
+## Current Situation
 
-**Click this link:** https://developer.intuit.com
+You're not seeing a company selection screen, which means:
 
-**Sign in** with your QuickBooks account
+1. **Your QuickBooks account likely only has access to one company**
+2. **QuickBooks automatically uses that company for authorization**  
+3. **The question is: which company is it using?**
 
----
+## What Should Happen
 
-## Step 2: Find Your App
+When you click the authorization URL:
 
-**Click:** "My Apps" (should be visible after signing in)
+1. QuickBooks login page loads
+2. You sign in with your credentials  
+3. QuickBooks shows permissions request
+4. You grant permissions to the app
+5. QuickBooks redirects back to our app
+6. Our system processes the authentication
 
-**Look for your app** with Client ID: `AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA`
+## Debugging Questions
 
-**Click** on your app name
+To help identify the issue:
 
----
+1. **What exactly happens when you click the authorization URL?**
+   - Does QuickBooks login page load?
+   - Do you see a permissions screen?
+   - What error (if any) appears?
 
-## Step 3: Update Redirect URI
+2. **How many QuickBooks companies do you have access to?**
+   - Is 9130351530529746 your only company?
+   - Or do you have multiple companies but QB isn't showing selection?
 
-**Click:** "Keys & OAuth" (in the left sidebar)
+3. **What is the exact error or behavior you see?**
+   - Does it redirect immediately?
+   - Does it show an error page?
+   - Does it get stuck somewhere?
 
-**Scroll down** to find "Redirect URIs" section
+## Possible Solutions
 
-**Look for existing URI** (probably shows the old long URL)
+Based on your response, I can:
 
-**Click "Edit"** next to the existing URI OR **Click "Add URI"** if no URI exists
+1. **If you only have one company:** Update the system to expect company ID 9130351530529746 directly
+2. **If there's an app configuration issue:** Help troubleshoot the QuickBooks app settings
+3. **If there's a permissions issue:** Help verify the app has correct scopes and permissions
 
-**Replace with this EXACT text:**
+## Current Authorization URL
 ```
-https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
+https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth
 ```
 
-**Click "Save"**
-
----
-
-## Step 4: Test the Connection
-
-**Come back here** and I'll give you a fresh authorization link to test
-
-**The authorization should now work** because the URLs will match exactly
-
----
-
-**Important:** Copy and paste that URL exactly - no extra spaces or characters.
-
-Let me know when you've completed Step 3 (updating the redirect URI).
+Please describe exactly what happens when you click this URL so I can provide the right solution.
