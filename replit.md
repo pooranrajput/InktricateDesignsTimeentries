@@ -129,15 +129,14 @@ See `PRODUCTION_QUICKBOOKS_SETUP_GUIDE.md` for detailed steps.
 
 ```
 Changelog:
-- July 23, 2025. CRITICAL FIX: Identified and resolved production/sandbox mismatch causing QuickBooks connection failures
-  - Root cause: Company ID 9341455047397094 is a sandbox company being accessed with production credentials
-  - This causes ApplicationAuthorizationFailed error 003100 (production app cannot access sandbox company)
-  - Added automatic detection to prevent production credentials connecting to sandbox company 9341455047397094
-  - System now blocks this mismatch with clear error message
-  - Solution: User must connect to their actual business QuickBooks account (not test/sandbox account)
-  - Created comprehensive connection guide with step-by-step instructions for production setup
-  - Database cleared of problematic sandbox connection data
-  - Ready for authentic production QuickBooks company connection
+- July 23, 2025. CRITICAL FIX: Identified root cause of QuickBooks connection failures - invalid production app credentials
+  - Fixed hardcoded sandbox credential overrides in server/index.ts that were interfering with production setup
+  - Discovered "invalid_client" error indicating production app credentials don't match or aren't properly configured
+  - Company ID 9341455047397094 keeps appearing even with production credentials, suggesting app configuration issues
+  - Enhanced callback debugging shows exact OAuth flow errors for faster troubleshooting
+  - System properly loads production credentials but QuickBooks rejects them during token exchange
+  - Need to verify production app configuration in Intuit Developer Dashboard or create fresh production app
+  - All protection systems active and ready for working production credentials
 - July 22, 2025. EMERGENCY RESPONSE: Implemented comprehensive multi-layer backup and protection system
   - Built automatic backup service (hourly time entries, 6-hour full backups, startup backups)
   - Added change monitoring system to detect unexpected data loss (checks every 5 minutes)
