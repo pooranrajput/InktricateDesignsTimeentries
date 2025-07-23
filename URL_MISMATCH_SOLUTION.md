@@ -1,44 +1,41 @@
-# QuickBooks URL Mismatch Solution
+# QuickBooks Redirect URI Mismatch - SOLUTION REQUIRED
 
-## CRITICAL DISCOVERY: Root Cause Identified
+## The Problem
+You're getting connection errors when clicking the authorization URL. This is almost certainly because the redirect URI configured in your QuickBooks app doesn't match what our system is using.
 
-The issue is **URL mismatch** between your QuickBooks app configuration and where you're actually accessing the app.
+## Current System Configuration
+- **Our Redirect URI:** `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- **Client ID:** `AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA`
 
-**Evidence:**
-- Screenshot shows you're being redirected to **development preview URL** (blue banner)
-- Our system expects redirect from production URL: `https://aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev`
-- QuickBooks is sending you to a different URL, causing `invalid_client` error
+## REQUIRED ACTION: Update QuickBooks App Configuration
 
-## IMMEDIATE SOLUTION
+You need to log into the QuickBooks Developer Dashboard and update the redirect URI:
 
-### Step 1: Identify Your Actual App URL
-Check what URL you see in your browser when accessing the app. It might be something like:
-- `https://[different-id].replit.dev` 
-- Or a development preview URL
+### Steps:
+1. **Go to:** https://developer.intuit.com/
+2. **Sign in** with your QuickBooks developer account
+3. **Find your app** (the one with Client ID: AB6HieH2iC...)
+4. **Go to** "App Settings" or "Keys & OAuth"
+5. **Update Redirect URI to:** 
+   ```
+   https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
+   ```
+6. **Save** the changes
 
-### Step 2: Update QuickBooks App Redirect URI
-1. Go to your QuickBooks app in developer dashboard
-2. Update the redirect URI to match your actual app URL
-3. Format: `[YOUR_ACTUAL_URL]/api/quickbooks/callback`
+## Alternative Quick Fix
+If you want to test immediately, tell me what redirect URI is currently configured in your QuickBooks app, and I can temporarily update our system to match it.
 
-### Step 3: Update Our Configuration
-Once you know your actual URL, update `.env.quickbooks`:
-```
-QUICKBOOKS_REDIRECT_URI=[YOUR_ACTUAL_URL]/api/quickbooks/callback
-```
+## Common Redirect URI Patterns
+Check if your app is configured with one of these:
+- `https://inkticate-time-tracker-pooranrajput.replit.app/callback`
+- `https://inkticate-time-tracker-pooranrajput.replit.app/auth/callback`
+- `https://inkticate-time-tracker-pooranrajput.replit.app/oauth/callback`
 
 ## Why This Happens
+QuickBooks requires exact matching between:
+- The redirect URI in the authorization URL
+- The redirect URI configured in the QuickBooks app dashboard
 
-QuickBooks OAuth requires **exact URL matching**:
-- Authorization URL uses redirect URI from our config
-- But actual redirect must match exactly what's configured in QB app
-- Even slight differences (dev vs prod URLs) cause `invalid_client` errors
+Even a small difference (like missing `/api/` or different path) will cause the connection to fail.
 
-## Current Status
-
-✅ Credentials are valid and loading correctly
-✅ OAuth authorization works (reaches callback)
-❌ Token exchange fails due to URL mismatch
-✅ Enhanced debugging shows exact failure point
-
-Once URL matching is fixed, the authentication will work immediately.
+**This is a one-time setup issue that needs to be fixed in the QuickBooks app configuration.**
