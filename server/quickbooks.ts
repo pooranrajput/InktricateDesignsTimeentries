@@ -179,7 +179,7 @@ export class QuickBooksService {
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
     const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
-    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     
@@ -893,4 +893,5 @@ export class QuickBooksService {
   }
 }
 
-export const quickbooksService = new QuickBooksService();
+// Export class for instantiation after environment setup
+// Note: Do not create singleton instance here to avoid loading before environment variables are set

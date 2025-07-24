@@ -1,16 +1,16 @@
+// CRITICAL: Load production environment FIRST before any other imports
+import { config } from 'dotenv';
+config({ path: '.env.production', override: true });
+
+// Force override environment variables for QuickBooks production setup IMMEDIATELY
+process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { backupService } from "./backup";
 import { changeMonitor } from "./protection";
-
-// Load production environment overrides
-import { config } from 'dotenv';
-config({ path: '.env.production', override: true });
-
-// Force override environment variables for QuickBooks production setup
-process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
-process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
 
 console.log('🔧 Production Environment Override:', {
   replotDomains: process.env.REPLIT_DOMAINS,

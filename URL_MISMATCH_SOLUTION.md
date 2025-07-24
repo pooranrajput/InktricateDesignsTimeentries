@@ -1,41 +1,38 @@
-# QuickBooks Redirect URI Mismatch - SOLUTION REQUIRED
+# URL Mismatch Issue - FIXED!
 
-## The Problem
-You're getting connection errors when clicking the authorization URL. This is almost certainly because the redirect URI configured in your QuickBooks app doesn't match what our system is using.
+## The Problem You Identified
 
-## Current System Configuration
-- **Our Redirect URI:** `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
-- **Client ID:** `AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA`
+You were absolutely right! The authorization URL contained the development domain:
+```
+https://aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev/api/quickbooks/callback
+```
 
-## REQUIRED ACTION: Update QuickBooks App Configuration
+Instead of production domain:
+```
+https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
+```
 
-You need to log into the QuickBooks Developer Dashboard and update the redirect URI:
+## Root Cause
 
-### Steps:
-1. **Go to:** https://developer.intuit.com/
-2. **Sign in** with your QuickBooks developer account
-3. **Find your app** (the one with Client ID: AB6HieH2iC...)
-4. **Go to** "App Settings" or "Keys & OAuth"
-5. **Update Redirect URI to:** 
-   ```
-   https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
-   ```
-6. **Save** the changes
+The QuickBooks service was being instantiated during module loading (before environment variables were set), causing it to use the development REPLIT_DOMAINS value.
 
-## Alternative Quick Fix
-If you want to test immediately, tell me what redirect URI is currently configured in your QuickBooks app, and I can temporarily update our system to match it.
+## Solution Applied
 
-## Common Redirect URI Patterns
-Check if your app is configured with one of these:
-- `https://inkticate-time-tracker-pooranrajput.replit.app/callback`
-- `https://inkticate-time-tracker-pooranrajput.replit.app/auth/callback`
-- `https://inkticate-time-tracker-pooranrajput.replit.app/oauth/callback`
+1. **Fixed Environment Loading Order**:
+   - Moved production environment loading to very beginning of server/index.ts
+   - Ensured environment variables are set BEFORE any imports
 
-## Why This Happens
-QuickBooks requires exact matching between:
-- The redirect URI in the authorization URL
-- The redirect URI configured in the QuickBooks app dashboard
+2. **Fixed Service Instantiation**:
+   - Removed singleton pattern that caused early instantiation
+   - Changed to create new QuickBooksService instances after environment is properly configured
+   - Updated all route handlers to use `new QuickBooksService()`
 
-Even a small difference (like missing `/api/` or different path) will cause the connection to fail.
+3. **Hard-coded Production URLs**:
+   - Used explicit production domain in redirect URI configuration
+   - Eliminated dependency on potentially incorrect environment variables
 
-**This is a one-time setup issue that needs to be fixed in the QuickBooks app configuration.**
+## Expected Result
+
+The authorization URL should now contain the correct production domain and QuickBooks should properly recognize your production app configuration.
+
+**The issue was on our side, not QuickBooks.** Thank you for catching this critical detail!

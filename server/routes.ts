@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig } from "@shared/schema";
-import { quickbooksService } from "./quickbooks";
+import { QuickBooksService } from "./quickbooks";
 import { backupService } from "./backup";
 import { protectData } from "./protection";
 import { z } from "zod";
@@ -724,7 +724,8 @@ export function registerRoutes(app: Express): Server {
         sandbox: process.env.QUICKBOOKS_SANDBOX === 'true' ? 'true' : 'false'
       });
       
-      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');
+      const quickbooks = new QuickBooksService();
+      const authUrl = quickbooks.getAuthorizationUrl('timetracking-reauth');
       res.json({ authUrl, debug: { configured: true } });
     } catch (error: any) {
       console.error("Error getting QuickBooks auth URL:", error);
@@ -751,7 +752,8 @@ export function registerRoutes(app: Express): Server {
       console.log('🔄 Cleared ALL QuickBooks tokens - ready for fresh production authentication');
       
       // Generate new auth URL
-      const authUrl = quickbooksService.getAuthorizationUrl('timetracking-reauth');
+      const quickbooks = new QuickBooksService();
+      const authUrl = quickbooks.getAuthorizationUrl('timetracking-reauth');
       
       res.json({ 
         message: "Expired tokens cleared. Please re-authenticate with QuickBooks.",
@@ -793,7 +795,8 @@ export function registerRoutes(app: Express): Server {
 
       // Pass individual parameters to the service
       console.log('🔍 Attempting to handle callback with QuickBooks service...');
-      const result = await quickbooksService.handleCallback(code, state, realmId);
+      const quickbooks = new QuickBooksService();
+      const result = await quickbooks.handleCallback(code, state, realmId);
       console.log('🔍 QuickBooks Callback Debug - Success result:', result);
       
       // Redirect to production app URL with success message
