@@ -1,60 +1,43 @@
 # QuickBooks Advanced Troubleshooting
 
-## Current Issue: "undefined didn't connect" persists despite redirect URI fix
+## Current Status
 
-This error suggests deeper app configuration issues beyond just redirect URI. Here are advanced troubleshooting steps:
+### Environment Verification ✅
+- Client ID environment variable: 50 characters (correct)
+- Client ID content: Matches QuickBooks Developer Dashboard exactly
+- Client Secret: Present
+- Sandbox mode: false (production)
+- URLs: All using production domain
 
-## Possible Root Causes
+### Persistent Issue ❌
+- Still getting "invalid_client" error during token exchange
+- Server logs show clientIdLength: 48 vs actual 50
+- Suggests environment loading issue in service context
 
-1. **App Not Fully Published/Active**
-   - Check if your production app is fully published in Intuit Developer Dashboard
-   - Verify app status is "Live" not "Development"
+## Potential Root Causes
 
-2. **Client ID/Secret Mismatch**
-   - Confirm you're using the correct production credentials
-   - Client ID: `AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA`
+### 1. Environment Variable Loading Timing
+- Service may be reading environment before production overrides are applied
+- `.env.production` may not be fully loaded when service initializes
+- Character encoding or trimming issues
 
-3. **Scope Configuration Issues**
-   - Verify "Accounting" scope is enabled in your app settings
-   - Check if additional scopes are required
+### 2. Credential Validation by QuickBooks
+- QuickBooks may validate Client ID against registered redirect URIs
+- App may need re-verification after URL changes
+- Production vs Sandbox credential mismatch
 
-4. **App Configuration Incomplete**
-   - App might need additional settings configured
-   - Webhook endpoints might be required even if not used
-
-## Advanced Solutions to Try
-
-### Option 1: Create Fresh Production App
-If configuration issues persist, create a completely new production app:
-
-1. Go to https://developer.intuit.com
-2. Create new app → QuickBooks Online API
-3. Use same redirect URI: `https://aec04ca2-dc60-472c-81a4-9f1ed6245b26-00-1gxccut935jmz.worf.replit.dev/api/quickbooks/callback`
-4. Enable Accounting scope
-5. Publish app
-6. Update credentials in `.env.quickbooks`
-
-### Option 2: Manual OAuth Flow
-Implemented manual URL construction to bypass potential library issues.
-
-### Option 3: Direct API Testing
-Test your credentials directly with QuickBooks API Explorer:
-- Visit: https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/companyinfo
-- Use your production credentials
-- Test company info endpoint
-
-## Current Implementation Status
-
-- ✅ Production credentials loaded
-- ✅ Manual URL generation implemented
-- ✅ Enhanced debugging added
-- ✅ Sandbox mismatch protection active
+### 3. OAuth Flow Issues
+- Authorization code may be tied to different Client ID
+- Time-sensitive token exchange
+- Company ID mismatch (sandbox vs production)
 
 ## Next Steps
 
-1. Try the new manual authorization URL
-2. If still failing, check app publication status
-3. Consider creating fresh production app if configuration is corrupted
-4. Test credentials with QuickBooks API Explorer
+1. **Verify Full Environment Loading**: Check if production environment is fully loaded in service context
+2. **Test Direct Token Exchange**: Use curl to test QuickBooks token endpoint directly
+3. **Validate App Configuration**: Ensure QuickBooks app settings match exactly
+4. **Consider Sandbox Testing**: Test with sandbox credentials to isolate credential vs environment issues
 
-The "undefined" error typically indicates the app itself isn't properly configured in QuickBooks Developer Dashboard, not just credential issues.
+## Current Debugging Focus
+
+The system correctly loads the production Client ID in shell context but shows different length in service context, suggesting an environment loading race condition.

@@ -1,53 +1,37 @@
-// Debug production QuickBooks configuration
-import { config } from 'dotenv';
-
-// Load production environment
-config({ path: '.env.production', override: true });
-
-console.log('🔍 PRODUCTION vs DEVELOPMENT QuickBooks Analysis');
+// Debug production QuickBooks credentials
+console.log('🔍 DEBUGGING PRODUCTION QUICKBOOKS CREDENTIALS');
 console.log('='.repeat(60));
 
 console.log('\n📋 Environment Variables:');
-console.log('QUICKBOOKS_SANDBOX:', process.env.QUICKBOOKS_SANDBOX);
-console.log('REPLIT_DOMAINS:', process.env.REPLIT_DOMAINS);
-console.log('CLIENT_ID ends with:', process.env.QUICKBOOKS_CLIENT_ID?.slice(-10));
+console.log('CLIENT_ID length:', process.env.QUICKBOOKS_CLIENT_ID?.length || 'undefined');
+console.log('CLIENT_ID first 15:', process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 15) || 'undefined');
+console.log('CLIENT_SECRET exists:', !!process.env.QUICKBOOKS_CLIENT_SECRET);
+console.log('SANDBOX mode:', process.env.QUICKBOOKS_SANDBOX);
 
-console.log('\n🌐 Domain Analysis:');
-const currentDomain = process.env.REPLIT_DOMAINS;
-const expectedProduction = 'inkticate-time-tracker-pooranrajput.replit.app';
+console.log('\n🎯 Expected Values:');
+console.log('Expected CLIENT_ID: AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA');
+console.log('Expected length: 50 characters');
+console.log('Expected start: AB6HieH2iCWWSQej');
 
-console.log('Current domain:', currentDomain);
-console.log('Expected production:', expectedProduction);
-console.log('Domain matches production:', currentDomain === expectedProduction);
+console.log('\n🔍 Current vs Expected:');
+const current = process.env.QUICKBOOKS_CLIENT_ID || '';
+const expected = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+console.log('Length match:', current.length === expected.length);
+console.log('First 15 match:', current.substring(0, 15) === expected.substring(0, 15));
+console.log('Character 11 current:', current.charAt(10));
+console.log('Character 11 expected:', expected.charAt(10));
 
-console.log('\n🔧 Callback URL Analysis:');
-const developmentCallback = `https://${currentDomain}/api/quickbooks/callback`;
-const productionCallback = `https://${expectedProduction}/api/quickbooks/callback`;
-
-console.log('Development callback:', developmentCallback);
-console.log('Production callback:', productionCallback);
-console.log('URLs match:', developmentCallback === productionCallback);
-
-console.log('\n⚠️  POTENTIAL ISSUES:');
-if (currentDomain !== expectedProduction) {
-  console.log('❌ DOMAIN MISMATCH: System using dev domain instead of production');
-  console.log('❌ QuickBooks app might be configured for different callback URL');
-  console.log('❌ This could cause "redirect_uri_mismatch" errors');
+if (current !== expected) {
+  console.log('\n❌ CLIENT_ID MISMATCH DETECTED');
+  console.log('Current :', current);
+  console.log('Expected:', expected);
+  
+  // Find differences
+  for (let i = 0; i < Math.max(current.length, expected.length); i++) {
+    if (current.charAt(i) !== expected.charAt(i)) {
+      console.log(`Difference at position ${i}: "${current.charAt(i)}" vs "${expected.charAt(i)}"`);
+    }
+  }
+} else {
+  console.log('\n✅ CLIENT_ID MATCHES EXPECTED VALUE');
 }
-
-if (process.env.QUICKBOOKS_SANDBOX === 'true') {
-  console.log('❌ SANDBOX MODE: Using sandbox credentials with production QuickBooks');
-  console.log('❌ This will cause authentication failures');
-}
-
-console.log('\n✅ REQUIRED FIXES:');
-console.log('1. Ensure REPLIT_DOMAINS = inkticate-time-tracker-pooranrajput.replit.app');
-console.log('2. Ensure QUICKBOOKS_SANDBOX = false (or not set)');
-console.log('3. Verify QuickBooks app callback URL matches production domain');
-console.log('4. Use production Client ID and Secret');
-
-console.log('\n🎯 CORRECT PRODUCTION SETUP:');
-console.log('Domain:', expectedProduction);
-console.log('Callback:', productionCallback);
-console.log('Sandbox:', false);
-console.log('Company ID expected:', '9130351530529746');

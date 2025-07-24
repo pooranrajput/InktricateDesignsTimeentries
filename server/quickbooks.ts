@@ -29,7 +29,9 @@ export class QuickBooksService {
       sandbox: process.env.QUICKBOOKS_SANDBOX,
       useSandbox: this.useSandbox,
       replitDomains: process.env.REPLIT_DOMAINS,
-      envRedirectUri: process.env.QUICKBOOKS_REDIRECT_URI
+      envRedirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
+      rawClientIdLength: (process.env.QUICKBOOKS_CLIENT_ID || '').length,
+      fullClientId: process.env.QUICKBOOKS_CLIENT_ID // Debug: Show full ID to check for issues
     });
     
     this.oauthClient = new OAuthClient({
