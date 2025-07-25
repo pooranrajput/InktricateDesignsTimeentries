@@ -716,6 +716,8 @@ export function registerRoutes(app: Express): Server {
   // Get QuickBooks authorization URL  
   app.get('/api/quickbooks/auth', async (req: any, res) => {
     try {
+      console.log('🔍 QuickBooks Auth Route - Starting...');
+      
       // Debug environment variables
       console.log('Environment check:', {
         hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
@@ -724,11 +726,16 @@ export function registerRoutes(app: Express): Server {
         sandbox: process.env.QUICKBOOKS_SANDBOX === 'true' ? 'true' : 'false'
       });
       
+      console.log('🔍 Creating QuickBooks service...');
       const quickbooks = new QuickBooksService();
+      
+      console.log('🔍 Getting authorization URL...');
       const authUrl = quickbooks.getAuthorizationUrl('timetracking-reauth');
+      
+      console.log('🔍 Auth URL generated successfully:', authUrl.substring(0, 100) + '...');
       res.json({ authUrl, debug: { configured: true } });
     } catch (error: any) {
-      console.error("Error getting QuickBooks auth URL:", error);
+      console.error("🚨 Error getting QuickBooks auth URL:", error);
       res.status(500).json({ 
         message: "Failed to get authorization URL", 
         error: error?.message || "Unknown error",
