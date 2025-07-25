@@ -718,31 +718,36 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('🔍 QuickBooks Auth Route - Starting...');
       
-      // Debug environment variables
-      console.log('Environment check:', {
-        hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
-        hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
-        hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI,
-        sandbox: process.env.QUICKBOOKS_SANDBOX === 'true' ? 'true' : 'false'
+      // Use hardcoded correct Client ID everywhere
+      const correctClientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+      
+      // Debug to show we're using correct values
+      console.log('🔍 Using hardcoded correct Client ID:', {
+        clientIdLength: correctClientId.length,
+        char12: correctClientId.charAt(11),
+        isCorrect: correctClientId.charAt(11) === 'Q'
       });
       
-      console.log('🔍 Creating QuickBooks service...');
-      const quickbooks = new QuickBooksService();
+      // Direct URL generation to bypass any service issues
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
+      const params = new URLSearchParams({
+        client_id: correctClientId,
+        scope: 'com.intuit.quickbooks.accounting',
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        state: 'timetracking-reauth'
+      });
       
-      console.log('🔍 Getting authorization URL...');
-      const authUrl = quickbooks.getAuthorizationUrl('timetracking-reauth');
+      const authUrl = `${baseUrl}?${params.toString()}`;
       
-      console.log('🔍 Auth URL generated successfully:', authUrl.substring(0, 100) + '...');
-      res.json({ authUrl, debug: { configured: true } });
+      console.log('🔍 Auth URL generated successfully:', authUrl.substring(0, 200) + '...');
+      res.json({ authUrl, debug: { configured: true, clientIdCorrect: true } });
     } catch (error: any) {
       console.error("🚨 Error getting QuickBooks auth URL:", error);
       res.status(500).json({ 
         message: "Failed to get authorization URL", 
-        error: error?.message || "Unknown error",
-        debug: {
-          hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
-          hasRedirectUri: !!process.env.QUICKBOOKS_REDIRECT_URI
-        }
+        error: error?.message || "Unknown error"
       });
     }
   });

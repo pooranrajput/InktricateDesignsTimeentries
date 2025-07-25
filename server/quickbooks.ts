@@ -204,7 +204,7 @@ export class QuickBooksService {
     }
     
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    const clientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
@@ -288,7 +288,7 @@ export class QuickBooksService {
 
       // Initialize QuickBooks client for OAuth 2.0
       this.qbo = new QuickBooks(
-        process.env.QUICKBOOKS_CLIENT_ID,   // consumerKey (Client ID)
+        'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA',   // consumerKey (Client ID)
         process.env.QUICKBOOKS_CLIENT_SECRET, // consumerSecret (Client Secret)
         config.accessToken,                 // accessToken
         false,                             // No token secret for OAuth 2.0
