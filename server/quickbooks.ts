@@ -44,7 +44,8 @@ export class QuickBooksService {
 
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
-    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    // Force reload environment to ensure we get the latest secret
+    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     
@@ -54,8 +55,19 @@ export class QuickBooksService {
       redirectUri: redirectUri,
       sandbox: this.useSandbox,
       targetCompanyId: expectedProductionCompanyId,
-      fullClientId: clientId // Log full client ID for debugging
+      fullClientId: clientId, // Log full client ID for debugging
+      char11: clientId?.charAt(10) || 'undefined',
+      expectedChar11: 'Q'
     });
+    
+    // Verify we have the correct Client ID before generating URL
+    if (!clientId || clientId.length !== 50) {
+      throw new Error(`Invalid Client ID: expected 50 characters, got ${clientId?.length || 0}`);
+    }
+    
+    if (clientId.charAt(10) !== 'Q') {
+      throw new Error(`Client ID has wrong character at position 11: expected 'Q', got '${clientId.charAt(10)}'`);
+    }
     
     // Manual URL construction with pre-selected company ID
     const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
