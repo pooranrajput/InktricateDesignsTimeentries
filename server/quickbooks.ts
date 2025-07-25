@@ -15,7 +15,7 @@ export class QuickBooksService {
   constructor() {
     // CRITICAL FIX: Override incorrect Client ID with correct production value
     // The Replit secret contains 'W' at position 11, should be 'Q'
-    const correctClientId = 'AB6HieH2iCWWSQQjneSCittAKuPHlcipzio09raTAQV5EUtA';
+    const correctClientId = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
     const envClientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     
     // Use correct Client ID regardless of environment variable value
@@ -58,7 +58,7 @@ export class QuickBooksService {
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
     // Use correct Client ID directly - bypass environment variables
-    const clientId = 'AB6HieH2iCWWSQQjneSCittAKuPHlcipzio09raTAQV5EUtA';
+    const clientId = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     
