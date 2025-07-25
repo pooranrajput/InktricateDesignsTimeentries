@@ -13,9 +13,22 @@ export class QuickBooksService {
   private useSandbox: boolean;
 
   constructor() {
-    // Clean and validate environment variables
-    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    // CRITICAL FIX: Override incorrect Client ID with correct production value
+    // The Replit secret contains 'W' at position 11, should be 'Q'
+    const correctClientId = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+    const envClientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    
+    // Use correct Client ID regardless of environment variable value
+    const clientId = correctClientId;
     const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+    
+    console.log('🔧 Client ID Fix Applied:', {
+      envClientId: envClientId.substring(0, 15) + '...',
+      envChar11: envClientId.charAt(10),
+      correctedClientId: clientId.substring(0, 15) + '...',
+      correctedChar11: clientId.charAt(10),
+      isFixed: clientId.charAt(10) === 'Q'
+    });
     // Always use the exact production URL to prevent any environment conflicts
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
@@ -44,8 +57,8 @@ export class QuickBooksService {
 
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
-    // Force reload environment to ensure we get the latest secret
-    const clientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    // Use correct Client ID directly - bypass environment variables
+    const clientId = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     

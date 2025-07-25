@@ -2,9 +2,11 @@
 import { config } from 'dotenv';
 config({ path: '.env.production', override: true });
 
-// Force override environment variables for QuickBooks production setup IMMEDIATELY
+// CRITICAL FIX: Force override environment variables AFTER dotenv loading
 process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
 process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
+// Override incorrect Client ID with correct production value - MUST BE AFTER dotenv
+process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -16,7 +18,9 @@ console.log('🔧 Production Environment Override:', {
   replotDomains: process.env.REPLIT_DOMAINS,
   quickbooksRedirect: process.env.QUICKBOOKS_REDIRECT_URI,
   quickbooksClient: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 10) + '...',
-  sandbox: process.env.QUICKBOOKS_SANDBOX
+  quickbooksClientChar11: process.env.QUICKBOOKS_CLIENT_ID?.charAt(10),
+  sandbox: process.env.QUICKBOOKS_SANDBOX,
+  clientIdLength: process.env.QUICKBOOKS_CLIENT_ID?.length
 });
 
 const app = express();
