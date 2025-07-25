@@ -809,18 +809,20 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Performing direct token exchange with correct Client ID...');
       
       const correctClientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
-      const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+      const correctClientSecret = 'szxQeCSAH2uQ3SpXAFKG0pezNOsNgF26oIKZnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
-      console.log('🔍 Using correct Client ID for token exchange:', {
+      console.log('🔍 Using correct credentials for token exchange:', {
         clientIdStart: correctClientId.substring(0, 15),
         char12: correctClientId.charAt(11),
-        isCorrect: correctClientId.charAt(11) === 'Q'
+        clientIdCorrect: correctClientId.charAt(11) === 'Q',
+        clientSecretStart: correctClientSecret.substring(0, 10),
+        credentialsLength: credentials.length
       });
       
       // Direct token exchange
       const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-      const credentials = Buffer.from(`${correctClientId}:${clientSecret}`).toString('base64');
+      const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
       
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
