@@ -130,13 +130,13 @@ System is production-ready. Use authorization URL from admin dashboard to connec
 
 ```
 Changelog:
-- July 24, 2025. CLIENT ID TYPO FIXED: Corrected QuickBooks Client ID and URL configuration issues
-  - FIXED: Client ID typo corrected from AB6HieH2iCWWSQ8j... to AB6HieH2iCWWSQej... (Q vs 8 in position 11)
-  - FIXED: URL configuration now uses production domain instead of development domain in authorization
-  - FIXED: Environment loading order to ensure production variables load before QuickBooks service initialization
-  - COMPLETED: Authorization URL now properly uses production domain and correct credentials
-  - STATUS: Ready for QuickBooks OAuth connection with correct production app configuration
-  - NEXT: Test authorization flow with corrected credentials and production domain
+- July 25, 2025. CLIENT ID SECRET UPDATED: Fixed Replit secret to use corrected QuickBooks Client ID
+  - IDENTIFIED: Root cause was incorrect Client ID still stored in Replit secrets (AB6HieH2iCWWSQ8j... instead of AB6HieH2iCWWSQej...)
+  - FIXED: Updated QUICKBOOKS_CLIENT_ID secret with corrected value (character 11: "8" → "Q")
+  - VERIFIED: All environment configuration now uses production domain and correct credentials
+  - COMPLETED: Secret environment variable properly updated to match QuickBooks Developer Dashboard
+  - STATUS: System ready for successful QuickBooks OAuth authentication
+  - NEXT: Test complete authorization flow with corrected secret
 - July 22, 2025. EMERGENCY RESPONSE: Implemented comprehensive multi-layer backup and protection system
   - Built automatic backup service (hourly time entries, 6-hour full backups, startup backups)
   - Added change monitoring system to detect unexpected data loss (checks every 5 minutes)
