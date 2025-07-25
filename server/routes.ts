@@ -805,11 +805,66 @@ export function registerRoutes(app: Express): Server {
         return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
       }
 
-      // Pass individual parameters to the service
-      console.log('🔍 Attempting to handle callback with QuickBooks service...');
-      const quickbooks = new QuickBooksService();
-      const result = await quickbooks.handleCallback(code, state, realmId);
-      console.log('🔍 QuickBooks Callback Debug - Success result:', result);
+      // DIRECT TOKEN EXCHANGE - bypassing service to use correct Client ID
+      console.log('🔍 Performing direct token exchange with correct Client ID...');
+      
+      const correctClientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+      const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      
+      console.log('🔍 Using correct Client ID for token exchange:', {
+        clientIdStart: correctClientId.substring(0, 15),
+        char12: correctClientId.charAt(11),
+        isCorrect: correctClientId.charAt(11) === 'Q'
+      });
+      
+      // Direct token exchange
+      const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+      const credentials = Buffer.from(`${correctClientId}:${clientSecret}`).toString('base64');
+      
+      const params = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri
+      });
+      
+      const response = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: params.toString()
+      });
+      
+      console.log('🔍 Token Exchange Response Status:', response.status);
+      const responseData = await response.json();
+      console.log('🔍 Token Exchange Response:', responseData);
+      
+      if (!response.ok) {
+        throw new Error(`Token exchange failed: ${response.status} - ${JSON.stringify(responseData)}`);
+      }
+      
+      // Store the tokens in database
+      await db.insert(quickbooksConfig).values({
+        companyId: realmId,
+        accessToken: responseData.access_token,
+        refreshToken: responseData.refresh_token,
+        tokenExpiry: new Date(Date.now() + (responseData.expires_in * 1000)),
+        sandbox: false
+      }).onConflictDoUpdate({
+        target: quickbooksConfig.companyId,
+        set: {
+          accessToken: responseData.access_token,
+          refreshToken: responseData.refresh_token,
+          tokenExpiry: new Date(Date.now() + (responseData.expires_in * 1000)),
+          sandbox: false
+        }
+      });
+      
+      console.log('✅ QuickBooks authentication successful with correct Client ID!');
+      console.log('🔍 Tokens stored successfully for company:', realmId);
       
       // Redirect to production app URL with success message
       res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=success');
