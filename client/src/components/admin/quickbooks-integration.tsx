@@ -42,15 +42,25 @@ export default function QuickBooksIntegration() {
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('GET', '/api/quickbooks/auth');
+      // Add cache-busting parameter to ensure fresh URL
+      const timestamp = Date.now();
+      const response = await apiRequest('GET', `/api/quickbooks/auth?t=${timestamp}`);
       return response.json();
     },
     onSuccess: (data) => {
-      // Open QuickBooks authorization in new window
-      window.open(data.authUrl, '_blank');
+      console.log('🔍 Opening OAuth URL:', data.authUrl);
+      
+      // Clear any QuickBooks-related cookies first
+      document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      
+      // Open QuickBooks authorization in new window with additional parameters
+      const cleanAuthUrl = data.authUrl + '&cache_bust=' + Date.now();
+      window.open(cleanAuthUrl, '_blank', 'noopener,noreferrer');
+      
       toast({
         title: "Authorization Started",
-        description: "Please complete the authorization in the new window.",
+        description: "Please complete the authorization in the new window. Clear browser cache if you see errors.",
       });
     },
     onError: (error: Error) => {

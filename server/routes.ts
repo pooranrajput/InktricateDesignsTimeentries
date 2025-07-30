@@ -738,12 +738,14 @@ export function registerRoutes(app: Express): Server {
       });
       
       // FIXED: State parameter is required by QuickBooks OAuth
+      // Use a unique state value for each request to avoid caching issues
+      const uniqueState = `timetracking-${Date.now()}`;
       const params = new URLSearchParams({
         client_id: correctClientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: 'timetracking-oauth-state'
+        state: uniqueState
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
