@@ -288,7 +288,7 @@ export class QuickBooksService {
 
       // Initialize QuickBooks client for OAuth 2.0
       this.qbo = new QuickBooks(
-        'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA',   // consumerKey (Client ID)
+        'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA',   // consumerKey (Client ID)
         process.env.QUICKBOOKS_CLIENT_SECRET, // consumerSecret (Client Secret)
         config.accessToken,                 // accessToken
         false,                             // No token secret for OAuth 2.0
