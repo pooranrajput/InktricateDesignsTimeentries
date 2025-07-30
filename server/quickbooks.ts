@@ -60,7 +60,7 @@ export class QuickBooksService {
     // Use correct Client ID directly - bypass environment variables
     const clientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
-    const expectedProductionCompanyId = '9341455047397094';
+    const expectedProductionCompanyId = '9130351530529746';
     
     console.log('🔧 QuickBooks Authorization Debug:', {
       clientId: clientId?.substring(0, 8) + '...',
@@ -173,7 +173,7 @@ export class QuickBooksService {
   private async exchangeCodeForTokens(authCode: string, realmId: string) {
     // Check for sandbox/production compatibility
     const knownSandboxCompanyId = '9341455047397094';
-    const expectedProductionCompanyId = '9341455047397094';
+    const expectedProductionCompanyId = '9130351530529746';
     
     console.log('🔍 Company ID Check:', {
       realmId,
