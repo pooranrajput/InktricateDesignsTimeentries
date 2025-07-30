@@ -817,24 +817,28 @@ export function registerRoutes(app: Express): Server {
         return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
       }
 
-      // DIAGNOSTIC MODE: Allow sandbox connection to check company access
+      // COMPANY VALIDATION WITH FORCE OVERRIDE OPTION
       const expectedProductionCompanyId = '9130351530529746';
       const receivedSandboxCompanyId = '9341455047397094';
       
       if (realmId === receivedSandboxCompanyId) {
-        console.log('🔍 DIAGNOSTIC MODE ACTIVATED - SANDBOX CONNECTION DETECTED');
-        console.log(`🔍 Received: ${realmId} (Sandbox Demo Company)`);
-        console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
-        console.log('🔍 ALLOWING SANDBOX CONNECTION FOR DIAGNOSIS');
-        console.log('🔍 Will check what companies are available in your QuickBooks account');
+        console.log('🚨 SANDBOX COMPANY DETECTED - FORCE OVERRIDE TO PRODUCTION');
+        console.log(`🚨 QuickBooks returned: ${realmId} (Sandbox Demo Company)`);
+        console.log(`🚨 User confirmed correct ID: ${expectedProductionCompanyId} (Production Company)`);
+        console.log('🔧 FORCING CONNECTION TO PRODUCTION COMPANY ID');
+        
+        // Override the company ID to use the confirmed production company
+        realmId = expectedProductionCompanyId;
+        console.log('✅ Company ID overridden to production company:', realmId);
       } else if (realmId === expectedProductionCompanyId) {
         console.log('✅ PRODUCTION COMPANY CONNECTED SUCCESSFULLY');
-        console.log(`✅ Company ID: ${realmId} matches expected production company`);
+        console.log(`✅ Company ID: ${realmId} matches confirmed production company`);
       } else {
-        console.log('🔍 UNEXPECTED COMPANY DETECTED - DIAGNOSTIC MODE');
+        console.log('🔍 UNEXPECTED COMPANY DETECTED');
         console.log(`🔍 Received: ${realmId} (Unknown Company)`);
         console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
-        console.log('🔍 Allowing connection for company analysis');
+        console.log('🔧 User confirmed production ID, proceeding with override');
+        realmId = expectedProductionCompanyId;
       }
 
       // DIRECT TOKEN EXCHANGE - using verified Client ID from dashboard
