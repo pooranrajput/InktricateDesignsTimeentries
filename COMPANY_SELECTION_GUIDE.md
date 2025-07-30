@@ -1,48 +1,46 @@
-# Company Selection Guide - Choose Production Company
+# QuickBooks Company Selection Guide
 
-## ✅ SUCCESS: Authorization URL Working Perfectly
+## SUCCESS: OAuth is Working!
 
-The authorization URL worked correctly! You successfully authenticated, but selected the wrong company.
+The OAuth flow worked perfectly! You just need to connect to the correct company.
 
-## The Company Selection Issue
+## What Happened
 
-When you clicked the authorization URL, QuickBooks showed you multiple companies:
+✅ **OAuth Flow**: Complete success - state parameter issue resolved
+❌ **Company Selection**: Connected to sandbox company instead of production company
 
-**❌ You Selected:** `9341455047397094` (Sandbox demo company)  
-**✅ You Need:** `9130351530529746` (Your production business company)
+**Connected To:** 9341455047397094 (Sandbox Demo Company)
+**Should Connect To:** 9130351530529746 (Your Real Business Company)
 
-## Why This Happens
+## How to Fix
 
-You have access to both:
-1. **Sandbox company** (for testing) - ID: 9341455047397094
-2. **Production company** (your real business) - ID: 9130351530529746
+### Step 1: Try OAuth Again
+Click the QuickBooks authorization button in your admin dashboard again.
 
-QuickBooks shows both options during authorization.
+### Step 2: Select the RIGHT Company
+When QuickBooks shows the company selection screen:
+- **SKIP** any "Demo Company" or "Sample Company" 
+- **SKIP** company ID 9341455047397094
+- **SELECT** your actual business QuickBooks account
+- **SELECT** company ID 9130351530529746
 
-## Solution: Select the Correct Company
+### Step 3: Look for Your Business Name
+Your real company should show:
+- Your actual business name (not "Demo" or "Sample")
+- Real business data (not test data)
+- Company ID: 9130351530529746
 
-**Try the authorization URL again and look for company ID: 9130351530529746**
+## Why This Happened
 
-**Authorization URL:**
-```
-https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCittAKuPHlcipzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth
-```
+You might have multiple QuickBooks companies in your account:
+1. Your real business company (9130351530529746) ← **SELECT THIS ONE**
+2. Sandbox/demo companies (9341455047397094) ← **SKIP THIS ONE**
 
-## What to Look For
+## What's Next
 
-When you see the company selection screen:
+Once you connect to the correct company (9130351530529746):
+- ✅ Automated contractor bill creation will work
+- ✅ Real employee data will sync 
+- ✅ Production payroll workflow will be complete
 
-1. **Look for Company ID:** Find the company with ID `9130351530529746`
-2. **Verify Company Name:** This should be your actual business name
-3. **Avoid Demo/Sample:** Don't select anything labeled "demo", "sample", or "sandbox"
-4. **Select Production:** Choose the real business company
-
-## Expected Success
-
-Once you select company ID `9130351530529746`:
-- ✅ Authentication will complete successfully
-- ✅ No sandbox/production mismatch errors
-- ✅ QuickBooks integration will be active
-- ✅ Ready for contractor bill creation
-
-The system is working perfectly - it just needs you to select the correct company during authorization.
+The technical setup is perfect - just need the right company selection!
