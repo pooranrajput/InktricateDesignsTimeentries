@@ -728,9 +728,16 @@ export function registerRoutes(app: Express): Server {
         isCorrect: correctClientId.charAt(11) === 'Q'
       });
       
-      // Direct URL generation to bypass any service issues
+      // Direct URL generation with FIXED redirect URI
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
+      
+      console.log('🔍 Auth URL generation debug:', {
+        correctClientId: correctClientId.substring(0, 20) + '...',
+        redirectUri: redirectUri,
+        char12: correctClientId.charAt(11)
+      });
+      
       const params = new URLSearchParams({
         client_id: correctClientId,
         scope: 'com.intuit.quickbooks.accounting',
@@ -812,6 +819,10 @@ export function registerRoutes(app: Express): Server {
       const correctClientSecret = 'szxQeCSAH2uQ3SpXAFKG0pezNOsNgF26oIKZnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
+      // Direct token exchange
+      const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+      const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
+      
       console.log('🔍 Using correct credentials for token exchange:', {
         clientIdStart: correctClientId.substring(0, 15),
         char12: correctClientId.charAt(11),
@@ -819,10 +830,6 @@ export function registerRoutes(app: Express): Server {
         clientSecretStart: correctClientSecret.substring(0, 10),
         credentialsLength: credentials.length
       });
-      
-      // Direct token exchange
-      const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-      const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
       
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
@@ -841,8 +848,19 @@ export function registerRoutes(app: Express): Server {
       });
       
       console.log('🔍 Token Exchange Response Status:', response.status);
+      console.log('🔍 Token Exchange Response Headers:', Object.fromEntries(response.headers.entries()));
       const responseData = await response.json();
       console.log('🔍 Token Exchange Response:', responseData);
+      
+      // Debug the exact request that was sent
+      console.log('🔍 Request Debug:', {
+        url: tokenEndpoint,
+        method: 'POST',
+        authHeader: `Basic ${credentials.substring(0, 20)}...`,
+        bodyParams: params.toString(),
+        clientIdUsed: correctClientId.substring(0, 20) + '...',
+        secretUsed: correctClientSecret.substring(0, 10) + '...'
+      });
       
       if (!response.ok) {
         throw new Error(`Token exchange failed: ${response.status} - ${JSON.stringify(responseData)}`);
