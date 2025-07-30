@@ -1,58 +1,60 @@
-# 🚨 SANDBOX/PRODUCTION MISMATCH SOLUTION
+# QuickBooks App Environment Verification Guide
 
-## ✅ ISSUE IDENTIFIED: You're Connecting to Wrong QuickBooks Account
+## ✅ CONFIRMED: Redirect URI Matches
+- App Setting: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- Code Setting: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- Status: ✅ EXACT MATCH
 
-The system is working perfectly! The issue is that **you're still connecting to the sandbox demo account instead of your real business QuickBooks account.**
+## 🔍 Remaining Issues to Check
 
-## 📊 What's Happening
+### 1. App Environment Tab Verification
+**CRITICAL**: QuickBooks has separate credentials for Development vs Production
 
-**From the logs:**
+**Your QuickBooks Developer Dashboard Steps:**
+1. Go to: https://developer.intuit.com/app/developer/dashboard
+2. Select your app
+3. Click "Keys & OAuth"
+4. **Look for tabs at the top**: "Development" and "Production"
+
+**Question**: Which tab were you on when you copied the credentials?
+- Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`
+- Client Secret: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU`
+
+### 2. App Publication Status
+**Production apps require approval**
+
+Check your app status:
+1. In Developer Dashboard, look for app status indicator
+2. Apps can be: "Development", "In Review", "Published"
+3. Only "Published" apps can connect to real business QuickBooks accounts
+
+### 3. Company Account Type
+**Your QuickBooks company (ID: 9341455047397094)**
+- Is this a real business QuickBooks Online account?
+- Or is it a sandbox/test company?
+
+## 🎯 Most Likely Solutions
+
+### Option A: Use Development Credentials
+If your credentials are from the "Development" tab:
 ```
-realmId: '9341455047397094'  ← This is a SANDBOX company ID
-Production Mode: true        ← You're using PRODUCTION credentials
-Result: "invalid_client"     ← QuickBooks rejects this combination
+Credentials: Development tab credentials
+Company: Sandbox test company  
+Result: Should work with sandbox mode
 ```
 
-## 🎯 THE SOLUTION
-
-### When you click the authorization URL:
-
+### Option B: Get True Production Credentials  
+If you need real business integration:
 ```
-https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSClcttlAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth
+Credentials: Production tab credentials (after app approval)
+Company: Real QuickBooks Online business account
+Result: Works with production mode
 ```
 
-### QuickBooks will show you company options:
+## 🔧 Next Steps
+**Please verify:**
+1. **Tab Source**: Development or Production tab for your credentials?
+2. **App Status**: Is your app "Published" or still in "Development"?
+3. **Account Type**: Real business or sandbox QuickBooks account?
 
-**❌ DO NOT SELECT:**
-- "Sample Company" 
-- "Sandbox Company"
-- Company ID: 9341455047397094
-- Any demo/test accounts
-
-**✅ SELECT YOUR ACTUAL BUSINESS:**
-- Your real QuickBooks company
-- The account you use for actual business operations
-- Your live business data (not demo data)
-
-## 🔧 System Status
-
-- ✅ Authorization URL: CORRECT
-- ✅ Production credentials: LOADED
-- ✅ Redirect URI: FIXED  
-- ✅ Environment: CONFIGURED
-- ⚠️ Company selection: **YOU NEED TO CHOOSE YOUR REAL BUSINESS**
-
-## 💡 Why This Happens
-
-**QuickBooks Security Rule:**
-- Production apps can ONLY connect to real business accounts
-- Sandbox apps can ONLY connect to demo accounts
-- You cannot mix production credentials with sandbox data
-
-## 🚀 Next Steps
-
-1. **Use the authorization URL above**
-2. **When QuickBooks asks "Which company?", select your REAL business account**
-3. **The authentication will then work perfectly**
-
-Your system is completely ready - you just need to connect to the right QuickBooks account!
+**Based on your answers, I'll configure the system correctly.**
