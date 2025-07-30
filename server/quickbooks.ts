@@ -58,7 +58,7 @@ export class QuickBooksService {
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
     // Use correct Client ID directly - bypass environment variables
-    const clientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+    const clientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     
@@ -202,8 +202,8 @@ export class QuickBooksService {
     }
     
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-    const clientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
-    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
+    const clientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');

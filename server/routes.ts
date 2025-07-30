@@ -719,7 +719,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 QuickBooks Auth Route - Starting...');
       
       // Use hardcoded correct Client ID everywhere
-      const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+      const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
       
       // Debug to show we're using correct values
       console.log('🔍 Using hardcoded correct Client ID:', {
