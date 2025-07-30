@@ -9,13 +9,13 @@ console.log('CLIENT_SECRET exists:', !!process.env.QUICKBOOKS_CLIENT_SECRET);
 console.log('SANDBOX mode:', process.env.QUICKBOOKS_SANDBOX);
 
 console.log('\n🎯 Expected Values:');
-console.log('Expected CLIENT_ID: AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA');
+console.log('Expected CLIENT_ID: AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA');
 console.log('Expected length: 50 characters');
-console.log('Expected start: AB6HieH2iCWWSQej');
+console.log('Expected start: AB6HieH2iCWWSQ8j');
 
 console.log('\n🔍 Current vs Expected:');
 const current = process.env.QUICKBOOKS_CLIENT_ID || '';
-const expected = 'AB6HieH2iCWWSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+const expected = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
 console.log('Length match:', current.length === expected.length);
 console.log('First 15 match:', current.substring(0, 15) === expected.substring(0, 15));
 console.log('Character 11 current:', current.charAt(10));

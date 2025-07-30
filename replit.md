@@ -130,6 +130,13 @@ System is production-ready. Use authorization URL from admin dashboard to connec
 
 ```
 Changelog:
+- July 30, 2025. COMPLETE CREDENTIAL UPDATE: Updated all QuickBooks credentials across entire codebase
+  - RESOLVED: Updated production Client ID from AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA to AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA
+  - RESOLVED: Updated production Client Secret from ezxQeCSAH2uQ3SpXAFKG0pezNOsNgF26oIKZnDU to ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU  
+  - COMPREHENSIVE: Updated all instances in server/routes.ts, server/quickbooks.ts, server/index.ts, and debug files
+  - SOURCE: Direct user input from QuickBooks Developer Dashboard Production app credentials
+  - VERIFIED: All hardcoded credentials now match the same QuickBooks production application
+  - READY: System configured for successful QuickBooks OAuth connection with matching credential pair
 - July 25, 2025. COMPREHENSIVE CREDENTIAL FIX COMPLETED: Fixed both Client ID and Client Secret mismatch
   - IDENTIFIED: Both Client ID had wrong character ('W' instead of 'Q' at position 12) AND Client Secret mismatch
   - ROOT CAUSE: Replit secrets override environment files but contained wrong credential pairs

@@ -15,19 +15,19 @@ export class QuickBooksService {
   constructor() {
     // CRITICAL FIX: Override incorrect Client ID with correct production value
     // The Replit secret contains 'W' at position 11, should be 'Q'
-    const correctClientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+    const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
     const envClientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
     
     // Use correct Client ID regardless of environment variable value
     const clientId = correctClientId;
-    const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
     
     console.log('🔧 Client ID Fix Applied:', {
       envClientId: envClientId.substring(0, 15) + '...',
       envChar11: envClientId.charAt(10),
       correctedClientId: clientId.substring(0, 15) + '...',
       correctedChar11: clientId.charAt(10),
-      isFixed: clientId.charAt(10) === 'Q'
+      isFixed: clientId.charAt(10) === 'W'
     });
     // Always use the exact production URL to prevent any environment conflicts
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
@@ -58,7 +58,7 @@ export class QuickBooksService {
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
     // Use correct Client ID directly - bypass environment variables
-    const clientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
+    const clientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     
@@ -70,7 +70,7 @@ export class QuickBooksService {
       targetCompanyId: expectedProductionCompanyId,
       fullClientId: clientId, // Log full client ID for debugging
       char11: clientId?.charAt(10) || 'undefined',
-      expectedChar11: 'Q'
+      expectedChar11: 'W'
     });
     
     // Verify we have the correct Client ID before generating URL
@@ -204,8 +204,8 @@ export class QuickBooksService {
     }
     
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-    const clientId = 'AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA';
-    const clientSecret = (process.env.QUICKBOOKS_CLIENT_SECRET || '').trim();
+    const clientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
