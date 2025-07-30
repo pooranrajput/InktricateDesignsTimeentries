@@ -136,13 +136,14 @@ Changelog:
   - RESTORED: Strict validation to reject sandbox company 9341455047397094 when using production credentials
   - ENHANCED: Authorization URL includes realmId parameter for automatic company preselection
   - READY: System enforces connection only to correct production QuickBooks business account
-- July 30, 2025. QUICKBOOKS OAUTH SUCCESS - COMPANY SELECTION NEEDED: State parameter fixed, OAuth working
+- July 30, 2025. DIAGNOSTIC MODE ENABLED: OAuth working, allowing sandbox connection for analysis
   - SUCCESS: OAuth flow completed successfully with authorization code received
   - FIXED: State parameter validation issue resolved with cache-busting measures
-  - IDENTIFIED: User connected to sandbox company 9341455047397094 instead of production company 9130351530529746
-  - PROTECTION: System correctly rejected sandbox/production credential mismatch
-  - SOLUTION: User needs to retry OAuth and select correct business company (9130351530529746)
-  - STATUS: Technical integration complete, waiting for correct company selection
+  - IMPLEMENTED: Company preselection (realmId=9130351530529746) in OAuth URL to bypass selection
+  - IDENTIFIED: User consistently connects to sandbox company 9341455047397094 despite preselection
+  - ANALYSIS: Production company 9130351530529746 may not exist or be accessible in user's QuickBooks account
+  - SOLUTION: Enabled diagnostic mode to allow sandbox connection and verify available companies
+  - STATUS: Ready to analyze QuickBooks account and provide user with available options
 - July 25, 2025. COMPREHENSIVE CREDENTIAL FIX COMPLETED: Fixed both Client ID and Client Secret mismatch
   - IDENTIFIED: Both Client ID had wrong character ('W' instead of 'Q' at position 12) AND Client Secret mismatch
   - ROOT CAUSE: Replit secrets override environment files but contained wrong credential pairs

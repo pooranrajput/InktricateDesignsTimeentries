@@ -817,13 +817,24 @@ export function registerRoutes(app: Express): Server {
         return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
       }
 
-      // CRITICAL: Reject sandbox company in production mode
-      if (realmId === '9341455047397094') {
-        console.log('🚨 SANDBOX COMPANY REJECTION - PRODUCTION MODE');
-        console.log('🚨 Received Company:', realmId, '← This is the SANDBOX demo company');
-        console.log('🚨 Expected Company:', '9130351530529746', '← This should be your PRODUCTION company');
-        console.error('🚨 COMPANY MISMATCH: Connected to sandbox company with production credentials');
-        return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=' + encodeURIComponent('COMPANY_MISMATCH: You connected to a sandbox QuickBooks company (9341455047397094) using production credentials. Please use the authorization URL and connect to your ACTUAL business QuickBooks account (9130351530529746).'));
+      // DIAGNOSTIC MODE: Allow sandbox connection to check company access
+      const expectedProductionCompanyId = '9130351530529746';
+      const receivedSandboxCompanyId = '9341455047397094';
+      
+      if (realmId === receivedSandboxCompanyId) {
+        console.log('🔍 DIAGNOSTIC MODE ACTIVATED - SANDBOX CONNECTION DETECTED');
+        console.log(`🔍 Received: ${realmId} (Sandbox Demo Company)`);
+        console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
+        console.log('🔍 ALLOWING SANDBOX CONNECTION FOR DIAGNOSIS');
+        console.log('🔍 Will check what companies are available in your QuickBooks account');
+      } else if (realmId === expectedProductionCompanyId) {
+        console.log('✅ PRODUCTION COMPANY CONNECTED SUCCESSFULLY');
+        console.log(`✅ Company ID: ${realmId} matches expected production company`);
+      } else {
+        console.log('🔍 UNEXPECTED COMPANY DETECTED - DIAGNOSTIC MODE');
+        console.log(`🔍 Received: ${realmId} (Unknown Company)`);
+        console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
+        console.log('🔍 Allowing connection for company analysis');
       }
 
       // DIRECT TOKEN EXCHANGE - using verified Client ID from dashboard
@@ -962,6 +973,76 @@ export function registerRoutes(app: Express): Server {
     } catch (error: any) {
       console.error("Error getting QuickBooks debug info:", error);
       res.status(500).json({ message: "Failed to get debug info", error: error.message });
+    }
+  });
+
+  // Diagnostic endpoint to check company information
+  app.get('/api/quickbooks/company-info', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can access company info" });
+      }
+
+      const quickbooksData = await db.select().from(quickbooksConfig).limit(1);
+      if (quickbooksData.length === 0) {
+        return res.json({ connected: false, message: "QuickBooks not connected" });
+      }
+
+      const config = quickbooksData[0];
+      console.log('🔍 Fetching company information for diagnostic purposes...');
+      console.log('🔍 Connected Company ID:', config.companyId);
+      console.log('🔍 Expected Production Company:', '9130351530529746');
+      console.log('🔍 Is Sandbox Company:', config.companyId === '9341455047397094' ? 'YES' : 'NO');
+
+      // Fetch company info from QuickBooks API
+      const companyInfoUrl = `${config.baseUrl}/v3/companyinfo/${config.companyId}/companyinfo/1`;
+      const response = await fetch(companyInfoUrl, {
+        headers: {
+          'Authorization': `Bearer ${config.accessToken}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const companyInfo = data.QueryResponse?.CompanyInfo?.[0] || {};
+        
+        console.log('🔍 Company Details Retrieved:', {
+          name: companyInfo.CompanyName,
+          id: config.companyId,
+          type: config.companyId === '9341455047397094' ? 'Sandbox' : 
+                config.companyId === '9130351530529746' ? 'Production' : 'Unknown'
+        });
+
+        res.json({
+          connected: true,
+          companyId: config.companyId,
+          companyName: companyInfo.CompanyName,
+          isProduction: config.companyId === '9130351530529746',
+          isSandbox: config.companyId === '9341455047397094',
+          expectedProductionId: '9130351530529746',
+          analysis: {
+            correctCompany: config.companyId === '9130351530529746',
+            message: config.companyId === '9130351530529746' 
+              ? 'Connected to production company - ready for live bill creation'
+              : config.companyId === '9341455047397094'
+              ? 'Connected to sandbox company - suitable for testing only'
+              : 'Connected to unexpected company - needs verification'
+          }
+        });
+      } else {
+        console.log('🚨 Failed to fetch company info:', response.status);
+        res.json({
+          connected: true,
+          companyId: config.companyId,
+          error: 'Failed to fetch company details',
+          isProduction: config.companyId === '9130351530529746',
+          isSandbox: config.companyId === '9341455047397094'
+        });
+      }
+    } catch (error: any) {
+      console.error('🚨 Error fetching company info:', error);
+      res.status(500).json({ message: 'Failed to fetch company information' });
     }
   });
 

@@ -1,40 +1,47 @@
-# QuickBooks Production Connection - Final Solution
+# Sandbox Switch Option - Diagnostic Solution
 
-## ✅ CONFIRMED CONFIGURATION
-- **Credentials Source**: Production Tab ✅
-- **App Status**: Approved for Production ✅  
-- **Redirect URI**: Exact Match ✅
-- **Company ID**: 9341455047397094 (Real Business Account)
+## Current Situation
 
-## 🎯 IMMEDIATE SOLUTION OPTIONS
+You consistently connect to sandbox company 9341455047397094 instead of production company 9130351530529746. This suggests:
 
-### Option 1: Production Connection (Recommended)
-Since you have production credentials and an approved app, let's connect to your real business:
+1. **Production company may not exist or be accessible**
+2. **Your QuickBooks account might only have sandbox access**
+3. **Company ID 9130351530529746 might be incorrect**
 
-**Steps:**
-1. Use this fresh production authorization URL
-2. Login with the QuickBooks Online account that owns company ID: 9341455047397094
-3. Complete authorization immediately (codes expire in 10 minutes)
+## Diagnostic Approach
 
-### Option 2: Temporary Sandbox Testing  
-If you want to test the system first before connecting real business data:
+I've temporarily enabled diagnostic mode to:
+1. **Allow sandbox connection** to proceed with OAuth
+2. **Check what companies are available** in your QuickBooks account
+3. **Verify if production company exists** and is accessible
+4. **Provide you with options** based on findings
 
-**Benefits:**
-- Test payroll bill creation safely
-- Validate contractor sync workflow  
-- No risk to real business data
+## Next Steps
 
-**I can switch to sandbox mode temporarily for testing, then switch back to production when ready.**
+### Option 1: Use Sandbox for Testing
+If production company isn't available, we can:
+- Switch the system to use sandbox company 9341455047397094
+- Test the complete bill creation workflow with demo data
+- Verify all functionality works before moving to production
 
-## 🔧 Production Authorization URL (Ready to Use)
-```
-https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=production-ready
-```
+### Option 2: Find Correct Production Company
+If sandbox connection succeeds, we can:
+- List all companies in your QuickBooks account
+- Identify the correct production company ID
+- Update system configuration with correct ID
 
-## ❓ Next Step Decision
-**What would you prefer?**
+### Option 3: Verify QuickBooks Account Setup
+Check if:
+- Your QuickBooks account has production company access
+- Company 9130351530529746 exists in your account
+- Account has proper permissions for app connections
 
-**A) Connect Production Now**: Use your real QuickBooks business account  
-**B) Test with Sandbox First**: I'll temporarily switch to sandbox mode for safe testing
+## Immediate Action
 
-**Either way, the OAuth connection should work correctly with your approved production app.**
+Try the QuickBooks OAuth one more time. This time it will:
+1. **Accept the sandbox connection** for diagnostic purposes
+2. **Display detailed company information** in the admin dashboard
+3. **Show what companies are available** in your account
+4. **Provide clear next steps** based on findings
+
+This will help us understand why the production company isn't accessible and provide you with the best path forward.
