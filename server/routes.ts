@@ -852,6 +852,19 @@ export function registerRoutes(app: Express): Server {
       const responseData = await response.json();
       console.log('🔍 Token Exchange Response:', responseData);
       
+      // ENHANCED ERROR LOGGING
+      if (!response.ok) {
+        console.log('🚨 DETAILED ERROR ANALYSIS:');
+        console.log('🚨 Status:', response.status);
+        console.log('🚨 Error:', responseData.error);  
+        console.log('🚨 Description:', responseData.error_description);
+        console.log('🚨 Company ID used:', realmId);
+        console.log('🚨 Expected Company ID:', '9130351530529746');
+        console.log('🚨 Company ID Match:', realmId === '9130351530529746');
+        console.log('🚨 Authorization Code Length:', code.length);
+        console.log('🚨 Authorization Code Preview:', code.substring(0, 15) + '...');
+      }
+      
       // Debug the exact request that was sent
       console.log('🔍 Request Debug:', {
         url: tokenEndpoint,
