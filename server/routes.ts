@@ -737,13 +737,13 @@ export function registerRoutes(app: Express): Server {
         char12: correctClientId.charAt(11)
       });
       
+      // TEST: Simplified OAuth parameters to isolate issue
       const params = new URLSearchParams({
         client_id: correctClientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
-        response_type: 'code',
-        state: 'timetracking-reauth',
-        // realmId: '9130351530529746' // Removed - may cause confusion, user must manually select production company
+        response_type: 'code'
+        // Removed state parameter to test minimal OAuth flow
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
