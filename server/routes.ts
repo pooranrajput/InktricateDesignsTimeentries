@@ -743,7 +743,8 @@ export function registerRoutes(app: Express): Server {
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: 'timetracking-reauth'
+        state: 'timetracking-reauth',
+        realmId: '9130351530529746' // Pre-select production company
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;

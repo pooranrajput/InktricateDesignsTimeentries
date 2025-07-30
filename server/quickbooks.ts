@@ -78,8 +78,8 @@ export class QuickBooksService {
       throw new Error(`Invalid Client ID: expected 50 characters, got ${clientId?.length || 0}`);
     }
     
-    if (clientId.charAt(10) !== 'Q') {
-      throw new Error(`Client ID has wrong character at position 11: expected 'Q', got '${clientId.charAt(10)}'`);
+    if (clientId.charAt(10) !== 'W') {
+      throw new Error(`Client ID has wrong character at position 11: expected 'W', got '${clientId.charAt(10)}'`);
     }
     
     // Manual URL construction with pre-selected company ID
@@ -187,11 +187,9 @@ export class QuickBooksService {
       console.log('⚠️  SANDBOX COMPANY DETECTED IN PRODUCTION MODE');
       console.log('⚠️  Company:', realmId, '← This is the SANDBOX demo company');
       console.log('⚠️  Expected:', expectedProductionCompanyId, '← This should be your PRODUCTION company');
-      console.log('🔧 TEMPORARILY ALLOWING CONNECTION for debugging...');
-      console.log('🔧 This connection will work but may have limitations');
-      
-      // Allow connection to proceed for debugging purposes
-      // throw new Error(`WRONG COMPANY SELECTED: You selected sandbox company ${realmId} but should select your production company ${expectedProductionCompanyId}. Please use the authorization URL again and select your actual business QuickBooks account.`);
+      console.error('🚨 You connected to sandbox company 9341455047397094 with production credentials');
+      console.error('🚨 This is not allowed. You must connect to your production company: 9130351530529746');
+      throw new Error('SANDBOX/PRODUCTION MISMATCH: You are connecting to a sandbox QuickBooks company (ID: 9341455047397094) using production app credentials. This is not allowed by QuickBooks. Please use the authorization URL again and select your ACTUAL business QuickBooks account with ID 9130351530529746.');
     }
     
     if (!this.useSandbox && realmId === expectedProductionCompanyId) {

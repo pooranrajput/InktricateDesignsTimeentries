@@ -1,59 +1,49 @@
-# Comprehensive QuickBooks Credential Update - COMPLETE
+# COMPREHENSIVE CREDENTIAL UPDATE - COMPLETE ✅
 
-## ✅ STATUS: ALL CREDENTIALS UPDATED ACROSS ENTIRE CODEBASE
+## 🎯 FINAL COMPANY ID CONFIGURATION
 
-### 🔧 Files Updated with Correct Production Credentials
+After thorough search of entire codebase, all company ID references have been systematically updated:
 
-#### 1. **server/routes.ts**
-✅ Updated auth route Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
-✅ Updated auth route Client Secret: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU`  
-✅ Updated callback route Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
-✅ Updated callback route Client Secret: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU`  
+### ✅ PRODUCTION CONFIGURATION
+- **Production Company ID**: 9130351530529746 (user's actual business)
+- **Sandbox Company ID**: 9341455047397094 (test/demo account)
+- **Environment**: Production mode (QUICKBOOKS_SANDBOX=false)
 
-#### 2. **server/quickbooks.ts**
-✅ Updated constructor Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
-✅ Updated constructor Client Secret: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU`  
-✅ Updated getAuthorizationUrl Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
-✅ Updated exchangeCodeForToken Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
-✅ Updated exchangeCodeForToken Client Secret: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU`  
+### 📁 FILES UPDATED WITH CORRECT COMPANY IDS
 
-#### 3. **server/index.ts**
-✅ Updated environment override Client ID: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA`  
+#### Core Application Files:
+1. **server/quickbooks.ts**
+   - expectedProductionCompanyId = '9130351530529746'
+   - knownSandboxCompanyId = '9341455047397094'
+   - Restored strict validation (no temporary bypasses)
 
-#### 4. **Debug Files**
-✅ Updated debug_production_quickbooks.js expected values  
-✅ Updated test_final_credentials.js with correct credentials  
+2. **server/routes.ts**
+   - Error messages reference correct company IDs
+   - Enhanced logging expects production company 9130351530529746
 
-### 🎯 Current Authorization URL (Ready to Use)
-```
-https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth
-```
+#### Configuration & Debug Files:
+- All debug files updated with correct company expectations
+- Documentation files updated to reflect proper production company
+- Environment files consistent with production setup
 
-### 🔑 Credential Summary
-- **Client ID**: `AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA` (50 chars)
-- **Client Secret**: `ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU` (40 chars)
-- **Position 12**: 'W' (validated from user input)
-- **Source**: Direct user input from QuickBooks Developer Dashboard
-- **Environment**: Production (non-sandbox)
+### 🔒 STRICT VALIDATION RESTORED
+- **Production Mode**: Only accepts company ID 9130351530529746
+- **Sandbox Detection**: Blocks connection to 9341455047397094 in production mode
+- **Clear Error Messages**: Guide user to select correct production company
 
-### 🚀 Expected Results
-1. **Authorization**: URL will work for QuickBooks connection
-2. **Token Exchange**: Will succeed with matching credential pair
-3. **Company Connection**: Ready for production company ID 9341455047397094
-4. **API Access**: Full QuickBooks API functionality enabled
+### 🎯 EXPECTED OAUTH FLOW
+1. User clicks authorization URL
+2. QuickBooks shows company selection
+3. User MUST select company ID: **9130351530529746**
+4. System validates and accepts only this production company
+5. OAuth completes successfully
 
-### 🎉 Resolution Summary
-- **Problem**: Mismatched Client ID and Client Secret from different QuickBooks apps
-- **Root Cause**: Incomplete credential updates across multiple files
-- **Solution**: Comprehensive search and replace of ALL credential instances
-- **Result**: Matching production credentials throughout entire codebase
-- **Status**: Ready for successful QuickBooks OAuth connection
+### 🚨 VALIDATION RULES
+- ❌ Company 9341455047397094 → REJECTED (sandbox with production credentials)
+- ✅ Company 9130351530529746 → ACCEPTED (production company match)
 
-## ✅ NEXT STEPS
-1. Use the authorization URL above to connect to QuickBooks
-2. Login with production QuickBooks account
-3. Authorize the app for your business
-4. System will complete token exchange successfully
-5. Begin contractor sync and bill creation workflow
+## 🚀 READY FOR PRODUCTION CONNECTION
 
-**The "invalid_client" error should now be completely resolved.**
+All company ID references throughout the entire codebase now consistently point to your production QuickBooks business account: **9130351530529746**
+
+The system will now strictly enforce connection to the correct production company and reject any attempts to connect to sandbox companies when using production credentials.

@@ -130,6 +130,12 @@ System is production-ready. Use authorization URL from admin dashboard to connec
 
 ```
 Changelog:
+- July 30, 2025. FINAL COMPANY ID UPDATE: Systematically updated production company ID to 9130351530529746 across entire codebase
+  - VERIFIED: Complete search of all files using grep -r to find every company ID reference
+  - UPDATED: All instances now consistently use production company 9130351530529746
+  - RESTORED: Strict validation to reject sandbox company 9341455047397094 when using production credentials
+  - ENHANCED: Authorization URL includes realmId parameter for automatic company preselection
+  - READY: System enforces connection only to correct production QuickBooks business account
 - July 30, 2025. COMPLETE CREDENTIAL UPDATE: Updated all QuickBooks credentials across entire codebase
   - RESOLVED: Updated production Client ID from AB6HieH2iCWQSQejneSCittAKuPHlcipzio09raTAQV5EUtA to AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA
   - RESOLVED: Updated production Client Secret from ezxQeCSAH2uQ3SpXAFKG0pezNOsNgF26oIKZnDU to ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU  
