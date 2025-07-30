@@ -816,8 +816,8 @@ export function registerRoutes(app: Express): Server {
       // DIRECT TOKEN EXCHANGE - bypassing service to use correct Client ID
       console.log('🔍 Performing direct token exchange with correct Client ID...');
       
-      const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
-      const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
+      const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
