@@ -744,7 +744,7 @@ export function registerRoutes(app: Express): Server {
         redirect_uri: redirectUri,
         response_type: 'code',
         state: 'timetracking-reauth',
-        realmId: '9130351530529746' // Pre-select production company
+        // realmId: '9130351530529746' // Removed - may cause confusion, user must manually select production company
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
@@ -811,6 +811,15 @@ export function registerRoutes(app: Express): Server {
         console.log('🚨 QuickBooks Callback Error - Missing required parameters');
         console.log('🚨 This suggests OAuth authorization was denied or failed');
         return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
+      }
+
+      // CRITICAL: Reject sandbox company in production mode
+      if (realmId === '9341455047397094') {
+        console.log('🚨 SANDBOX COMPANY REJECTION - PRODUCTION MODE');
+        console.log('🚨 Received Company:', realmId, '← This is the SANDBOX demo company');
+        console.log('🚨 Expected Company:', '9130351530529746', '← This should be your PRODUCTION company');
+        console.error('🚨 COMPANY MISMATCH: Connected to sandbox company with production credentials');
+        return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=' + encodeURIComponent('COMPANY_MISMATCH: You connected to a sandbox QuickBooks company (9341455047397094) using production credentials. Please use the authorization URL and connect to your ACTUAL business QuickBooks account (9130351530529746).'));
       }
 
       // DIRECT TOKEN EXCHANGE - bypassing service to use correct Client ID
