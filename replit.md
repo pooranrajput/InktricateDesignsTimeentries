@@ -136,14 +136,14 @@ Changelog:
   - RESTORED: Strict validation to reject sandbox company 9341455047397094 when using production credentials
   - ENHANCED: Authorization URL includes realmId parameter for automatic company preselection
   - READY: System enforces connection only to correct production QuickBooks business account
-- July 30, 2025. QUICKBOOKS DEVELOPER DASHBOARD CONFIGURATION REQUIRED: OAuth error indicates app setup issue
-  - CONFIRMED: All code credentials are correct and verified against screenshot
-  - OAUTH ERROR: QuickBooks returning error page indicates app configuration problem in Developer Dashboard  
-  - REQUIRED: App must be configured for Production environment (not Development)
-  - REQUIRED: Redirect URI must exactly match: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
-  - REQUIRED: Scope com.intuit.quickbooks.accounting must be enabled
-  - REQUIRED: App must be approved for production use by QuickBooks
-  - STATUS: Code ready, waiting for QuickBooks Developer Dashboard configuration update
+- July 30, 2025. QUICKBOOKS DASHBOARD ISSUE IDENTIFIED: Missing redirect URI configuration
+  - ANALYZED: Complete QuickBooks Developer Dashboard screenshots reviewed
+  - CONFIRMED: Credentials, scopes, and production environment are correctly configured
+  - ROOT CAUSE: Redirect URI missing from Settings > Redirect URIs tab in QuickBooks Dashboard
+  - REQUIRED: Add https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback to Redirect URIs
+  - VERIFIED: Client ID AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA matches dashboard exactly
+  - VERIFIED: All other app settings are correct (production, scopes, categories)
+  - STATUS: Ready for OAuth once redirect URI is added to QuickBooks Developer Dashboard
 - July 25, 2025. COMPREHENSIVE CREDENTIAL FIX COMPLETED: Fixed both Client ID and Client Secret mismatch
   - IDENTIFIED: Both Client ID had wrong character ('W' instead of 'Q' at position 12) AND Client Secret mismatch
   - ROOT CAUSE: Replit secrets override environment files but contained wrong credential pairs
