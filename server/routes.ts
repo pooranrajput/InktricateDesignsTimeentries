@@ -737,13 +737,13 @@ export function registerRoutes(app: Express): Server {
         char12: correctClientId.charAt(11)
       });
       
-      // TEST: Simplified OAuth parameters to isolate issue
+      // FIXED: State parameter is required by QuickBooks OAuth
       const params = new URLSearchParams({
         client_id: correctClientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
-        response_type: 'code'
-        // Removed state parameter to test minimal OAuth flow
+        response_type: 'code',
+        state: 'timetracking-oauth-state'
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
