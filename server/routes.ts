@@ -725,7 +725,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Using hardcoded correct Client ID:', {
         clientIdLength: correctClientId.length,
         char12: correctClientId.charAt(11),
-        isCorrect: correctClientId.charAt(11) === '8'
+        isCorrect: correctClientId.charAt(11) === 'W'
       });
       
       // Direct URL generation with FIXED redirect URI
@@ -826,7 +826,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Using correct credentials for token exchange:', {
         clientIdStart: correctClientId.substring(0, 15),
         char12: correctClientId.charAt(11),
-        clientIdCorrect: correctClientId.charAt(11) === '8',
+        clientIdCorrect: correctClientId.charAt(11) === 'W',
         clientSecretStart: correctClientSecret.substring(0, 10),
         credentialsLength: credentials.length
       });
