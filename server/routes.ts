@@ -740,12 +740,15 @@ export function registerRoutes(app: Express): Server {
       // FIXED: State parameter is required by QuickBooks OAuth
       // Use a unique state value for each request to avoid caching issues
       const uniqueState = `timetracking-${Date.now()}`;
+      const expectedProductionCompanyId = '9130351530529746';
+      
       const params = new URLSearchParams({
         client_id: correctClientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: uniqueState
+        state: uniqueState,
+        realmId: expectedProductionCompanyId  // Pre-select production company
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
