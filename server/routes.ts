@@ -719,13 +719,13 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 QuickBooks Auth Route - Starting...');
       
       // Use hardcoded correct Client ID everywhere
-      const correctClientId = 'AB6HieH2iCWWSQSjneSCittAKuPHlcipzio09raTAQV5EUtA';
+      const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
       
       // Debug to show we're using correct values
       console.log('🔍 Using hardcoded correct Client ID:', {
         clientIdLength: correctClientId.length,
         char12: correctClientId.charAt(11),
-        isCorrect: correctClientId.charAt(11) === 'S'
+        isCorrect: correctClientId.charAt(11) === '8'
       });
       
       // Direct URL generation with FIXED redirect URI
@@ -815,8 +815,8 @@ export function registerRoutes(app: Express): Server {
       // DIRECT TOKEN EXCHANGE - bypassing service to use correct Client ID
       console.log('🔍 Performing direct token exchange with correct Client ID...');
       
-      const correctClientId = 'AB6HieH2iCWWSQSjneSCittAKuPHlcipzio09raTAQV5EUtA';
-      const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgF26oIKZnDU';
+      const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+      const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
@@ -826,7 +826,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Using correct credentials for token exchange:', {
         clientIdStart: correctClientId.substring(0, 15),
         char12: correctClientId.charAt(11),
-        clientIdCorrect: correctClientId.charAt(11) === 'S',
+        clientIdCorrect: correctClientId.charAt(11) === '8',
         clientSecretStart: correctClientSecret.substring(0, 10),
         credentialsLength: credentials.length
       });
