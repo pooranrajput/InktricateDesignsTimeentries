@@ -722,10 +722,17 @@ export function registerRoutes(app: Express): Server {
       const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
       
       // Debug to show we're using correct values
-      console.log('🔍 Using hardcoded correct Client ID:', {
-        clientIdLength: correctClientId.length,
-        char12: correctClientId.charAt(11),
-        isCorrect: correctClientId.charAt(11) === 'W'
+      // TEST: Try App ID as Client ID based on QuickBooks documentation
+      const appIdAsClientId = '7ccd23c7-a525-4cb8-8c30-df60652e4603';
+      const originalClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      
+      // Use App ID first (App ID and Client ID should be same per QB docs)
+      const correctClientId = appIdAsClientId;
+      
+      console.log('🔍 Testing App ID as Client ID:', {
+        appId: appIdAsClientId,
+        originalClientId: originalClientId.substring(0, 15) + '...',
+        usingAppId: true
       });
       
       // Direct URL generation with FIXED redirect URI
@@ -822,10 +829,11 @@ export function registerRoutes(app: Express): Server {
         return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=' + encodeURIComponent('COMPANY_MISMATCH: You connected to a sandbox QuickBooks company (9341455047397094) using production credentials. Please use the authorization URL and connect to your ACTUAL business QuickBooks account (9130351530529746).'));
       }
 
-      // DIRECT TOKEN EXCHANGE - bypassing service to use correct Client ID
-      console.log('🔍 Performing direct token exchange with correct Client ID...');
+      // DIRECT TOKEN EXCHANGE - testing with App ID as Client ID
+      console.log('🔍 Performing direct token exchange with App ID as Client ID...');
       
-      const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      const appIdAsClientId = '7ccd23c7-a525-4cb8-8c30-df60652e4603';
+      const correctClientId = appIdAsClientId;
       const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
@@ -833,12 +841,11 @@ export function registerRoutes(app: Express): Server {
       const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
       const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
       
-      console.log('🔍 Using correct credentials for token exchange:', {
-        clientIdStart: correctClientId.substring(0, 15),
-        char12: correctClientId.charAt(11),
-        clientIdCorrect: correctClientId.charAt(11) === 'W',
-        clientSecretStart: correctClientSecret.substring(0, 10),
-        credentialsLength: credentials.length
+      console.log('🔍 Using App ID as Client ID for token exchange:', {
+        appIdAsClientId: correctClientId,
+        clientSecretStart: correctClientSecret.substring(0, 10) + '...',
+        credentialsLength: credentials.length,
+        testingAppIdApproach: true
       });
       
       const params = new URLSearchParams({
