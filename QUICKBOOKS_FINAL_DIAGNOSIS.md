@@ -1,53 +1,56 @@
-# QuickBooks Integration - Final Diagnosis & Solutions
+# QuickBooks OAuth Issue - Final Diagnosis
 
-## Current Situation
+## 🔍 Current Status
+- **Error**: "invalid_grant" - "Incorrect Token type or clientID" (Status 400)
+- **Testing Done**: Tried both sandbox and production modes - same error
+- **Credentials**: Verified encoding is correct, all instances updated
 
-**What's Working:**
-- QuickBooks OAuth flow completes successfully
-- Authorization URL correctly formed with production credentials
-- System properly configured for production environment
+## 🚨 Root Cause Analysis
 
-**The Problem:**
-- QuickBooks only returns access to sandbox company (9341455047397094)
-- Production company (9130351530529746) is not accessible through OAuth
-- This happens regardless of URL parameters or app configuration
+Based on QuickBooks OAuth documentation, this error occurs due to:
 
-## Root Cause Analysis
+### 1. **App Environment Mismatch** ⚠️ MOST LIKELY
+Your credentials might be from a **Development/Sandbox app** but you need **Production app** credentials.
 
-This typically happens when:
+**Check:** In your QuickBooks Developer Dashboard:
+- Are you looking at the "Development" tab or "Production" tab?
+- Production apps have different Client ID/Secret than Development apps
+- The screenshot you provided - was it from the "Production" tab?
 
-1. **Production Company Not Linked**: Company 9130351530529746 may not be properly linked to your QuickBooks app
-2. **App Environment Mismatch**: Your app may still be in sandbox/development mode despite production credentials
-3. **Account Access Issue**: Your QuickBooks account might not have proper access to the production company
-4. **App Approval Status**: Your app may need additional approval for production company access
+### 2. **Redirect URI Mismatch** 
+QuickBooks requires **exact match** between:
+- Redirect URI in app settings: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- Redirect URI in code: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
 
-## Immediate Solutions
+### 3. **App Configuration Issue**
+Your QuickBooks app might not be properly configured for production use.
 
-### Option 1: Use Sandbox for Now (Recommended)
-- Accept sandbox company connection temporarily
-- Test all integration functionality (vendor sync, bill creation, etc.)
-- This proves the system works while we resolve production access
+## 🎯 Solution Steps
 
-### Option 2: Verify Production Company Access
-Check these in your QuickBooks account:
-- Login to QuickBooks Online directly
-- Verify company 9130351530529746 exists and is accessible
-- Check if it appears in your company list
-- Ensure you have admin access to this company
+### Step 1: Verify App Environment
+1. Go to https://developer.intuit.com/app/developer/dashboard
+2. Select your app
+3. Click "Keys & OAuth" 
+4. **Ensure you're on the "Production" tab** (not Development)
+5. Copy the Production Client ID and Client Secret
 
-### Option 3: App Configuration Review
-In QuickBooks Developer Dashboard:
-- Verify app is set to "Production" mode (not just using production credentials)
-- Check if production company is listed in connected companies
-- Ensure app has been published/approved for production use
+### Step 2: Verify Redirect URI
+1. In the same "Keys & OAuth" section
+2. Check "Redirect URIs" section
+3. Ensure it contains: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+4. If not, add it and save
 
-## Next Steps
+### Step 3: App Publication Status
+1. Check if your app is published/approved for production
+2. Some OAuth features require app approval
 
-1. **Immediate**: Connect with sandbox company to test functionality
-2. **Investigation**: Verify production company exists and is accessible
-3. **Resolution**: Fix production company access through proper channels
-4. **Switch**: Move to production once access is confirmed
+## 🔧 Quick Test
+**Can you confirm:**
+1. **Screenshot source**: Was your credential screenshot from "Production" or "Development" tab?
+2. **App status**: Is your QuickBooks app approved for production use?
+3. **Redirect URI**: Does your app settings contain our exact redirect URI?
 
-## Technical Note
+## 📋 Expected Resolution
+Once we use true **Production** credentials from an approved app with correct redirect URI, the OAuth flow should succeed.
 
-The system is correctly configured. The issue is with QuickBooks company access, not our technical implementation. Once company access is resolved, the existing configuration will work perfectly.
+**The error suggests the credentials are valid but belong to wrong environment or have configuration mismatch.**
