@@ -718,8 +718,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('🔍 QuickBooks Auth Route - Starting...');
       
-      // CRITICAL FIX: Use corrected Client ID (Q instead of W at position 12)
-      const correctClientId = 'AB6HieH2iCWQSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      // Use environment variables for consistent credentials across OAuth flow
+      const correctClientId = process.env.QUICKBOOKS_CLIENT_ID;
       
       console.log('🔍 Using correct Client ID from dashboard:', {
         clientId: correctClientId.substring(0, 15) + '...',
@@ -853,9 +853,9 @@ export function registerRoutes(app: Express): Server {
       // DIRECT TOKEN EXCHANGE - using SAME credentials as OAuth authorization
       console.log('🔍 Performing direct token exchange with SAME credentials used in OAuth...');
       
-      // CRITICAL FIX: Use corrected Client ID (Q instead of W at position 12)
-      const correctClientId = 'AB6HieH2iCWQSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
-      const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
+      // Use environment variables for consistent credentials across OAuth flow
+      const correctClientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const correctClientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
       
       console.log('🔧 CREDENTIAL CORRECTION APPLIED - Q instead of W at position 12');
       console.log('🔧 Previous (broken): AB6HieH2iCW**W**SQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
