@@ -857,9 +857,12 @@ export function registerRoutes(app: Express): Server {
       const correctClientId = process.env.QUICKBOOKS_CLIENT_ID;
       const correctClientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
       
-      console.log('🔧 CREDENTIAL CORRECTION APPLIED - Q instead of W at position 12');
-      console.log('🔧 Previous (broken): AB6HieH2iCW**W**SQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
-      console.log('🔧 Current (fixed):   AB6HieH2iCW**Q**SQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
+      console.log('🔧 USING ENVIRONMENT VARIABLE CREDENTIALS FOR CONSISTENCY:', {
+        clientIdFromEnv: correctClientId?.substring(0, 20) + '...',
+        clientIdLength: correctClientId?.length,
+        secretFromEnv: correctClientSecret?.substring(0, 10) + '...',
+        secretLength: correctClientSecret?.length
+      });
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
