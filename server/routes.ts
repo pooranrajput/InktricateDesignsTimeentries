@@ -718,8 +718,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('🔍 QuickBooks Auth Route - Starting...');
       
-      // CONFIRMED: Use Client ID from dashboard (App ID is different identifier)
-      const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      // CRITICAL FIX: Use corrected Client ID (Q instead of W at position 12)
+      const correctClientId = 'AB6HieH2iCWQSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
       
       console.log('🔍 Using correct Client ID from dashboard:', {
         clientId: correctClientId.substring(0, 15) + '...',
@@ -846,9 +846,13 @@ export function registerRoutes(app: Express): Server {
       // DIRECT TOKEN EXCHANGE - using SAME credentials as OAuth authorization
       console.log('🔍 Performing direct token exchange with SAME credentials used in OAuth...');
       
-      // USE IDENTICAL CREDENTIALS as the OAuth authorization URL
-      const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+      // CRITICAL FIX: Use corrected Client ID (Q instead of W at position 12)
+      const correctClientId = 'AB6HieH2iCWQSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
       const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
+      
+      console.log('🔧 CREDENTIAL CORRECTION APPLIED - Q instead of W at position 12');
+      console.log('🔧 Previous (broken): AB6HieH2iCW**W**SQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
+      console.log('🔧 Current (fixed):   AB6HieH2iCW**Q**SQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
