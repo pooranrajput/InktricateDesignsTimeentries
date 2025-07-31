@@ -1,58 +1,61 @@
-// Analyze the exact request being made based on logs
+// Debug the actual request being made when Connect QuickBooks is clicked
 
-const loggedRequest = {
-  url: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
-  method: 'POST',
-  authHeader: 'Basic QUI2SGllSDJpQ1dXU1E4...',
-  bodyParams: 'grant_type=authorization_code&code=XAB11753988923orSs9H5orobNh056mn29JfSyypK2IbsnfvkN&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback',
-  clientIdUsed: 'AB6HieH2iCWWSQ8jneSC...',
-  secretUsed: 'ezxQeCSAH2...'
+import fetch from 'node-fetch';
+
+const debugActualRequest = async () => {
+  console.log('DEBUGGING ACTUAL CONNECT QUICKBOOKS REQUEST...');
+  
+  try {
+    // Generate the URL that's actually being used
+    const response = await fetch('http://localhost:5000/api/quickbooks/auth');
+    const data = await response.json();
+    
+    console.log('ACTUAL OAUTH URL BEING GENERATED:');
+    console.log(data.authUrl);
+    console.log('');
+    
+    // Parse the URL to check parameters
+    const url = new URL(data.authUrl);
+    console.log('URL BREAKDOWN:');
+    console.log('Base URL:', url.origin + url.pathname);
+    console.log('Parameters:');
+    
+    for (const [key, value] of url.searchParams.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+    
+    console.log('');
+    
+    // Check for sandbox indicators
+    const hasSandboxParam = url.searchParams.has('sandbox');
+    const sandboxValue = url.searchParams.get('sandbox');
+    
+    console.log('SANDBOX CHECK:');
+    console.log('Has sandbox parameter:', hasSandboxParam);
+    console.log('Sandbox value:', sandboxValue);
+    
+    // Check if using production base URL
+    const isProductionURL = url.hostname === 'appcenter.intuit.com';
+    console.log('Using production URL:', isProductionURL);
+    
+    console.log('');
+    console.log('DIAGNOSIS:');
+    
+    if (isProductionURL && sandboxValue === 'false') {
+      console.log('✅ URL is correctly configured for production');
+    } else if (!isProductionURL) {
+      console.log('❌ URL is using sandbox base URL');
+    } else if (sandboxValue !== 'false') {
+      console.log('❌ Sandbox parameter not set to false');
+    }
+    
+    console.log('');
+    console.log('COPY THIS URL AND OPEN IN BROWSER:');
+    console.log(data.authUrl);
+    
+  } catch (error) {
+    console.log('Error:', error.message);
+  }
 };
 
-console.log('🔍 ANALYZING ACTUAL REQUEST FROM LOGS');
-
-// Decode the auth header to see what credentials are being sent
-const authHeaderDecoded = Buffer.from('QUI2SGllSDJpQ1dXU1E4am5lU0NJY3RmSUFLdVBISWN1anppbzA5cmFUQVFWNUVVdEE6ZXp4UWVDU0FIMnVRM1NwWEFGS0cwcGV6Tk9zTmdGSTI2Y2xLRW5EVQ==', 'base64').toString();
-console.log('Auth header decoded:', authHeaderDecoded);
-
-const [clientIdFromHeader, secretFromHeader] = authHeaderDecoded.split(':');
-console.log('Client ID from auth header:', clientIdFromHeader);
-console.log('Client Secret from auth header:', secretFromHeader);
-
-// Compare with expected values
-const expectedClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
-const expectedSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
-
-console.log('\n🔍 CREDENTIAL COMPARISON:');
-console.log('Expected Client ID:  ', expectedClientId);
-console.log('Actual Client ID:    ', clientIdFromHeader);
-console.log('Client ID matches:   ', clientIdFromHeader === expectedClientId);
-
-console.log('\nExpected Secret:     ', expectedSecret);
-console.log('Actual Secret:       ', secretFromHeader);
-console.log('Secret matches:      ', secretFromHeader === expectedSecret);
-
-// Analyze redirect URI from body params
-const bodyParams = new URLSearchParams(loggedRequest.bodyParams);
-const redirectUriFromBody = bodyParams.get('redirect_uri');
-console.log('\n🔍 REDIRECT URI ANALYSIS:');
-console.log('Redirect URI in request:', redirectUriFromBody);
-
-// Check for any character differences
-if (clientIdFromHeader !== expectedClientId) {
-  console.log('\n🚨 CLIENT ID DIFFERENCES:');
-  for (let i = 0; i < Math.max(clientIdFromHeader.length, expectedClientId.length); i++) {
-    if (clientIdFromHeader[i] !== expectedClientId[i]) {
-      console.log(`Position ${i}: actual='${clientIdFromHeader[i]}' vs expected='${expectedClientId[i]}'`);
-    }
-  }
-}
-
-if (secretFromHeader !== expectedSecret) {
-  console.log('\n🚨 CLIENT SECRET DIFFERENCES:');
-  for (let i = 0; i < Math.max(secretFromHeader.length, expectedSecret.length); i++) {
-    if (secretFromHeader[i] !== expectedSecret[i]) {
-      console.log(`Position ${i}: actual='${secretFromHeader[i]}' vs expected='${expectedSecret[i]}'`);
-    }
-  }
-}
+debugActualRequest();

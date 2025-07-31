@@ -70,7 +70,7 @@ export class QuickBooksService {
       throw new Error(`Client ID has wrong character at position 11: expected 'W', got '${clientId.charAt(10)}'`);
     }
     
-    // Manual URL construction with pre-selected company ID
+    // Manual URL construction with PRODUCTION ONLY parameters
     const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
     const params = new URLSearchParams({
       client_id: clientId || '',
@@ -78,7 +78,8 @@ export class QuickBooksService {
       redirect_uri: redirectUri || '',
       response_type: 'code',
       state: state || 'production-auth',
-      realmId: expectedProductionCompanyId // Pre-select production company
+      // FORCE PRODUCTION - remove realmId parameter that might cause sandbox lookup
+      sandbox: 'false'
     });
     
     const manualAuthUrl = `${baseUrl}?${params.toString()}`;

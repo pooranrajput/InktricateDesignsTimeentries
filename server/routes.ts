@@ -751,8 +751,7 @@ export function registerRoutes(app: Express): Server {
         redirect_uri: redirectUri,
         response_type: 'code',
         state: uniqueState,
-        // Add app name to help QuickBooks identify our app properly
-        app_name: 'Inkticate Time Tracker'
+        sandbox: 'false' // Explicitly force production mode
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
