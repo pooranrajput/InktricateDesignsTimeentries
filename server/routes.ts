@@ -727,8 +727,8 @@ export function registerRoutes(app: Express): Server {
         dashboardVerified: true
       });
       
-      // Direct URL generation with FIXED redirect URI
-      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      // Use environment redirect URI for consistency
+      const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
       
       console.log('🔍 Auth URL generation debug:', {
@@ -863,7 +863,7 @@ export function registerRoutes(app: Express): Server {
         secretFromEnv: correctClientSecret?.substring(0, 10) + '...',
         secretLength: correctClientSecret?.length
       });
-      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
       const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
