@@ -713,58 +713,53 @@ export function registerRoutes(app: Express): Server {
 
   // QuickBooks Integration Routes
   
-  // Get QuickBooks authorization URL  
+  // Get QuickBooks authorization URL - FRESH START
   app.get('/api/quickbooks/auth', async (req: any, res) => {
     try {
-      console.log('🔍 QuickBooks Auth Route - Starting...');
+      console.log('🆕 FRESH QuickBooks Authorization Starting...');
       
-      // Use environment variables for consistent credentials across OAuth flow
-      const correctClientId = process.env.QUICKBOOKS_CLIENT_ID;
+      // Clear any existing QuickBooks configurations
+      await db.delete(quickbooksConfig);
+      console.log('🧹 Cleared all existing QuickBooks configurations');
       
-      console.log('🔍 Using correct Client ID from dashboard:', {
-        clientId: correctClientId.substring(0, 15) + '...',
-        clientIdLength: correctClientId.length,
-        dashboardVerified: true
-      });
-      
-      // Use environment redirect URI for consistency
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
       const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
-      
-      console.log('🔍 Auth URL generation debug:', {
-        correctClientId: correctClientId.substring(0, 20) + '...',
-        redirectUri: redirectUri,
-        char12: correctClientId.charAt(11)
-      });
-      
-      // FIXED: State parameter is required by QuickBooks OAuth
-      // Use a unique state value for each request to avoid caching issues
-      const uniqueState = `timetracking-${Date.now()}`;
       const expectedProductionCompanyId = '9130351530529746';
       
+      console.log('🆕 Fresh OAuth Configuration:', {
+        clientIdLength: clientId?.length,
+        productionMode: true,
+        redirectUri: redirectUri,
+        targetCompany: expectedProductionCompanyId
+      });
+      
+      const uniqueState = `fresh-start-${Date.now()}`;
+      
       const params = new URLSearchParams({
-        client_id: correctClientId,
+        client_id: clientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
         state: uniqueState,
-        realmId: expectedProductionCompanyId  // Pre-select production company
-      });
-      
-      console.log('🔧 OAuth URL using Client ID from environment:', {
-        clientIdUsed: correctClientId.substring(0, 20) + '...',
-        clientIdLength: correctClientId.length,
-        fromEnvironment: true
+        realmId: expectedProductionCompanyId
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
       
-      console.log('🔍 Auth URL generated successfully:', authUrl.substring(0, 200) + '...');
-      res.json({ authUrl, debug: { configured: true, clientIdCorrect: true } });
+      console.log('🆕 Fresh authorization URL generated successfully');
+      res.json({ 
+        authUrl, 
+        debug: { 
+          freshStart: true, 
+          productionMode: true,
+          configCleared: true 
+        } 
+      });
     } catch (error: any) {
-      console.error("🚨 Error getting QuickBooks auth URL:", error);
+      console.error("🚨 Error in fresh QuickBooks authorization:", error);
       res.status(500).json({ 
-        message: "Failed to get authorization URL", 
+        message: "Failed to generate fresh authorization URL", 
         error: error?.message || "Unknown error"
       });
     }
@@ -796,12 +791,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Handle QuickBooks OAuth callback
+  // Handle QuickBooks OAuth callback - FRESH START
   app.get('/api/quickbooks/callback', async (req: any, res) => {
     try {
-      console.log('🔍 QuickBooks Callback Debug - Full query params:', req.query);
-      console.log('🔍 QuickBooks Callback Debug - Full URL:', req.url);
-      const { code, state, error } = req.query;
+      console.log('🆕 FRESH QuickBooks Callback - Query params:', req.query);
+      const { code, state, error, realmId } = req.query;
       let realmId = req.query.realmId;
       
       console.log('🔍 QuickBooks Callback Debug - Parsed params:', {

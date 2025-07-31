@@ -13,39 +13,26 @@ export class QuickBooksService {
   private useSandbox: boolean;
 
   constructor() {
-    // CRITICAL FIX: Override incorrect Client ID with correct production value
-    // The Replit secret contains 'W' at position 11, should be 'Q'
-    const correctClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
-    const envClientId = (process.env.QUICKBOOKS_CLIENT_ID || '').trim();
+    // FRESH START: Use environment credentials directly for production
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
+    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
-    // Use correct Client ID regardless of environment variable value
-    const clientId = correctClientId;
-    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
+    // FORCE PRODUCTION MODE: Disable sandbox completely
+    this.useSandbox = false;
     
-    console.log('🔧 Client ID Fix Applied:', {
-      envClientId: envClientId.substring(0, 15) + '...',
-      envChar11: envClientId.charAt(10),
-      correctedClientId: clientId.substring(0, 15) + '...',
-      correctedChar11: clientId.charAt(10),
-      isFixed: clientId.charAt(10) === 'W'
-    });
-    // Always use the exact production URL to prevent any environment conflicts
-    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
-    
-    this.useSandbox = process.env.QUICKBOOKS_SANDBOX === 'true';
-    
-    console.log('🔧 QuickBooks Init Debug:', {
-      clientIdLength: clientId.length,
-      clientIdStart: clientId.substring(0, 10),
+    console.log('🆕 FRESH QUICKBOOKS INTEGRATION:', {
+      clientIdLength: clientId?.length,
+      clientIdStart: clientId?.substring(0, 10),
       hasClientSecret: !!clientSecret,
       redirectUri,
-      sandbox: process.env.QUICKBOOKS_SANDBOX,
-      useSandbox: this.useSandbox,
-      replitDomains: process.env.REPLIT_DOMAINS,
-      envRedirectUri: process.env.QUICKBOOKS_REDIRECT_URI,
-      rawClientIdLength: (process.env.QUICKBOOKS_CLIENT_ID || '').length,
-      fullClientId: process.env.QUICKBOOKS_CLIENT_ID // Debug: Show full ID to check for issues
+      productionMode: !this.useSandbox,
+      environmentSource: 'Replit Secrets'
     });
+    
+    if (!clientId || !clientSecret) {
+      throw new Error('QuickBooks credentials missing from environment');
+    }
     
     this.oauthClient = new OAuthClient({
       clientId,
@@ -57,20 +44,14 @@ export class QuickBooksService {
 
   // Step 1: Get authorization URL for OAuth flow
   getAuthorizationUrl(state?: string) {
-    // Use correct Client ID directly - bypass environment variables
-    const clientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
-    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     const expectedProductionCompanyId = '9130351530529746';
     
-    console.log('🔧 QuickBooks Authorization Debug:', {
-      clientId: clientId?.substring(0, 8) + '...',
-      clientIdLength: clientId?.length,
+    console.log('🆕 FRESH OAuth Authorization:', {
+      productionMode: !this.useSandbox,
       redirectUri: redirectUri,
-      sandbox: this.useSandbox,
       targetCompanyId: expectedProductionCompanyId,
-      fullClientId: clientId, // Log full client ID for debugging
-      char11: clientId?.charAt(10) || 'undefined',
-      expectedChar11: 'W'
+      state: state || 'fresh-start'
     });
     
     // Verify we have the correct Client ID before generating URL
