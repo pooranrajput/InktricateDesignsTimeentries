@@ -781,14 +781,32 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Only admins can re-authenticate QuickBooks" });
       }
       
+      console.log('🔄 FRESH QuickBooks Re-authentication Starting...');
+      
       // Clear ALL QuickBooks configurations to ensure clean state
       await db.delete(quickbooksConfig);
       console.log('🔄 Cleared ALL QuickBooks tokens - ready for fresh production authentication');
       
-      // Generate new auth URL
-      const quickbooks = new QuickBooksService();
-      const authUrl = quickbooks.getAuthorizationUrl('timetracking-reauth');
+      // FORCE PRODUCTION REAUTH URL - same logic as /auth endpoint
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
       
+      const reauthState = `fresh-reauth-${Date.now()}`;
+      
+      // FORCE PRODUCTION OAUTH URL - identical to /auth endpoint
+      const params = new URLSearchParams({
+        client_id: clientId,
+        scope: 'com.intuit.quickbooks.accounting',
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        state: reauthState,
+        sandbox: 'false' // Force production mode
+      });
+      
+      const authUrl = `${baseUrl}?${params.toString()}`;
+      
+      console.log('🔄 Production re-authentication URL generated');
       res.json({ 
         message: "Expired tokens cleared. Please re-authenticate with QuickBooks.",
         authUrl,
