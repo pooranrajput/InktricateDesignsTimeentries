@@ -795,7 +795,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('🔍 QuickBooks Callback Debug - Full query params:', req.query);
       console.log('🔍 QuickBooks Callback Debug - Full URL:', req.url);
-      const { code, state, realmId, error } = req.query;
+      const { code, state, error } = req.query;
+      let realmId = req.query.realmId;
       
       console.log('🔍 QuickBooks Callback Debug - Parsed params:', {
         hasCode: !!code,
@@ -839,6 +840,7 @@ export function registerRoutes(app: Express): Server {
         console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
         console.log('🔧 User confirmed production ID, proceeding with override');
         realmId = expectedProductionCompanyId;
+        console.log('✅ Company ID overridden to production company:', realmId);
       }
 
       // DIRECT TOKEN EXCHANGE - using verified Client ID from dashboard
