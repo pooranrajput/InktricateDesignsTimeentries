@@ -723,7 +723,8 @@ export function registerRoutes(app: Express): Server {
       console.log('🧹 Cleared all existing QuickBooks configurations');
       
       const clientId = process.env.QUICKBOOKS_CLIENT_ID;
-      const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      // FORCE PRODUCTION REDIRECT URI - ignore environment variable
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
       const expectedProductionCompanyId = '9130351530529746';
       
@@ -736,13 +737,14 @@ export function registerRoutes(app: Express): Server {
       
       const uniqueState = `fresh-start-${Date.now()}`;
       
+      // TRY WITHOUT REALM ID - Force company selection dialog
       const params = new URLSearchParams({
         client_id: clientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: uniqueState,
-        realmId: expectedProductionCompanyId
+        state: uniqueState
+        // Remove realmId to force company selection
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
@@ -856,7 +858,8 @@ export function registerRoutes(app: Express): Server {
         secretFromEnv: correctClientSecret?.substring(0, 10) + '...',
         secretLength: correctClientSecret?.length
       });
-      const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      // FORCE PRODUCTION REDIRECT URI for token exchange consistency  
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       // Direct token exchange
       const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';

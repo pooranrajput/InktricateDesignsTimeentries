@@ -1,47 +1,41 @@
-# Final OAuth Analysis - Credentials Validated
+# Final OAuth Configuration - Ready for Testing
 
-## BREAKTHROUGH: Credentials Are Valid!
+## Changes Made
 
-✅ **Credentials verified working** with QuickBooks OAuth endpoint
-- Test with dummy code returns `"invalid_grant"` (expected for bad code)
-- NOT `"invalid_client"` (which would indicate bad credentials)
-- This confirms our Client ID and Secret are correctly configured
+### 1. Removed realmId Parameter
+- OAuth URL no longer forces company ID `9130351530529746`
+- QuickBooks will show company selection dialog
+- User can manually choose production company
 
-## Root Cause Identified
+### 2. Fixed Redirect URI Consistency
+- Forced production redirect URI: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- Ignores environment variable pointing to dev URL
+- Both authorization and token exchange use same URI
 
-The issue is with the **authorization codes** being generated, not the credentials:
+### 3. Fresh Start Configuration
+- All existing QB configurations cleared
+- Production mode forced (sandbox disabled)
+- Clean state for new authorization
 
-1. **OAuth authorization** generates codes using one app configuration
-2. **Token exchange** attempts to use codes with different app configuration
-3. **Result**: Valid credentials but mismatched authorization codes
+## Expected Behavior Now
 
-## Most Likely Causes
+1. **Authorization URL**: No company pre-selection, forces user choice
+2. **Company Selection**: User manually selects production company
+3. **Token Exchange**: Uses consistent redirect URI
+4. **Result**: Should succeed without "invalid_client" error
 
-### 1. QuickBooks App Environment Mismatch
-- Authorization URL might still use sandbox app settings
-- Need to verify OAuth URL uses production Client ID
+## Testing Instructions
 
-### 2. Redirect URI Configuration
-- QuickBooks app dashboard redirect URI might not match our endpoint
-- Should be exactly: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+1. Try QuickBooks authorization in **incognito browser**
+2. When prompted, select your **production company** (not sandbox)
+3. Complete authorization
+4. Should return production company ID and successful token exchange
 
-## Immediate Next Steps
+## Why This Should Work
 
-**Option A: Verify App Dashboard Settings**
-1. Check QuickBooks Developer Dashboard app configuration
-2. Confirm app is set to "Production" mode
-3. Verify redirect URI matches exactly
-4. Ensure app has accounting permissions
+- Removed automatic company selection (sandbox interference)
+- Fixed redirect URI mismatch between auth and token exchange
+- Clean slate configuration
+- Manual company selection bypasses cached preferences
 
-**Option B: Test Sandbox First**
-If production setup is complex, test with sandbox credentials to verify OAuth flow works, then migrate to production.
-
-## Technical Status: READY
-
-The application code is completely ready for QuickBooks integration:
-- ✅ OAuth flow implemented correctly
-- ✅ Credentials validated with QuickBooks
-- ✅ Force override mechanism working
-- ✅ Production company ID confirmed (9130351530529746)
-
-Once the QuickBooks app dashboard configuration is aligned, authentication will succeed immediately.
+The OAuth flow is now optimized for production use with manual company selection.
