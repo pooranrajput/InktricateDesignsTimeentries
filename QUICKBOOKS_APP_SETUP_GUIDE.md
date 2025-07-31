@@ -1,106 +1,45 @@
-# QUICKBOOKS DEVELOPER DASHBOARD CONFIGURATION GUIDE
+# QuickBooks App Setup Guide - Fresh Start
 
-## CURRENT STATUS: OAUTH ERROR PAGE
+## Create New QuickBooks Application
 
-The OAuth error page indicates your QuickBooks app needs specific configuration in the Developer Dashboard. All code credentials are correct - this is purely an app setup issue.
+### Step 1: Go to QuickBooks Developer Dashboard
+1. Visit: https://developer.intuit.com/
+2. Sign in with your Intuit account
+3. Click "Create an app" or "My Apps" → "Create new app"
 
-## REQUIRED QUICKBOOKS APP CONFIGURATION
+### Step 2: App Configuration
+**Choose these settings:**
+- **Platform**: QuickBooks Online and Payments
+- **App Name**: `Inktricate Time Tracker` (or your preferred name)
+- **Description**: `Time tracking and contractor bill automation for wedding industry`
+- **Category**: Business Management or Accounting
 
-### 1. APP ENVIRONMENT SETTINGS
-- **Environment:** Must be set to "Production" (not Development)
-- **Status:** App must be "Active" and approved for production use
-- **Client ID:** AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA
+### Step 3: Production Configuration
+**Critical Settings (Copy exactly):**
+- **Redirect URI**: `https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback`
+- **Environment**: **Production** (NOT Sandbox)
+- **Scopes**: Select "Accounting" permissions
 
-### 2. REDIRECT URI CONFIGURATION
-**Exact redirect URI required:**
-```
-https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
-```
-**Critical:** Must match exactly (case-sensitive, no trailing slash)
+### Step 4: Get New Credentials
+Once created, you'll get:
+- **Client ID** (50 characters starting with letters)
+- **Client Secret** (40 characters)
 
-### 3. SCOPE PERMISSIONS
-**Required scope:**
-```
-com.intuit.quickbooks.accounting
-```
-**Must be explicitly enabled in app settings**
+### Step 5: Update Our Application
+I'll update the environment variables with your new credentials once you provide them.
 
-### 4. APP APPROVAL STATUS
-- Production apps require QuickBooks approval
-- Development apps work only with developer accounts
-- Your app may need to complete the production approval process
+## Why This Will Fix the Issue
 
-## CONFIGURATION STEPS
+The current OAuth error suggests the authorization codes are being generated for a different app configuration. A fresh app will:
+1. Ensure clean production environment
+2. Eliminate any historical configuration conflicts
+3. Provide credentials that match your exact QuickBooks company
+4. Reset any cached OAuth state
 
-### Step 1: Access Developer Dashboard
-1. Go to developer.intuit.com
-2. Sign in with your QuickBooks developer account
-3. Navigate to "My Apps"
-4. Select your app (Client ID: AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA)
+## Next Steps
+1. Create the app using the settings above
+2. Provide the new Client ID and Client Secret
+3. I'll update our application to use the new credentials
+4. Test the OAuth flow with fresh configuration
 
-### Step 2: Verify App Settings
-Check these critical settings:
-
-**Environment Tab:**
-- Environment: Production ✓
-- Status: Active ✓
-
-**Keys & Credentials Tab:**
-- Client ID: AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA ✓
-- Client Secret: ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU ✓
-
-**Redirect URIs Tab:**
-- Add: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback ✓
-
-**Scopes Tab:**
-- Enable: com.intuit.quickbooks.accounting ✓
-
-### Step 3: Production Approval
-If app is in Development mode:
-1. Complete app information and privacy policy
-2. Submit for production approval
-3. Wait for QuickBooks approval (can take several days)
-4. App must pass security review
-
-## COMMON CONFIGURATION ISSUES
-
-### Issue 1: Redirect URI Mismatch
-- Error: OAuth error page
-- Cause: Redirect URI not registered or incorrect
-- Fix: Add exact URI in Developer Dashboard
-
-### Issue 2: Development Mode
-- Error: OAuth error page
-- Cause: App in development, not production
-- Fix: Submit for production approval
-
-### Issue 3: Scope Not Enabled
-- Error: OAuth error page
-- Cause: Required scope not configured
-- Fix: Enable com.intuit.quickbooks.accounting scope
-
-### Issue 4: App Not Approved
-- Error: OAuth error page
-- Cause: Production app pending approval
-- Fix: Complete approval process or use development mode temporarily
-
-## VERIFICATION CHECKLIST
-
-Before testing OAuth again, verify:
-
-- [ ] App environment is "Production"
-- [ ] App status is "Active" 
-- [ ] Redirect URI exactly matches: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback
-- [ ] Scope com.intuit.quickbooks.accounting is enabled
-- [ ] App has completed production approval process
-- [ ] No typos in any configuration fields
-
-## NEXT STEPS
-
-1. **Access your QuickBooks Developer Dashboard**
-2. **Verify all configuration settings above**
-3. **Make necessary updates to match requirements**
-4. **If app needs approval, submit for production review**
-5. **Test OAuth again after configuration is complete**
-
-The code is ready - only the QuickBooks app configuration needs to be updated to match the requirements.
+This approach eliminates all variables and gives us a known-good starting point.
