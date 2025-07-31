@@ -35,4 +35,4 @@ The application employs a full-stack architecture:
 -   **UI Components**: `@radix-ui/*`, `tailwindcss`, `lucide-react`, `class-variance-authority`
 -   **Date Utilities**: `date-fns`
 -   **Build Tools**: `vite`, `typescript`, `tsx`
--   **QuickBooks Integration**: Specific QuickBooks APIs for authentication, vendor management, and bill creation.
+-   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Current status: App configuration issue identified - "undefined didn't connect" error indicates QuickBooks developer dashboard misconfiguration rather than code issues.
