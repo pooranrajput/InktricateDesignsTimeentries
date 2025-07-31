@@ -737,14 +737,19 @@ export function registerRoutes(app: Express): Server {
       
       const uniqueState = `fresh-start-${Date.now()}`;
       
-      // TRY WITHOUT REALM ID - Force company selection dialog
+      // COMPLETE ENVIRONMENT OVERRIDE FOR PRODUCTION
+      process.env.QUICKBOOKS_SANDBOX = 'false';
+      process.env.QUICKBOOKS_REDIRECT_URI = redirectUri;
+      delete process.env.INTUIT_SANDBOX;
+      delete process.env.QB_SANDBOX;
+      
+      // FORCE PRODUCTION OAUTH URL - bypass any library configurations
       const params = new URLSearchParams({
         client_id: clientId,
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
         state: uniqueState
-        // Remove realmId to force company selection
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;

@@ -13,13 +13,14 @@ export class QuickBooksService {
   private useSandbox: boolean;
 
   constructor() {
-    // FRESH START: Use environment credentials directly for production
+    // FORCE PRODUCTION: Hardcode production settings
     const clientId = process.env.QUICKBOOKS_CLIENT_ID;
     const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
-    const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
-    // FORCE PRODUCTION MODE: Disable sandbox completely
+    // FORCE PRODUCTION MODE: Completely disable sandbox
     this.useSandbox = false;
+    process.env.QUICKBOOKS_SANDBOX = 'false';
     
     console.log('🆕 FRESH QUICKBOOKS INTEGRATION:', {
       clientIdLength: clientId?.length,
@@ -37,8 +38,9 @@ export class QuickBooksService {
     this.oauthClient = new OAuthClient({
       clientId,
       clientSecret,
-      sandbox: this.useSandbox,
+      sandbox: false, // FORCE PRODUCTION
       redirectUri,
+      environment: 'production' // Force production environment
     });
   }
 
@@ -76,10 +78,18 @@ export class QuickBooksService {
     
     const manualAuthUrl = `${baseUrl}?${params.toString()}`;
     
-    // Also try the library method as backup
+    // Force production OAuth client configuration
+    const productionOAuthClient = new OAuthClient({
+      clientId: process.env.QUICKBOOKS_CLIENT_ID,
+      clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
+      sandbox: false,
+      redirectUri: 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback',
+      environment: 'production'
+    });
+    
     let libraryAuthUrl = '';
     try {
-      libraryAuthUrl = this.oauthClient.authorizeUri({
+      libraryAuthUrl = productionOAuthClient.authorizeUri({
         scope: [OAuthClient.scopes.Accounting],
         state: state || 'production-auth',
       });
