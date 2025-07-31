@@ -1,35 +1,32 @@
-// Debug current QuickBooks error to understand what's happening
-console.log('🔍 CURRENT QUICKBOOKS ERROR ANALYSIS');
-console.log('='.repeat(60));
+// Debug the current credential issue
 
-console.log('\n📋 Current Configuration Check:');
-console.log('Client ID: AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA');
-console.log('Production Company: 9130351530529746');
-console.log('Redirect URI: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback');
-console.log('Environment: Production (QUICKBOOKS_SANDBOX=false)');
+console.log('🔍 CURRENT CREDENTIAL DEBUG');
 
-console.log('\n🔗 Expected Authorization Flow:');
-console.log('1. User clicks authorization URL with realmId=9130351530529746');
-console.log('2. QuickBooks shows login for production company');
-console.log('3. User authorizes application');
-console.log('4. QuickBooks redirects to callback with authorization code');
-console.log('5. System exchanges code for tokens');
+const expectedClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+const expectedClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26clKEnDU';
 
-console.log('\n🚨 Possible Error Causes:');
-console.log('1. Authorization code expired (10 minute limit)');
-console.log('2. Company selection mismatch during OAuth');
-console.log('3. Client credentials mismatch in token exchange');  
-console.log('4. QuickBooks app configuration issue');
-console.log('5. Network/connectivity issue during token exchange');
+const actualClientId = process.env.QUICKBOOKS_CLIENT_ID;
+const actualClientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
 
-console.log('\n💡 Next Steps for Debugging:');
-console.log('1. Check server logs for exact error details');
-console.log('2. Verify which company ID was selected during authorization');
-console.log('3. Test token exchange manually with captured authorization code');
-console.log('4. Confirm QuickBooks app settings match our configuration');
+console.log('Expected vs Actual:');
+console.log('Client ID Expected:', expectedClientId);
+console.log('Client ID Actual:  ', actualClientId);
+console.log('Client ID Match:   ', actualClientId === expectedClientId);
 
-console.log('\n🎯 Key Questions:');
-console.log('- What error message appeared in the browser?');
-console.log('- Did QuickBooks show company selection or go directly to your business account?');
-console.log('- Was there any delay between authorization and callback?');
-console.log('- Did you see any specific QuickBooks error codes?');
+console.log('\nClient Secret Expected:', expectedClientSecret);
+console.log('Client Secret Actual:  ', actualClientSecret);
+console.log('Client Secret Match:   ', actualClientSecret === expectedClientSecret);
+
+console.log('\nLength Comparison:');
+console.log('Client ID - Expected:', expectedClientId.length, 'Actual:', actualClientId?.length);
+console.log('Client Secret - Expected:', expectedClientSecret.length, 'Actual:', actualClientSecret?.length);
+
+if (actualClientSecret !== expectedClientSecret) {
+  console.log('\n🚨 CLIENT SECRET MISMATCH:');
+  console.log('Expected first 10:', expectedClientSecret.substring(0, 10));
+  console.log('Actual first 10:  ', actualClientSecret?.substring(0, 10));
+  
+  if (actualClientSecret && expectedClientSecret) {
+    console.log('First character - Expected:', expectedClientSecret[0], 'Actual:', actualClientSecret[0]);
+  }
+}
