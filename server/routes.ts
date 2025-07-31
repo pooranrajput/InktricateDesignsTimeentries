@@ -753,8 +753,8 @@ export function registerRoutes(app: Express): Server {
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri || '',
         response_type: 'code',
-        state: safeState,
-        sandbox: 'false' // Explicitly force production mode
+        state: safeState
+        // REMOVED sandbox parameter - QuickBooks OAuth doesn't use this parameter
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
@@ -803,8 +803,8 @@ export function registerRoutes(app: Express): Server {
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: reauthState,
-        sandbox: 'false' // Force production mode
+        state: reauthState
+        // REMOVED sandbox parameter - QuickBooks OAuth doesn't use this parameter
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;

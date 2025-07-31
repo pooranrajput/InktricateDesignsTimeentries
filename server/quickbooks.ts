@@ -81,8 +81,8 @@ export class QuickBooksService {
       scope: 'com.intuit.quickbooks.accounting',
       redirect_uri: redirectUri || '',
       response_type: 'code',
-      state: safeState,
-      sandbox: 'false' // FORCE PRODUCTION
+      state: safeState
+      // REMOVED sandbox parameter - QuickBooks OAuth doesn't recognize this parameter
     });
     
     const manualAuthUrl = `${baseUrl}?${params.toString()}`;
