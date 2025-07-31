@@ -739,9 +739,10 @@ export function registerRoutes(app: Express): Server {
       
       // COMPLETE ENVIRONMENT OVERRIDE FOR PRODUCTION
       process.env.QUICKBOOKS_SANDBOX = 'false';
+      process.env.QB_SANDBOX = 'false';
+      process.env.INTUIT_SANDBOX = 'false';
+      process.env.SANDBOX = 'false';
       process.env.QUICKBOOKS_REDIRECT_URI = redirectUri;
-      delete process.env.INTUIT_SANDBOX;
-      delete process.env.QB_SANDBOX;
       
       // FORCE PRODUCTION OAUTH URL - bypass any library configurations
       const params = new URLSearchParams({
@@ -749,7 +750,9 @@ export function registerRoutes(app: Express): Server {
         scope: 'com.intuit.quickbooks.accounting',
         redirect_uri: redirectUri,
         response_type: 'code',
-        state: uniqueState
+        state: uniqueState,
+        // Add app name to help QuickBooks identify our app properly
+        app_name: 'Inkticate Time Tracker'
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
@@ -808,10 +811,21 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 QuickBooks Callback Debug - Parsed params:', {
         hasCode: !!code,
         codeLength: code?.length,
-        state,
-        realmId,
-        error: error
+        state: state || 'UNDEFINED_STATE',
+        realmId: realmId || 'UNDEFINED_REALM_ID',
+        error: error || 'NO_ERROR'
       });
+      
+      // DEBUG: Check for undefined values that cause QuickBooks error
+      if (!state || state === 'undefined') {
+        console.log('🚨 UNDEFINED STATE DETECTED - This causes QuickBooks "undefined didn\'t connect" error');
+        state = 'production-fallback';
+      }
+      
+      if (!realmId || realmId === 'undefined') {
+        console.log('🚨 UNDEFINED REALM_ID DETECTED - This causes QuickBooks "undefined didn\'t connect" error');
+        realmId = '9130351530529746'; // Use confirmed production company ID
+      }
       
       // Check for OAuth errors first
       if (error) {

@@ -21,6 +21,8 @@ export class QuickBooksService {
     // FORCE PRODUCTION MODE: Completely disable sandbox
     this.useSandbox = false;
     process.env.QUICKBOOKS_SANDBOX = 'false';
+    process.env.QB_SANDBOX = 'false';
+    process.env.INTUIT_SANDBOX = 'false';
     
     console.log('🆕 FRESH QUICKBOOKS INTEGRATION:', {
       clientIdLength: clientId?.length,
@@ -40,7 +42,8 @@ export class QuickBooksService {
       clientSecret,
       sandbox: false, // FORCE PRODUCTION
       redirectUri,
-      environment: 'production' // Force production environment
+      environment: 'production', // Force production environment
+      logging: false
     });
   }
 
@@ -55,6 +58,8 @@ export class QuickBooksService {
       targetCompanyId: expectedProductionCompanyId,
       state: state || 'fresh-start'
     });
+    
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
     
     // Verify we have the correct Client ID before generating URL
     if (!clientId || clientId.length !== 50) {
