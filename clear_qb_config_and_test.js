@@ -1,93 +1,63 @@
-// Clear QuickBooks config and test with correct environment
+// Clear all QuickBooks configurations and test fresh connection
 
 import fetch from 'node-fetch';
 
 const clearAndTest = async () => {
-  console.log('🧹 CLEARING QUICKBOOKS CONFIGURATION AND TESTING...');
-  
-  // Wait for server to start
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  console.log('CLEARING ALL QUICKBOOKS CONFIGURATIONS...');
   
   try {
-    // Clear any existing configurations
-    console.log('Step 1: Clearing old QuickBooks configurations...');
-    const clearResponse = await fetch('http://localhost:5000/api/quickbooks/clear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+    // Clear any cached configurations
+    await fetch('http://localhost:5000/api/quickbooks/clear', { method: 'POST' });
+    console.log('✅ Cleared cached configurations');
+    
+    // Wait a moment for clear to complete
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Generate completely fresh OAuth URL
+    console.log('Generating fresh OAuth URL...');
+    const response = await fetch(`http://localhost:5000/api/quickbooks/auth?fresh=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
     });
     
-    if (clearResponse.ok) {
-      console.log('✅ Old configurations cleared');
-    } else {
-      console.log('⚠️ Clear operation completed');
-    }
+    const data = await response.json();
     
-    // Generate new OAuth URL with fresh environment
-    console.log('Step 2: Generating fresh OAuth URL...');
-    const authResponse = await fetch('http://localhost:5000/api/quickbooks/auth');
-    const authData = await authResponse.json();
+    console.log('FRESH OAUTH URL:');
+    console.log(data.authUrl);
+    console.log('');
     
-    if (authData.authUrl) {
-      console.log('✅ FRESH OAUTH URL GENERATED');
+    // Verify correct credentials
+    const url = new URL(data.authUrl);
+    const clientId = url.searchParams.get('client_id');
+    const redirectUri = url.searchParams.get('redirect_uri');
+    
+    console.log('CREDENTIAL VERIFICATION:');
+    console.log('Client ID:', clientId);
+    console.log('Redirect URI:', redirectUri);
+    console.log('');
+    
+    // Check if using production credentials
+    const correctClientId = clientId === 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+    const correctRedirectUri = redirectUri === 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    
+    if (correctClientId && correctRedirectUri) {
+      console.log('✅ PRODUCTION CREDENTIALS CONFIRMED');
+      console.log('✅ All parameters correct');
       console.log('');
-      console.log('🔗 CORRECTED OAUTH URL:');
-      console.log('═'.repeat(100));
-      console.log(authData.authUrl);
-      console.log('═'.repeat(100));
-      console.log('');
-      console.log('✅ This URL now uses the correct production redirect URI');
-      console.log('✅ This should fix the "sandbox companies not found" error');
-      console.log('');
-      console.log('📋 INSTRUCTIONS:');
-      console.log('1. Copy the URL above');
-      console.log('2. Open in your browser (you are logged into QuickBooks)');
-      console.log('3. Select your production company');
-      console.log('4. Authorize the connection');
-      console.log('');
-      
-      // Monitor for successful connection
-      console.log('🔍 Monitoring for connection...');
-      let checks = 0;
-      while (checks < 60) { // Check for 2 minutes
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        checks++;
-        
-        try {
-          const statusResponse = await fetch('http://localhost:5000/api/quickbooks/status');
-          const statusText = await statusResponse.text();
-          
-          if (statusText.startsWith('{')) {
-            const statusData = JSON.parse(statusText);
-            if (statusData.connected) {
-              console.log('\n🎉 SUCCESS! QUICKBOOKS CONNECTED!');
-              console.log('✅ Company ID:', statusData.companyId);
-              console.log('✅ Environment configuration fixed!');
-              return true;
-            }
-          }
-          
-          if (checks % 15 === 0) {
-            console.log(`Still monitoring... (${checks * 2}s elapsed)`);
-          } else {
-            process.stdout.write('.');
-          }
-          
-        } catch (error) {
-          process.stdout.write('x');
-        }
-      }
-      
-      console.log('\nMonitoring timeout - check connection manually');
-      return false;
-      
+      console.log('READY FOR QUICKBOOKS CONNECTION');
+      console.log('Click Connect QuickBooks button now');
     } else {
-      console.log('❌ Failed to generate OAuth URL');
-      return false;
+      console.log('❌ CREDENTIAL MISMATCH:');
+      console.log('Expected Client ID: AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA');
+      console.log('Actual Client ID:', clientId);
+      console.log('Expected Redirect: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback');
+      console.log('Actual Redirect:', redirectUri);
     }
     
   } catch (error) {
-    console.log('❌ Test failed:', error.message);
-    return false;
+    console.log('Error:', error.message);
   }
 };
 

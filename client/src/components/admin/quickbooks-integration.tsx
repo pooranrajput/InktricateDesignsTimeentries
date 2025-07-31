@@ -42,26 +42,50 @@ export default function QuickBooksIntegration() {
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
     mutationFn: async () => {
-      // Add cache-busting parameter to ensure fresh URL
+      // FORCE FRESH REQUEST - clear all caches
       const timestamp = Date.now();
-      const response = await apiRequest('GET', `/api/quickbooks/auth?t=${timestamp}`);
+      const response = await fetch(`/api/quickbooks/auth?fresh=${timestamp}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to get authorization URL');
       return response.json();
     },
     onSuccess: (data) => {
-      console.log('🔍 Opening OAuth URL:', data.authUrl);
+      console.log('PRODUCTION OAuth URL:', data.authUrl);
       
-      // Clear any QuickBooks-related cookies first
-      document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      
-      // Open QuickBooks authorization in new window with additional parameters
-      const cleanAuthUrl = data.authUrl + '&cache_bust=' + Date.now();
-      window.open(cleanAuthUrl, '_blank', 'noopener,noreferrer');
-      
-      toast({
-        title: "Authorization Started",
-        description: "Please complete the authorization in the new window. Clear browser cache if you see errors.",
-      });
+      // Verify the URL uses correct Client ID and production endpoints
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+        console.log('✅ Production URL confirmed');
+        
+        // Clear ALL browser storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear QuickBooks cookies
+        document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        
+        // Open fresh URL
+        window.open(data.authUrl, '_blank', 'noopener,noreferrer');
+        
+        toast({
+          title: "Production Authorization Started",
+          description: "Opening QuickBooks authorization with production credentials.",
+        });
+      } else {
+        console.error('❌ Wrong Client ID or redirect URI in URL:', data.authUrl);
+        toast({
+          title: "Configuration Error",
+          description: "OAuth URL contains incorrect credentials. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
