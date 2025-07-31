@@ -1,33 +1,34 @@
-// Debug the invalid_client error from QuickBooks token exchange
-console.log('🔍 INVALID_CLIENT ERROR ANALYSIS');
-console.log('='.repeat(60));
+// Debug script to analyze the invalid_client error
 
-console.log('\n📋 OAUTH FLOW STATUS:');
-console.log('✅ Authorization URL: Generated correctly');
-console.log('✅ Authorization Code: Received (XAB11753899014d5tkqS5OA5HDMc018afJFcTmSXj6bJZanXny)');
-console.log('❌ Token Exchange: Failed with "invalid_client"');
-console.log('❌ Company ID: Received 9341455047397094 (sandbox), Expected 9130351530529746 (production)');
+const clientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
 
-console.log('\n🚨 ROOT CAUSE ANALYSIS:');
-console.log('1. Company ID Mismatch: OAuth connected to sandbox company instead of production');
-console.log('2. Invalid Client: Token exchange credentials still not matching QuickBooks app');
-console.log('3. Environment Conflict: Sandbox company used with production credentials');
+console.log('🔍 Credential Analysis:');
+console.log('Client ID:', clientId);
+console.log('Client ID Length:', clientId.length);
+console.log('Client ID Char 12:', clientId.charAt(11));
 
-console.log('\n🔍 TOKEN EXCHANGE DETAILS FROM LOGS:');
-console.log('Status: 401 Unauthorized');
-console.log('Error: invalid_client');
-console.log('Client ID Used: AB6HieH2iCWWSQ8jneSC...');
-console.log('Authorization Code: XAB11753899014d5tkqS5OA5HDMc018afJFcTmSXj6bJZanXny');
-console.log('Company Connected: 9341455047397094 (SANDBOX)');
+console.log('\nClient Secret:', clientSecret);
+console.log('Client Secret Length:', clientSecret.length);
 
-console.log('\n💡 SOLUTION STRATEGIES:');
-console.log('1. Force production company selection in authorization URL');
-console.log('2. Verify Client ID and Secret are EXACTLY matching QuickBooks app');
-console.log('3. Implement sandbox/production company validation');
-console.log('4. Debug base64 credentials encoding');
+console.log('\nBase64 Encoding Test:');
+const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+console.log('Credentials:', credentials);
+console.log('Credentials Length:', credentials.length);
 
-console.log('\n🎯 IMMEDIATE FIXES NEEDED:');
-console.log('1. Ensure authorization URL forces production company selection');
-console.log('2. Double-check Client ID/Secret character-by-character accuracy');
-console.log('3. Add company ID validation before token exchange');
-console.log('4. Test with fresh authorization targeting production company only');
+console.log('\nDecoding Test:');
+const decoded = Buffer.from(credentials, 'base64').toString();
+console.log('Decoded:', decoded);
+console.log('Matches Original:', decoded === `${clientId}:${clientSecret}`);
+
+// Test authorization code issue
+console.log('\n🔍 POTENTIAL ISSUE ANALYSIS:');
+console.log('1. Authorization URL uses Client ID:', clientId.substring(0, 15) + '...');
+console.log('2. Token exchange uses Client ID:', clientId.substring(0, 15) + '...');
+console.log('3. Both should match exactly');
+
+console.log('\n🚨 POSSIBLE CAUSES:');
+console.log('- Authorization code was generated with different credentials');
+console.log('- QuickBooks app configuration issue');
+console.log('- Client ID/Secret encoding problem');
+console.log('- Production vs Sandbox credential mismatch');

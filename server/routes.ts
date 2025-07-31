@@ -843,9 +843,10 @@ export function registerRoutes(app: Express): Server {
         console.log('✅ Company ID overridden to production company:', realmId);
       }
 
-      // DIRECT TOKEN EXCHANGE - using verified Client ID from dashboard
-      console.log('🔍 Performing direct token exchange with dashboard-verified Client ID...');
+      // DIRECT TOKEN EXCHANGE - using SAME credentials as OAuth authorization
+      console.log('🔍 Performing direct token exchange with SAME credentials used in OAuth...');
       
+      // USE IDENTICAL CREDENTIALS as the OAuth authorization URL
       const correctClientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
       const correctClientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
