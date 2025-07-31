@@ -96,20 +96,47 @@ export default function QuickBooksIntegration() {
     },
   });
 
-  // Re-authenticate QuickBooks (clear expired tokens)
+  // Re-authenticate QuickBooks (clear expired tokens) - FORCE FRESH
   const reauthMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/quickbooks/reauth');
+      // Force fresh request identical to connect button
+      const timestamp = Date.now();
+      const response = await fetch(`/api/quickbooks/auth?reauth=${timestamp}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to get re-authentication URL');
       return response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Ready to Re-authenticate",
-        description: data.message,
-      });
-      // Auto-open the authorization URL
-      if (data.authUrl) {
+      console.log('PRODUCTION Re-auth URL:', data.authUrl);
+      
+      // Verify production credentials before opening
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+        console.log('✅ Production re-auth URL confirmed');
+        
+        // Clear all browser caches
+        localStorage.clear();
+        sessionStorage.clear();
+        
         window.open(data.authUrl, '_blank');
+        
+        toast({
+          title: "Production Re-authentication Started",
+          description: "Opening QuickBooks with production credentials.",
+        });
+      } else {
+        console.error('❌ Wrong credentials in re-auth URL:', data.authUrl);
+        toast({
+          title: "Configuration Error",
+          description: "Re-auth URL contains incorrect credentials.",
+          variant: "destructive",
+        });
       }
       queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
     },
