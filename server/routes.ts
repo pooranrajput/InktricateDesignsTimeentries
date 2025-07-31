@@ -745,12 +745,15 @@ export function registerRoutes(app: Express): Server {
       process.env.QUICKBOOKS_REDIRECT_URI = redirectUri;
       
       // FORCE PRODUCTION OAUTH URL - bypass any library configurations
+      // Ensure state is always defined to prevent "undefined didn't connect" error
+      const safeState = uniqueState || `production-${Date.now()}`;
+      
       const params = new URLSearchParams({
-        client_id: clientId,
+        client_id: clientId || '',
         scope: 'com.intuit.quickbooks.accounting',
-        redirect_uri: redirectUri,
+        redirect_uri: redirectUri || '',
         response_type: 'code',
-        state: uniqueState,
+        state: safeState,
         sandbox: 'false' // Explicitly force production mode
       });
       

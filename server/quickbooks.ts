@@ -72,14 +72,17 @@ export class QuickBooksService {
     
     // Manual URL construction with PRODUCTION ONLY parameters
     const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
+    
+    // Ensure state parameter is never undefined to prevent "undefined didn't connect" error
+    const safeState = state || `production-auth-${Date.now()}`;
+    
     const params = new URLSearchParams({
       client_id: clientId || '',
       scope: 'com.intuit.quickbooks.accounting',
       redirect_uri: redirectUri || '',
       response_type: 'code',
-      state: state || 'production-auth',
-      // FORCE PRODUCTION - remove realmId parameter that might cause sandbox lookup
-      sandbox: 'false'
+      state: safeState,
+      sandbox: 'false' // FORCE PRODUCTION
     });
     
     const manualAuthUrl = `${baseUrl}?${params.toString()}`;
