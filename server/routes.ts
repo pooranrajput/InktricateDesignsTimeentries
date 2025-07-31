@@ -751,11 +751,10 @@ export function registerRoutes(app: Express): Server {
         realmId: expectedProductionCompanyId  // Pre-select production company
       });
       
-      console.log('🔧 OAuth URL using CORRECTED Client ID:', {
+      console.log('🔧 OAuth URL using Client ID from environment:', {
         clientIdUsed: correctClientId.substring(0, 20) + '...',
-        char12: correctClientId.charAt(11),
-        correctChar12: 'Q',
-        matches: correctClientId.charAt(11) === 'Q'
+        clientIdLength: correctClientId.length,
+        fromEnvironment: true
       });
       
       const authUrl = `${baseUrl}?${params.toString()}`;
