@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct QuickBooks Connection</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #0077C5;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .btn:hover { background: #005a9e; }
+        .url-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Direct QuickBooks Connection</h1>
+        
+        <div class="info status">
+            <strong>Bypassing Frontend Cache Issues</strong><br>
+            This page generates fresh OAuth URLs directly from the server.
+        </div>
+
+        <h2>Production OAuth URL</h2>
+        <button class="btn" onclick="generateFreshUrl()">Generate Fresh Production URL</button>
+        
+        <div id="urlContainer" style="display: none;">
+            <h3>Fresh Production URL:</h3>
+            <div id="urlDisplay" class="url-box"></div>
+            <a id="urlLink" class="btn" href="#" target="_blank">Open QuickBooks Authorization</a>
+        </div>
+
+        <h2>Connection Status</h2>
+        <button class="btn" onclick="checkStatus()">Check QuickBooks Connection</button>
+        <div id="statusDisplay"></div>
+
+        <h2>Debug Information</h2>
+        <div id="debugInfo" class="url-box" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function generateFreshUrl() {
+            try {
+                // Force fresh request with cache busting
+                const timestamp = Date.now();
+                const response = await fetch(`/api/quickbooks/auth?direct=${timestamp}`, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                // Display the URL
+                document.getElementById('urlDisplay').textContent = data.authUrl;
+                document.getElementById('urlLink').href = data.authUrl;
+                document.getElementById('urlContainer').style.display = 'block';
+                
+                // Verify credentials
+                const url = new URL(data.authUrl);
+                const clientId = url.searchParams.get('client_id');
+                const redirectUri = url.searchParams.get('redirect_uri');
+                const sandbox = url.searchParams.get('sandbox');
+                
+                const debugInfo = `
+Client ID: ${clientId}
+Redirect URI: ${redirectUri}
+Sandbox: ${sandbox}
+Base URL: ${url.origin}${url.pathname}
+State: ${url.searchParams.get('state')}
+                `;
+                
+                document.getElementById('debugInfo').textContent = debugInfo;
+                document.getElementById('debugInfo').style.display = 'block';
+                
+                // Verify production credentials
+                if (clientId === 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA' && 
+                    redirectUri === 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback' &&
+                    sandbox === 'false') {
+                    showStatus('✅ Production credentials confirmed! Click the link above.', 'success');
+                } else {
+                    showStatus('❌ Wrong credentials detected. Check debug info below.', 'error');
+                }
+                
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/quickbooks/status');
+                const data = await response.json();
+                
+                if (data.connected) {
+                    showStatus(`✅ Connected to QuickBooks! Company ID: ${data.companyId}`, 'success');
+                } else {
+                    showStatus('❌ Not connected to QuickBooks', 'error');
+                }
+            } catch (error) {
+                showStatus(`Error checking status: ${error.message}`, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusDisplay');
+            statusDiv.innerHTML = `<div class="${type} status">${message}</div>`;
+        }
+        
+        // Auto-generate URL on page load
+        window.onload = function() {
+            generateFreshUrl();
+        };
+    </script>
+</body>
+</html>
