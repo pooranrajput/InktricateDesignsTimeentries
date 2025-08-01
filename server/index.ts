@@ -11,8 +11,8 @@ process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQ
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { backupService } from "./backup";
-import { changeMonitor } from "./protection";
+// import { backupService } from "./backup";
+// import { changeMonitor } from "./protection";
 
 console.log('🔧 Production Environment Override:', {
   replotDomains: process.env.REPLIT_DOMAINS,
