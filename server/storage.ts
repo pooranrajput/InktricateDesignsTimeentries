@@ -257,7 +257,9 @@ export class DatabaseStorage implements IStorage {
       const startStr = startDate.toISOString().split('T')[0];
       const endStr = endDate.toISOString().split('T')[0];
       
-      return await db
+      console.log(`🔍 Fetching time entries: userId=${userId}, dates=${startStr} to ${endStr}`);
+      
+      const result = await db
         .select()
         .from(timeEntries)
         .where(
@@ -268,6 +270,9 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .orderBy(desc(timeEntries.date), desc(timeEntries.createdAt));
+        
+      console.log(`📊 Found ${result.length} time entries for user ${userId}`);
+      return result;
     }
     
     return await db
