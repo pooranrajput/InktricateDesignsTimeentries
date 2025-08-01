@@ -22,12 +22,11 @@ function Router() {
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('quickbooks') === 'success') {
-      // Clear the URL parameters and refresh the QuickBooks status
+      // Clear the URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Refresh the page after a short delay to show updated connection status
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Invalidate queries to refresh connection status
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/debug'] });
     }
   }, [location]);
 

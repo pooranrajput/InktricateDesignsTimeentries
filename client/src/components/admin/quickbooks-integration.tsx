@@ -28,15 +28,34 @@ export default function QuickBooksIntegration() {
     },
   });
 
-  // Test QuickBooks connection
-  const { data: connectionTest, isLoading: isTestingConnection } = useQuery<{
+  // Check QuickBooks debug info to get connection status
+  const { data: debugInfo, isLoading: isTestingConnection } = useQuery<{
+    configCount: number;
+    configs: Array<{
+      companyId: string;
+      hasAccessToken: boolean;
+      hasRefreshToken: boolean;
+      tokenExpiry: string;
+      isExpired: boolean;
+      sandbox: boolean;
+    }>;
+  }>({
+    queryKey: ['/api/quickbooks/debug'],
+    enabled: true,
+    retry: 1,
+    refetchInterval: 5000, // Refetch every 5 seconds to catch new connections
+  });
+
+  // Test QuickBooks connection (secondary check)
+  const { data: connectionTest } = useQuery<{
     success: boolean;
     companyInfo?: {
       CompanyName: string;
     };
   }>({
     queryKey: ['/api/quickbooks/test'],
-    enabled: true,
+    enabled: debugInfo?.configCount > 0, // Only test if we have config
+    retry: false,
   });
 
   // Get QuickBooks authorization URL
@@ -257,7 +276,10 @@ export default function QuickBooksIntegration() {
     });
   };
 
-  const isConnected = connectionTest?.success;
+  // QuickBooks is connected if we have a valid config with non-expired tokens
+  const hasValidConfig = debugInfo?.configCount > 0 && 
+    debugInfo?.configs?.some(config => config.hasAccessToken && config.hasRefreshToken && !config.isExpired);
+  const isConnected = hasValidConfig || connectionTest?.success;
 
   // Generate available months (only show months that don't have bills yet)
   const availableMonths = [
@@ -324,10 +346,23 @@ export default function QuickBooksIntegration() {
             )}
           </div>
 
-          {isConnected && connectionTest?.companyInfo && (
-            <Alert>
-              <AlertDescription>
-                Connected to <strong>{connectionTest.companyInfo.CompanyName}</strong>
+          {isConnected && (
+            <Alert className="bg-green-50 border-green-200">
+              <AlertDescription className="text-green-800">
+                <div className="flex flex-col gap-1">
+                  <div className="font-medium">🎉 QuickBooks Connected Successfully!</div>
+                  {debugInfo?.configs?.[0] && (
+                    <div className="text-sm">
+                      Company ID: {debugInfo.configs[0].companyId} | 
+                      Production Mode: {debugInfo.configs[0].sandbox ? 'No' : 'Yes'}
+                    </div>
+                  )}
+                  {connectionTest?.companyInfo && (
+                    <div className="text-sm">
+                      Company: <strong>{connectionTest.companyInfo.CompanyName}</strong>
+                    </div>
+                  )}
+                </div>
               </AlertDescription>
             </Alert>
           )}
