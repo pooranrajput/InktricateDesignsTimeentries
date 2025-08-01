@@ -13,9 +13,9 @@ export class QuickBooksService {
   private useSandbox: boolean;
 
   constructor() {
-    // FORCE PRODUCTION: Hardcode production settings
-    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
-    const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
+    // USE ACTUAL PRODUCTION CREDENTIALS: Check for production keys first
+    const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID || process.env.QUICKBOOKS_CLIENT_ID;
+    const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET || process.env.QUICKBOOKS_CLIENT_SECRET;
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     // FORCE PRODUCTION MODE: Completely disable sandbox
