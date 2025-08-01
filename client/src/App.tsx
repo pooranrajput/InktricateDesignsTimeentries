@@ -18,33 +18,7 @@ function Router() {
   const { viewAsEmployee } = useViewToggle();
   const [location] = useLocation();
 
-  // Handle QuickBooks callback parameters
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const quickbooksStatus = urlParams.get('quickbooks');
-    const reason = urlParams.get('reason');
-    const details = urlParams.get('details');
-    
-    if (quickbooksStatus === 'success') {
-      // QuickBooks connection successful
-      console.log('✅ QuickBooks connected successfully');
-    } else if (quickbooksStatus === 'error') {
-      // QuickBooks connection failed
-      console.log('❌ QuickBooks connection failed:', { reason, details });
-      
-      // Show detailed error information
-      if (reason) {
-        console.error('QuickBooks Error Reason:', reason);
-      }
-      if (details) {
-        console.error('QuickBooks Error Details:', decodeURIComponent(details));
-      }
-      
-      // Show user-friendly error message
-      const errorMessage = `QuickBooks connection failed.\nReason: ${reason || 'No specific reason provided'}\nDetails: ${details ? decodeURIComponent(details) : 'This usually means the QuickBooks authorization page had an issue before reaching our callback.'}`;
-      alert(errorMessage);
-    }
-  }, [location]);
+  // Clean application - no external integrations
 
   if (isLoading) {
     return (
