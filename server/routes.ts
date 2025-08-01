@@ -854,7 +854,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Clear any existing QuickBooks data for fresh start
-      await storage.clearQuickBooksConfig();
+      await db.delete(quickbooksConfig);
       console.log('🧹 Cleared existing QuickBooks configuration');
 
       // Exchange authorization code for tokens
@@ -891,7 +891,7 @@ export function registerRoutes(app: Express): Server {
       console.log('✅ Token exchange successful');
 
       // Store the tokens and configuration
-      await storage.storeQuickBooksTokens({
+      await db.insert(quickbooksConfig).values({
         companyId: realmId,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
