@@ -7,6 +7,8 @@ process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajp
 process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
 // Override incorrect Client ID with correct production value - MUST BE AFTER dotenv
 process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+// Force development mode for Replit deployment to ensure frontend serves correctly
+process.env.NODE_ENV = 'development';
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
