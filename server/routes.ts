@@ -1861,6 +1861,75 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Find specific vendor by name in production QuickBooks
+  app.post('/api/quickbooks/find-vendor', async (req: any, res) => {
+    try {
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+      
+      console.log(`🔍 Looking up vendor "${name}" in production QuickBooks...`);
+      const qbo = await quickbooksService.initializeClient();
+      
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors((err: any, vendorList: any) => {
+          if (err) reject(err);
+          else resolve(vendorList);
+        });
+      });
+      
+      const vendorArray = (vendors as any)?.QueryResponse?.Vendor || [];
+      console.log(`📊 Searching through ${vendorArray.length} vendors`);
+      
+      // Debug: Log vendor names to see the field structure
+      console.log('Sample vendor structure:', JSON.stringify(vendorArray[0], null, 2));
+      
+      // Find exact match for the name
+      const matchingVendor = vendorArray.find((vendor: any) => 
+        vendor.Name === name || 
+        vendor.DisplayName === name ||
+        (vendor.Name && vendor.Name.toLowerCase() === name.toLowerCase())
+      );
+      
+      if (matchingVendor) {
+        console.log(`✅ Found exact match: ${matchingVendor.Name} (ID: ${matchingVendor.Id})`);
+        res.json({
+          found: true,
+          vendor: {
+            id: matchingVendor.Id,
+            name: matchingVendor.Name,
+            displayName: matchingVendor.DisplayName,
+            active: matchingVendor.Active,
+            vendor1099: matchingVendor.Vendor1099
+          }
+        });
+      } else {
+        // Show partial matches for debugging
+        const partialMatches = vendorArray
+          .filter((v: any) => v.Name && (
+            v.Name.toLowerCase().includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(v.Name.toLowerCase())
+          ))
+          .map((v: any) => ({ id: v.Id, name: v.Name }));
+          
+        console.log(`❌ No exact match found. Partial matches:`, partialMatches);
+        res.json({
+          found: false,
+          message: `No exact vendor found for "${name}"`,
+          partialMatches: partialMatches.slice(0, 10)
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('Error finding vendor:', error);
+      res.status(500).json({ 
+        error: 'Failed to find vendor',
+        message: error.message 
+      });
+    }
+  });
+
   // CORRECTED Sync contractors to QuickBooks with proper duplicate detection
   app.post('/api/quickbooks/sync-contractors', async (req: any, res) => {
     console.log('🏢 PRODUCTION SYNC with proper duplicate detection from development');
