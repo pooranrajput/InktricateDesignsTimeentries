@@ -321,46 +321,40 @@ export default function QuickBooksIntegration() {
               )}
             </div>
             
-            {!isConnected && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    console.log('🔘 Connect to QuickBooks button clicked');
-                    
-                    // Try the API first, but have a fallback
-                    authMutation.mutate();
-                    
-                    // Fallback: If API fails, use the direct working URL after 2 seconds
-                    setTimeout(() => {
-                      if (!authMutation.isSuccess) {
-                        console.log('🔄 API timeout - using direct OAuth URL as fallback');
-                        const fallbackUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=direct-fallback-' + Date.now();
-                        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-                        
-                        toast({
-                          title: "QuickBooks Authorization Started",
-                          description: "Opening QuickBooks authorization using direct connection.",
-                        });
-                      }
-                    }, 2000);
-                  }}
-                  disabled={authMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {authMutation.isPending ? 'Getting URL...' : 'Connect to QuickBooks'}
-                </Button>
-                <Button
-                  onClick={() => reauthMutation.mutate()}
-                  disabled={reauthMutation.isPending}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {reauthMutation.isPending ? 'Re-authenticating...' : 'Re-authenticate'}
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  console.log('🔘 Connect to QuickBooks button clicked - DIRECT METHOD');
+                  
+                  // Use the working OAuth URL directly
+                  const directUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=button-direct-' + Date.now();
+                  
+                  console.log('🚀 Opening OAuth URL directly:', directUrl);
+                  window.open(directUrl, '_blank', 'noopener,noreferrer');
+                  
+                  toast({
+                    title: "QuickBooks Authorization Started",
+                    description: "Opening QuickBooks authorization page in new tab.",
+                  });
+                }}
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Connect to QuickBooks
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log('🔄 Re-authenticate button clicked');
+                  const reauthUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=reauth-direct-' + Date.now();
+                  window.open(reauthUrl, '_blank', 'noopener,noreferrer');
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Re-authenticate
+              </Button>
+            </div>
           </div>
 
           {isConnected && connectionTest?.companyInfo && (
