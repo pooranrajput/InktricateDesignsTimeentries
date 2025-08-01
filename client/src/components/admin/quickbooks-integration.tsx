@@ -58,10 +58,11 @@ export default function QuickBooksIntegration() {
     },
     onSuccess: (data) => {
       console.log('PRODUCTION OAuth URL:', data.authUrl);
+      console.log('🔍 Button click successful - OAuth URL received');
       
-      // Verify the URL uses correct Client ID and production endpoints
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
-        console.log('✅ Production URL confirmed');
+      // Always open the URL - the backend now generates the correct one
+      if (data.authUrl) {
+        console.log('✅ Opening QuickBooks authorization in new tab');
         
         // Clear ALL browser storage
         localStorage.clear();
@@ -71,18 +72,18 @@ export default function QuickBooksIntegration() {
         document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         
-        // Open fresh URL
+        // Open the OAuth URL in a new tab
         window.open(data.authUrl, '_blank', 'noopener,noreferrer');
         
         toast({
-          title: "Production Authorization Started",
-          description: "Opening QuickBooks authorization with production credentials.",
+          title: "QuickBooks Authorization Started",
+          description: "Opening QuickBooks authorization. Please complete the connection in the new tab.",
         });
       } else {
-        console.error('❌ Wrong Client ID or redirect URI in URL:', data.authUrl);
+        console.error('❌ No OAuth URL received:', data);
         toast({
-          title: "Configuration Error",
-          description: "OAuth URL contains incorrect credentials. Please try again.",
+          title: "Error",
+          description: "Failed to get authorization URL. Please try again.",
           variant: "destructive",
         });
       }
@@ -304,12 +305,15 @@ export default function QuickBooksIntegration() {
             {!isConnected && (
               <div className="flex gap-2">
                 <Button
-                  onClick={() => authMutation.mutate()}
+                  onClick={() => {
+                    console.log('🔘 Connect to QuickBooks button clicked');
+                    authMutation.mutate();
+                  }}
                   disabled={authMutation.isPending}
                   className="flex items-center gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Connect to QuickBooks
+                  {authMutation.isPending ? 'Getting URL...' : 'Connect to QuickBooks'}
                 </Button>
                 <Button
                   onClick={() => reauthMutation.mutate()}
