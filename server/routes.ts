@@ -15,6 +15,9 @@ import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
+// Initialize QuickBooks service
+const quickbooksService = new QuickBooksService();
+
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
