@@ -1,4 +1,4 @@
-// import { useAuth } from "@/hooks/use-auth"; // Temporarily disabled
+import { useAuth } from "@/hooks/use-auth";
 import { useViewToggle } from "@/hooks/use-view-toggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

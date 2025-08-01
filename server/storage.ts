@@ -4,6 +4,7 @@ import {
   taskCategories,
   userTaskAssignments,
   monthlyPayroll,
+  quickbooksConfig,
   type User,
   type UpsertUser,
   type InsertTimeEntry,
@@ -64,8 +65,14 @@ export interface IStorage {
   generateMonthlyPayroll(year: number, month: number): Promise<any[]>;
   markPayrollAsPaid(payrollId: number, paidBy: string): Promise<any>;
   getMonthlyPayroll(userId: string, year: number, month: number): Promise<any>;
+  updatePayrollQuickBooksInfo(payrollId: number, quickbooksBillId: string): Promise<any>;
+  
+  // QuickBooks integration operations
+  updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User>;
+  updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry>;
   getTimeEntry(id: number): Promise<TimeEntry | undefined>;
-  updateUser(userId: string, updates: any): Promise<User>;
+  getAllQuickBooksConfigs(): Promise<any[]>;
+  getExistingBillMonths(year: number): Promise<Array<{month: number, year: number}>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -617,11 +624,26 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
-  async updateUser(userId: string, updates: any): Promise<User> {
+  async updatePayrollQuickBooksInfo(payrollId: number, quickbooksBillId: string): Promise<any> {
+    const [record] = await db
+      .update(monthlyPayroll)
+      .set({
+        quickbooksBillId,
+        updatedAt: new Date(),
+      })
+      .where(eq(monthlyPayroll.id, payrollId))
+      .returning();
+    
+    return record;
+  }
+
+  // QuickBooks integration methods
+  async updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User> {
     const [user] = await db
       .update(users)
       .set({
-        ...updates,
+        quickbooksCustomerId,
+        quickbooksItemId,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
@@ -634,6 +656,24 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry> {
+    const [timeEntry] = await db
+      .update(timeEntries)
+      .set({
+        quickbooksTimeActivityId,
+        quickbooksStatus: 'billed',
+        updatedAt: new Date(),
+      })
+      .where(eq(timeEntries.id, timeEntryId))
+      .returning();
+    
+    if (!timeEntry) {
+      throw new Error("Time entry not found");
+    }
+    
+    return timeEntry;
+  }
+
   async getTimeEntry(id: number): Promise<TimeEntry | undefined> {
     const timeEntry = await db.query.timeEntries.findFirst({
       where: eq(timeEntries.id, id),
@@ -642,7 +682,29 @@ export class DatabaseStorage implements IStorage {
     return timeEntry;
   }
 
+  async getAllQuickBooksConfigs(): Promise<any[]> {
+    const configs = await db.select().from(quickbooksConfig);
+    return configs;
+  }
 
+  async getExistingBillMonths(year: number): Promise<Array<{month: number, year: number}>> {
+    const result = await db
+      .select({
+        month: monthlyPayroll.month,
+        year: monthlyPayroll.year,
+      })
+      .from(monthlyPayroll)
+      .where(
+        and(
+          eq(monthlyPayroll.year, year),
+          sql`${monthlyPayroll.quickbooksBillId} IS NOT NULL`
+        )
+      )
+      .groupBy(monthlyPayroll.month, monthlyPayroll.year)
+      .orderBy(monthlyPayroll.month);
+    
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();

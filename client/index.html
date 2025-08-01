@@ -3,31 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx?v=1754071566"></script>
+    <script type="module" src="/src/main.tsx"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
-    <script>
-      // Force clear all cached JavaScript files
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => {
-            caches.delete(name);
-          });
-        });
-      }
-      // Force reload if old cached files detected
-      window.addEventListener('load', () => {
-        const scripts = document.querySelectorAll('script[src*="index-nwFcc39e"]');
-        if (scripts.length > 0) {
-          location.reload(true);
-        }
-      });
-    </script>
   </body>
 </html>

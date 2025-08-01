@@ -2,14 +2,14 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-// import { useAuth } from "@/hooks/use-auth"; // Temporarily disabled
+import { useAuth } from "@/hooks/use-auth";
 import NavigationHeader from "@/components/navigation-header";
 import StatsCard from "@/components/ui/stats-card";
 import EmployeeManagement from "@/components/admin/employee-management";
 import MonthlyReport from "@/components/admin/monthly-report";
 import TaskManagement from "@/components/admin/task-management";
 import PayrollManagement from "@/components/admin/payroll-management";
-
+import QuickBooksIntegration from "@/components/admin/quickbooks-integration";
 import { BackupControls } from "@/components/admin/backup-controls";
 import Footer from "@/components/footer";
 import { Users, Clock, DollarSign, Calendar } from "lucide-react";
@@ -111,7 +111,8 @@ export default function AdminDashboard() {
         {/* Payroll Management */}
         <PayrollManagement />
 
-
+        {/* QuickBooks Integration */}
+        <QuickBooksIntegration />
 
         {/* Monthly Report */}
         <MonthlyReport />
