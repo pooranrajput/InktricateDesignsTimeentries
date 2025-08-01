@@ -848,7 +848,7 @@ export class QuickBooksService {
   }
 
   // Enhanced vendor search with multiple matching strategies
-  private async findExistingVendor(employee: any) {
+  private async findExistingVendorByEmployee(employee: any) {
     try {
       const qbo = await this.initializeClient();
       const fullName = `${employee.first_name || employee.firstName} ${employee.last_name || employee.lastName}`.trim();
