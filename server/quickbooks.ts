@@ -848,20 +848,20 @@ export class QuickBooksService {
     
     console.log('📤 Contractor sync completed:', results);
     
-    const created = results.filter(r => r.status === 'created');
-    const linked = results.filter(r => r.status === 'linked');
-    const failed = results.filter(r => r.status === 'failed');
+    const createdResults = results.filter(r => r.status === 'created');
+    const linkedResults = results.filter(r => r.status === 'linked');
+    const failedResults = results.filter(r => r.status === 'failed');
     
     return {
       total: employees.length,
-      created: created.length,
-      linked: linked.length,
-      failed: failed.length,
+      created: createdResults.length,
+      linked: linkedResults.length,
+      failed: failedResults.length,
       summary: {
-        successful: created.length + linked.length,
-        createdContractors: created.map(r => r.employeeName).join(', '),
-        linkedContractors: linked.map(r => r.employeeName).join(', '),
-        failedContractors: failed.map(r => r.employeeName || r.employee).join(', ')
+        successful: createdResults.length + linkedResults.length,
+        createdContractors: createdResults.map(r => r.employeeName).join(', '),
+        linkedContractors: linkedResults.map(r => r.employeeName).join(', '),
+        failedContractors: failedResults.map(r => r.employeeName || r.employee).join(', ')
       },
       details: results
     };
