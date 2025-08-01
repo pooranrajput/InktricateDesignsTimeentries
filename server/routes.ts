@@ -42,6 +42,54 @@ export function registerRoutes(app: Express): Server {
     res.json({ message: 'Test route working', timestamp: Date.now() });
   });
   
+  // MANUAL TOKEN SETUP - Direct token insertion from OAuth playground
+  app.post('/api/quickbooks/manual-setup', async (req: any, res) => {
+    console.log('🔧 MANUAL QUICKBOOKS TOKEN SETUP');
+    
+    try {
+      const { accessToken, refreshToken, companyId } = req.body;
+      
+      if (!accessToken || !refreshToken) {
+        return res.status(400).json({ 
+          error: 'Missing required tokens',
+          required: ['accessToken', 'refreshToken'],
+          instructions: 'Get tokens from QuickBooks OAuth playground'
+        });
+      }
+
+      const finalCompanyId = companyId || '9130351530529746';
+      
+      // Store tokens directly in database
+      const connection = await storage.insertQuickBooksConnection({
+        companyId: finalCompanyId,
+        accessToken,
+        refreshToken,
+        tokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
+        sandbox: false
+      });
+      
+      console.log('✅ MANUAL SETUP SUCCESS:', {
+        companyId: finalCompanyId,
+        connectionId: connection.id
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'QuickBooks connected via manual setup!',
+        companyId: finalCompanyId,
+        connectionId: connection.id,
+        tokenExpiry: connection.tokenExpiry
+      });
+      
+    } catch (error) {
+      console.error('❌ MANUAL SETUP ERROR:', error);
+      res.status(500).json({ 
+        error: 'Manual setup failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // EMERGENCY MANUAL AUTH ENDPOINT FOR PAYROLL DAY
   app.post('/api/manual-quickbooks-auth', async (req: any, res) => {
     console.log('🚨 EMERGENCY MANUAL AUTH ENDPOINT HIT');
