@@ -830,7 +830,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/callback', async (req: any, res) => {
     try {
       console.log('🆕 FRESH QuickBooks Callback - Query params:', req.query);
-      const { code, state, error } = req.query;
+      let { code, state, error } = req.query;
       let realmId = req.query.realmId;
       
       console.log('🔍 QuickBooks Callback Debug - Parsed params:', {

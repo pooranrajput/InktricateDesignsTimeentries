@@ -374,8 +374,8 @@ export class QuickBooksService {
     });
   }
 
-  // Find existing vendor by name in QuickBooks
-  async findExistingVendor(qbo: any, vendorName: string) {
+  // Find existing vendor by name in QuickBooks (SQL query version)
+  async findExistingVendorByQuery(qbo: any, vendorName: string) {
     return new Promise((resolve, reject) => {
       // Use SQL-like query which is more reliable for name searches
       const query = `SELECT * FROM Vendor WHERE Name = '${vendorName.replace(/'/g, "\\'")}'`;
