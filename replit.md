@@ -35,4 +35,5 @@ The application employs a full-stack architecture:
 -   **UI Components**: `@radix-ui/*`, `tailwindcss`, `lucide-react`, `class-variance-authority`
 -   **Date Utilities**: `date-fns`
 -   **Build Tools**: `vite`, `typescript`, `tsx`
--   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: PRODUCTION READY - App approved by QuickBooks (3 weeks active), confirmed by Intuit support, using production credentials, redirect URIs configured, ready for real business account connection (Company ID: 9130351530529746).
+-   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: PRODUCTION READY - App approved by QuickBooks (3 weeks active), confirmed by Intuit support, using production credentials, redirect URIs configured, ready for real business account connection (Company ID: 9130351530529746). Known issue: Callback routing requires investigation, but direct OAuth URL works for authentication.
+-   **Current Issues**: React hook error in authentication provider causing frontend JavaScript errors, but backend payroll functionality remains operational.
