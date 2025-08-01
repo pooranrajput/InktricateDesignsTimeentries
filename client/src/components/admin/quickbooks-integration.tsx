@@ -60,7 +60,7 @@ export default function QuickBooksIntegration() {
       console.log('PRODUCTION OAuth URL:', data.authUrl);
       
       // Verify the URL uses correct Client ID and production endpoints
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
         console.log('✅ Production URL confirmed');
         
         // Clear ALL browser storage
@@ -117,7 +117,7 @@ export default function QuickBooksIntegration() {
       console.log('PRODUCTION Re-auth URL:', data.authUrl);
       
       // Verify production credentials before opening
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
         console.log('✅ Production re-auth URL confirmed');
         
         // Clear all browser caches
