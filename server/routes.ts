@@ -35,6 +35,11 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/callback', async (req: any, res) => {
     console.log('🆕 NO-AUTH QuickBooks Callback (bypasses authentication)...');
     console.log('🔍 Raw Query:', req.query);
+    console.log('🔍 Environment check:', {
+      hasClientId: !!process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID,
+      hasClientSecret: !!process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET,
+      clientIdLength: process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID?.length
+    });
     
     try {
       const { code, state, realmId, error, error_description } = req.query;
@@ -116,10 +121,12 @@ export function registerRoutes(app: Express): Server {
 
     } catch (error) {
       console.error('❌ NO-AUTH Callback error:', {
-        message: error.message,
-        stack: error.stack
+        message: error?.message || 'Unknown error',
+        stack: error?.stack || 'No stack trace',
+        error: error
       });
-      res.redirect(`/?quickbooks=error&reason=server_error&details=${encodeURIComponent(error.message || 'Unknown error')}`);
+      
+      res.redirect(`/?quickbooks=error&reason=server_error&details=${encodeURIComponent(error?.message || 'Unknown error')}`);
     }
   });
 
