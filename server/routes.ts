@@ -33,6 +33,11 @@ export function registerRoutes(app: Express): Server {
   // Auth middleware
   setupAuth(app);
 
+  // Favicon route to prevent 500 errors
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end(); // No content - prevents favicon 500 errors
+  });
+
   // Legal document routes (required for QuickBooks production)
   app.get('/privacy-policy', (req, res) => {
     res.sendFile('privacy-policy.html', { root: process.cwd() });
