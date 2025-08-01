@@ -1,9 +1,4 @@
-// CRITICAL: Load production environment FIRST before any other imports
-import { config } from 'dotenv';
-config({ path: '.env.production', override: true });
-
-// Set Replit domain for production
-process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
+// Clean application - no external service configurations
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -11,9 +6,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { backupService } from "./backup";
 import { changeMonitor } from "./protection";
 
-console.log('🔧 Production Environment Override:', {
-  replotDomains: process.env.REPLIT_DOMAINS
-});
+
 
 const app = express();
 app.use(express.json());
