@@ -1222,23 +1222,7 @@ export function registerRoutes(app: Express): Server {
     res.json({ status: 'working', timestamp: new Date().toISOString() });
   });
 
-  // DEBUG: Test monthly report calculation without auth
-  app.get('/api/debug-monthly-report', async (req: any, res) => {
-    try {
-      console.log('🧪 DEBUG: Testing monthly report calculation');
-      const year = parseInt(req.query.year as string) || 2025;
-      const month = parseInt(req.query.month as string) || 7;
-      
-      console.log(`🧪 Testing for ${year}-${month}`);
-      const report = await storage.getMonthlyPayrollReport(year, month);
-      
-      console.log('🧪 Report result:', JSON.stringify(report, null, 2));
-      res.json(report);
-    } catch (error: any) {
-      console.error('🧪 Debug report error:', error);
-      res.status(500).json({ error: error.message, stack: error.stack });
-    }
-  });
+
 
   // Test QuickBooks connection (TEMPORARILY NO AUTH FOR DEBUGGING)
   app.get('/api/quickbooks/test-noauth', async (req: any, res) => {

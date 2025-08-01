@@ -13,21 +13,17 @@ export default function MonthlyReport() {
   const { data: reportData, isLoading } = useQuery({
     queryKey: ["/api/reports/monthly", { year: selectedYear, month: selectedMonth }],
     queryFn: async () => {
-      console.log(`🔍 Fetching monthly report for ${selectedYear}-${selectedMonth}`);
       const response = await fetch(`/api/reports/monthly?year=${selectedYear}&month=${selectedMonth}`, {
         credentials: 'include'
       });
       if (!response.ok) {
-        console.error(`❌ Monthly report fetch failed: ${response.status} ${response.statusText}`);
         if (response.status === 401) {
           window.location.href = '/login';
           return null;
         }
         throw new Error(`Failed to fetch monthly report: ${response.status}`);
       }
-      const data = await response.json();
-      console.log(`📊 Monthly report data received:`, data);
-      return data;
+      return response.json();
     },
     retry: false,
   });

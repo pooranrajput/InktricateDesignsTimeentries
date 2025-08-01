@@ -36,3 +36,9 @@ The application employs a full-stack architecture:
 -   **Date Utilities**: `date-fns`
 -   **Build Tools**: `vite`, `typescript`, `tsx`
 -   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: Successfully connected to production QuickBooks account (Company ID: 9130351530529746) with active tokens for contractor bill generation and 1099 tracking. API routing issues resolved with bypass endpoints `/qb-direct-status` and `/qb-bill-months` that work around Vite middleware interception.
+
+## Recent Changes (August 2025)
+
+-   **Monthly Payroll Report Fixed**: Resolved critical database schema mismatch that was causing payroll reports to show zero hours. Added missing QuickBooks integration columns (`is_quickbooks_billable`, `quickbooks_status`) to time_entries table. Report now correctly calculates and displays total hours, payroll amounts, and employee breakdowns.
+-   **Vendor Management**: Successfully created and verified all contractor vendor records in production QuickBooks with proper 1099 tracking enabled.
+-   **Database Integrity**: Fixed Drizzle ORM field mapping issues between TypeScript schema and actual database columns.
