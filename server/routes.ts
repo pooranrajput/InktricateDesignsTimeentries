@@ -713,7 +713,7 @@ export function registerRoutes(app: Express): Server {
 
   // QuickBooks Integration Routes
   
-  // Get QuickBooks authorization URL - FRESH START
+  // Get QuickBooks authorization URL - FRESH START (No auth required for OAuth URL generation)
   app.get('/api/quickbooks/auth', async (req: any, res) => {
     try {
       console.log('🆕 FRESH QuickBooks Authorization Starting...');

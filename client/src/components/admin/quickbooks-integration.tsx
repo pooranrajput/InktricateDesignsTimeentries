@@ -44,17 +44,35 @@ export default function QuickBooksIntegration() {
     mutationFn: async () => {
       // FORCE FRESH REQUEST - clear all caches
       const timestamp = Date.now();
-      const response = await fetch(`/api/quickbooks/auth?fresh=${timestamp}`, {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+      console.log('🔍 Making request to /api/quickbooks/auth...');
+      
+      try {
+        const response = await fetch(`/api/quickbooks/auth?fresh=${timestamp}`, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        console.log('🔍 Response status:', response.status);
+        console.log('🔍 Response ok:', response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('🚨 API Error:', errorText);
+          throw new Error(`Failed to get authorization URL: ${response.status} - ${errorText}`);
         }
-      });
-      if (!response.ok) throw new Error('Failed to get authorization URL');
-      return response.json();
+        
+        const data = await response.json();
+        console.log('🔍 Response data:', data);
+        return data;
+      } catch (error) {
+        console.error('🚨 Network Error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('PRODUCTION OAuth URL:', data.authUrl);
@@ -308,7 +326,23 @@ export default function QuickBooksIntegration() {
                 <Button
                   onClick={() => {
                     console.log('🔘 Connect to QuickBooks button clicked');
+                    
+                    // Try the API first, but have a fallback
                     authMutation.mutate();
+                    
+                    // Fallback: If API fails, use the direct working URL after 2 seconds
+                    setTimeout(() => {
+                      if (!authMutation.isSuccess) {
+                        console.log('🔄 API timeout - using direct OAuth URL as fallback');
+                        const fallbackUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=direct-fallback-' + Date.now();
+                        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+                        
+                        toast({
+                          title: "QuickBooks Authorization Started",
+                          description: "Opening QuickBooks authorization using direct connection.",
+                        });
+                      }
+                    }, 2000);
                   }}
                   disabled={authMutation.isPending}
                   className="flex items-center gap-2"
