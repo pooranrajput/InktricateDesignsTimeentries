@@ -30,6 +30,99 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export function registerRoutes(app: Express): Server {
+  // CRITICAL: Add QuickBooks callback BEFORE authentication setup
+  // QuickBooks callbacks must bypass authentication since they come from external service
+  app.get('/api/quickbooks/callback', async (req: any, res) => {
+    console.log('🆕 NO-AUTH QuickBooks Callback (bypasses authentication)...');
+    console.log('🔍 Raw Query:', req.query);
+    
+    try {
+      const { code, state, realmId, error, error_description } = req.query;
+      
+      // Check for OAuth errors first
+      if (error) {
+        console.error('❌ QuickBooks OAuth Error:', { error, error_description });
+        return res.redirect(`/?quickbooks=error&reason=${error}`);
+      }
+      
+      // Validate required parameters
+      if (!code) {
+        console.error('❌ No authorization code received');
+        return res.redirect('/?quickbooks=error&reason=no_code');
+      }
+
+      if (!realmId) {
+        console.error('❌ No company ID received');
+        return res.redirect('/?quickbooks=error&reason=no_company_id');
+      }
+
+      console.log('✅ Valid callback parameters received:', {
+        code: code.substring(0, 20) + '...',
+        state,
+        realmId,
+        codeLength: code.length
+      });
+
+      // Clear any existing QuickBooks data for fresh start
+      await db.delete(quickbooksConfig);
+      console.log('🧹 Cleared existing QuickBooks configuration');
+
+      // Exchange authorization code for tokens
+      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
+      const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      
+      console.log('🔄 Exchanging code for tokens with production credentials');
+      
+      const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('❌ Token exchange failed:', {
+          status: tokenResponse.status,
+          error: errorText
+        });
+        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}`);
+      }
+
+      const tokens = await tokenResponse.json();
+      console.log('✅ Token exchange successful');
+
+      // Store the tokens and configuration
+      await db.insert(quickbooksConfig).values({
+        companyId: realmId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
+        sandbox: false
+      });
+
+      console.log('💾 QuickBooks configuration saved successfully');
+      console.log('🎉 NO-AUTH QuickBooks connection established!');
+      
+      res.redirect('/?quickbooks=success&fresh=true');
+
+    } catch (error) {
+      console.error('❌ NO-AUTH Callback error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      res.redirect(`/?quickbooks=error&reason=server_error&details=${encodeURIComponent(error.message || 'Unknown error')}`);
+    }
+  });
+
   // Auth middleware
   setupAuth(app);
 
@@ -821,94 +914,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // QuickBooks callback handler - COMPLETELY CLEAN FRESH START
-  app.get('/api/quickbooks/callback', async (req: any, res) => {
-    console.log('🆕 COMPLETELY CLEAN FRESH QuickBooks Callback...');
-    console.log('🔍 Raw Query:', req.query);
-    
-    try {
-      const { code, state, realmId, error, error_description } = req.query;
-      
-      // Check for OAuth errors first
-      if (error) {
-        console.error('❌ QuickBooks OAuth Error:', { error, error_description });
-        return res.redirect(`/?quickbooks=error&reason=${error}`);
-      }
-      
-      // Validate required parameters
-      if (!code) {
-        console.error('❌ No authorization code received');
-        return res.redirect('/?quickbooks=error&reason=no_code');
-      }
-
-      if (!realmId) {
-        console.error('❌ No company ID received');
-        return res.redirect('/?quickbooks=error&reason=no_company_id');
-      }
-
-      console.log('✅ Valid callback parameters received:', {
-        code: code.substring(0, 20) + '...',
-        state,
-        realmId,
-        codeLength: code.length
-      });
-
-      // Clear any existing QuickBooks data for fresh start
-      await db.delete(quickbooksConfig);
-      console.log('🧹 Cleared existing QuickBooks configuration');
-
-      // Exchange authorization code for tokens
-      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
-      const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
-      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
-      
-      console.log('🔄 Exchanging code for tokens with production credentials');
-      
-      const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: redirectUri,
-        }),
-      });
-
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error('❌ Token exchange failed:', {
-          status: tokenResponse.status,
-          error: errorText
-        });
-        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}`);
-      }
-
-      const tokens = await tokenResponse.json();
-      console.log('✅ Token exchange successful');
-
-      // Store the tokens and configuration
-      await db.insert(quickbooksConfig).values({
-        companyId: realmId,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
-        sandbox: false
-      });
-
-      console.log('💾 QuickBooks configuration saved successfully');
-      console.log('🎉 CLEAN FRESH QuickBooks connection established!');
-      
-      res.redirect('/?quickbooks=success&fresh=true');
-
-    } catch (error) {
-      console.error('❌ Callback processing error:', error);
-      res.redirect('/?quickbooks=error&reason=server_error');
-    }
-  });
+  // Note: QuickBooks callback moved to before authentication setup to bypass auth middleware
 
   // Check QuickBooks database configuration
   app.get('/api/quickbooks/debug', isAuthenticated, async (req: any, res) => {
