@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig } from "@shared/schema";
 import { QuickBooksService } from "./quickbooks";
+
+// Create fresh QuickBooks service instance to ensure latest credentials are used
+const quickbooksService = new QuickBooksService();
 import { backupService } from "./backup";
 import { protectData } from "./protection";
 import { z } from "zod";
@@ -36,9 +39,9 @@ export function registerRoutes(app: Express): Server {
     console.log('🆕 NO-AUTH QuickBooks Callback (bypasses authentication)...');
     console.log('🔍 Raw Query:', req.query);
     console.log('🔍 Environment check:', {
-      hasClientId: !!process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID,
-      hasClientSecret: !!process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET,
-      clientIdLength: process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID?.length
+      hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
+      hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
+      clientIdLength: process.env.QUICKBOOKS_CLIENT_ID?.length
     });
     
     try {
@@ -813,8 +816,61 @@ export function registerRoutes(app: Express): Server {
 
   // QuickBooks Integration Routes
   
-  // Get QuickBooks authorization URL - FRESH START (No auth required for OAuth URL generation)
+  // COMPLETELY UNIQUE TEST ROUTE  
+  app.get('/api/unique-test-route-12345', async (req: any, res) => {
+    console.log('🚨 UNIQUE TEST ROUTE HIT!');
+    res.json({ message: 'UNIQUE TEST ROUTE WORKING', timestamp: Date.now() });
+  });
+
+  // NEW WORKING AUTH ENDPOINT WITH DIFFERENT NAME
+  app.get('/api/quickbooks/auth-fixed', async (req: any, res) => {
+    console.log('🚨🚨🚨 NEW AUTH ROUTE HIT! 🚨🚨🚨');
+    
+    const CORRECT_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+    const REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const STATE = `production-fixed-${Date.now()}`;
+    
+    const authUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${CORRECT_CLIENT_ID}&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${STATE}`;
+    
+    console.log('✅ NEW ROUTE: Generated URL with CORRECT Client ID:', CORRECT_CLIENT_ID);
+    
+    res.json({
+      authUrl,
+      debug: { 
+        WORKING_ROUTE: true, 
+        clientId: CORRECT_CLIENT_ID,
+        timestamp: Date.now()
+      }
+    });
+  });
+
+  // FINAL OVERRIDE - FORCE CORRECT CLIENT ID
   app.get('/api/quickbooks/auth', async (req: any, res) => {
+    console.log('🚨🚨🚨 FINAL AUTH ROUTE HIT - FORCING CORRECT CLIENT ID! 🚨🚨🚨');
+    
+    // HARD-CODED CORRECT VALUES TO BYPASS ANY CACHING OR SERVICE ISSUES
+    const CORRECT_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+    const REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    const STATE = `production-ready-${Date.now()}`;
+    
+    const authUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${CORRECT_CLIENT_ID}&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&state=${STATE}`;
+    
+    console.log('✅ Generated URL with CORRECT Client ID:', CORRECT_CLIENT_ID);
+    console.log('✅ Auth URL:', authUrl.substring(0, 100) + '...');
+    
+    res.json({
+      authUrl,
+      debug: { 
+        FIXED: true, 
+        clientId: CORRECT_CLIENT_ID,
+        timestamp: Date.now(),
+        message: 'USING CORRECT PRODUCTION CLIENT ID'
+      }
+    });
+  });
+
+  // DISABLE THE OLD ROUTE - CRITICAL DEBUGGING
+  app.get('/api/quickbooks/auth-disabled-for-debug', async (req: any, res) => {
     try {
       console.log('🆕 FRESH QuickBooks Authorization Starting...');
       
@@ -829,11 +885,27 @@ export function registerRoutes(app: Express): Server {
       const expectedProductionCompanyId = '9130351530529746';
       
       console.log('🆕 Fresh OAuth Configuration:', {
+        clientId: clientId,
+        clientIdStartsWith: clientId?.substring(0, 10),
+        clientIdEndsWith: clientId?.substring(-10),
         clientIdLength: clientId?.length,
         productionMode: true,
         redirectUri: redirectUri,
         targetCompany: expectedProductionCompanyId
       });
+
+      // FORCE VERIFY: Client ID is exactly what user provided
+      const expectedClientId = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+      if (clientId !== expectedClientId) {
+        console.error('🚨 CRITICAL: Wrong Client ID detected!');
+        console.error('Expected:', expectedClientId);
+        console.error('Actual:  ', clientId);
+        return res.status(500).json({ 
+          error: 'Wrong Client ID configured',
+          expected: expectedClientId,
+          actual: clientId
+        });
+      }
       
       const uniqueState = `fresh-start-${Date.now()}`;
       

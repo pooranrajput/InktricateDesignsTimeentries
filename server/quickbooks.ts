@@ -14,8 +14,8 @@ export class QuickBooksService {
 
   constructor() {
     // FORCE PRODUCTION CREDENTIALS: Use production keys exclusively
-    const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
-    const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     // FORCE PRODUCTION MODE: Completely disable sandbox
@@ -66,8 +66,9 @@ export class QuickBooksService {
       throw new Error(`Invalid Client ID: expected 50 characters, got ${clientId?.length || 0}`);
     }
     
-    if (clientId.charAt(10) !== 'I') {
-      throw new Error(`Client ID has wrong character at position 11: expected 'I', got '${clientId.charAt(10)}'`);
+    // Character validation updated for correct production Client ID
+    if (clientId.charAt(10) !== 'W') {
+      throw new Error(`Client ID has wrong character at position 11: expected 'W', got '${clientId.charAt(10)}'`);
     }
     
     // Manual URL construction with PRODUCTION ONLY parameters
@@ -286,7 +287,7 @@ export class QuickBooksService {
 
       // Initialize QuickBooks client for OAuth 2.0
       this.qbo = new QuickBooks(
-        'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA',   // consumerKey (Client ID)
+        process.env.QUICKBOOKS_CLIENT_ID || 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA',   // consumerKey (Client ID)
         process.env.QUICKBOOKS_CLIENT_SECRET, // consumerSecret (Client Secret)
         config.accessToken,                 // accessToken
         false,                             // No token secret for OAuth 2.0
