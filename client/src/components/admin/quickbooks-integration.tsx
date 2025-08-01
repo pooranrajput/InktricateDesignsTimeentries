@@ -16,33 +16,6 @@ export default function QuickBooksIntegration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get months with existing QuickBooks bills to filter dropdown - using bypass for now
-  const { data: existingBillMonths = [] } = useQuery<Array<{month: number, year: number}>>({
-    queryKey: ['/qb-bill-months', selectedYear],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/qb-bill-months?year=${selectedYear}`, {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          console.log('Bill months fetch failed, returning empty array');
-          return []; // Return empty array if API fails
-        }
-        const text = await response.text();
-        if (text.startsWith('<')) {
-          console.log('HTML response received for bill months, returning empty array');
-          return [];
-        }
-        return JSON.parse(text);
-      } catch (error) {
-        console.log('Bill months error:', error);
-        return [];
-      }
-    },
-    enabled: debugInfo?.connected, // Only fetch if connected
-    retry: false,
-  });
-
   // Check QuickBooks connection status using the bypass endpoint
   const { data: debugInfo, isLoading: isTestingConnection } = useQuery<{
     connected: boolean;
@@ -64,6 +37,33 @@ export default function QuickBooksIntegration() {
     retry: 2,
     refetchInterval: 10000, // Refetch every 10 seconds
     staleTime: 0, // Always fetch fresh data
+  });
+
+  // Get months with existing QuickBooks bills to filter dropdown - using bypass for now
+  const { data: existingBillMonths = [] } = useQuery<Array<{month: number, year: number}>>({
+    queryKey: ['/qb-bill-months', selectedYear],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/qb-bill-months?year=${selectedYear}`, {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.log('Bill months fetch failed, returning empty array');
+          return [];
+        }
+        const text = await response.text();
+        if (text.startsWith('<')) {
+          console.log('HTML response received for bill months, returning empty array');
+          return [];
+        }
+        return JSON.parse(text);
+      } catch (error) {
+        console.log('Bill months error:', error);
+        return [];
+      }
+    },
+    enabled: debugInfo?.connected, // Only fetch if connected
+    retry: false,
   });
 
   // Use the bypass status for connection test
