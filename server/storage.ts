@@ -337,8 +337,12 @@ export class DatabaseStorage implements IStorage {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
     
+    console.log(`🔍 Getting hours for user ${userId}, ${year}-${month}: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+    
     const entries = await this.getUserTimeEntries(userId, startDate, endDate);
     const totalHours = entries.reduce((sum, entry) => sum + parseFloat(entry.totalHours || '0'), 0);
+    
+    console.log(`📊 User ${userId}: Found ${entries.length} entries, total hours: ${totalHours}`);
     
     return { totalHours, entries };
   }
@@ -359,7 +363,10 @@ export class DatabaseStorage implements IStorage {
       }>;
     }>;
   }> {
+    console.log(`📊 Starting monthly payroll report for ${year}-${month}`);
     const employees = await this.getAllEmployees();
+    console.log(`👥 Found ${employees.length} employees`);
+    
     const employeeReports = [];
     let totalHours = 0;
     let totalPayroll = 0;
