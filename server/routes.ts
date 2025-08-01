@@ -1125,7 +1125,37 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Test QuickBooks connection
+  // Simple QuickBooks connection status (no auth required for UI)
+  app.get('/api/quickbooks/status', async (req: any, res) => {
+    try {
+      console.log('🔍 Status endpoint called - checking QB configs...');
+      const configs = await storage.getAllQuickBooksConfigs();
+      console.log(`📋 Found ${configs.length} QB configs`);
+      
+      const hasValidConfig = configs.length > 0 && 
+        configs.some((config: any) => config.accessToken && config.refreshToken && 
+        (!config.tokenExpiry || new Date() < config.tokenExpiry));
+      
+      if (hasValidConfig) {
+        const config = configs[0];
+        console.log(`✅ Valid config found: Company ${config.companyId}, Sandbox: ${config.sandbox}`);
+        res.json({
+          connected: true,
+          companyId: config.companyId,
+          sandbox: config.sandbox,
+          tokenExpiry: config.tokenExpiry
+        });
+      } else {
+        console.log('❌ No valid config found');
+        res.json({ connected: false });
+      }
+    } catch (error: any) {
+      console.error("Error checking QuickBooks status:", error);
+      res.json({ connected: false });
+    }
+  });
+  
+  // Test QuickBooks connection (admin only)
   app.get('/api/quickbooks/test', isAuthenticated, async (req: any, res) => {
     try {
       if (req.user.role !== 'admin') {

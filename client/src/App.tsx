@@ -25,8 +25,8 @@ function Router() {
       // Clear the URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
       // Invalidate queries to refresh connection status
-      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
       queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/debug'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
     }
   }, [location]);
 

@@ -28,7 +28,7 @@ export default function QuickBooksIntegration() {
     },
   });
 
-  // Check QuickBooks debug info to get connection status
+  // Check QuickBooks connection status using the debug endpoint (requires auth)
   const { data: debugInfo, isLoading: isTestingConnection } = useQuery<{
     configCount: number;
     configs: Array<{
@@ -44,9 +44,10 @@ export default function QuickBooksIntegration() {
     enabled: true,
     retry: 1,
     refetchInterval: 5000, // Refetch every 5 seconds to catch new connections
+    staleTime: 0, // Always fetch fresh data
   });
 
-  // Test QuickBooks connection (secondary check)
+  // Test QuickBooks connection (admin only, for company info)
   const { data: connectionTest } = useQuery<{
     success: boolean;
     companyInfo?: {
@@ -54,7 +55,7 @@ export default function QuickBooksIntegration() {
     };
   }>({
     queryKey: ['/api/quickbooks/test'],
-    enabled: debugInfo?.configCount > 0, // Only test if we have config
+    enabled: debugInfo?.configCount > 0, // Only test if we have configs
     retry: false,
   });
 
@@ -276,10 +277,19 @@ export default function QuickBooksIntegration() {
     });
   };
 
-  // QuickBooks is connected if we have a valid config with non-expired tokens
+  // Debug connection status
+  console.log('🔍 Connection Status:', {
+    debugInfo,
+    connectionTest,
+    isTestingConnection
+  });
+
+  // QuickBooks is connected if we have valid configs with non-expired tokens
   const hasValidConfig = debugInfo?.configCount > 0 && 
     debugInfo?.configs?.some(config => config.hasAccessToken && config.hasRefreshToken && !config.isExpired);
   const isConnected = hasValidConfig || connectionTest?.success;
+  
+  console.log('🔗 Final Connection Status:', { isConnected });
 
   // Generate available months (only show months that don't have bills yet)
   const availableMonths = [
