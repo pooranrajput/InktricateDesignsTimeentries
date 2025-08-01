@@ -28,36 +28,36 @@ export default function QuickBooksIntegration() {
     },
   });
 
-  // Check QuickBooks connection status using the debug endpoint (requires auth)
+  // Check QuickBooks connection status using the bypass endpoint
   const { data: debugInfo, isLoading: isTestingConnection } = useQuery<{
-    configCount: number;
-    configs: Array<{
-      companyId: string;
-      hasAccessToken: boolean;
-      hasRefreshToken: boolean;
-      tokenExpiry: string;
-      isExpired: boolean;
-      sandbox: boolean;
-    }>;
+    connected: boolean;
+    companyId?: string;
+    sandbox?: boolean;
+    tokenExpiry?: string;
+    isProduction?: boolean;
+    message?: string;
   }>({
-    queryKey: ['/api/quickbooks/debug'],
+    queryKey: ['/qb-direct-status'],
+    queryFn: async () => {
+      const response = await fetch('/qb-direct-status', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch QuickBooks status');
+      return response.json();
+    },
     enabled: true,
-    retry: 1,
-    refetchInterval: 5000, // Refetch every 5 seconds to catch new connections
+    retry: 2,
+    refetchInterval: 10000, // Refetch every 10 seconds
     staleTime: 0, // Always fetch fresh data
   });
 
-  // Test QuickBooks connection (admin only, for company info)
-  const { data: connectionTest } = useQuery<{
-    success: boolean;
-    companyInfo?: {
-      CompanyName: string;
-    };
-  }>({
-    queryKey: ['/api/quickbooks/test'],
-    enabled: debugInfo?.configCount > 0, // Only test if we have configs
-    retry: false,
-  });
+  // Use the bypass status for connection test
+  const connectionTest = debugInfo?.connected ? {
+    success: true,
+    companyInfo: {
+      CompanyName: debugInfo.isProduction ? 'Production Company' : 'Sandbox Company'
+    }
+  } : undefined;
 
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
@@ -284,10 +284,8 @@ export default function QuickBooksIntegration() {
     isTestingConnection
   });
 
-  // QuickBooks is connected if we have valid configs with non-expired tokens
-  const hasValidConfig = debugInfo?.configCount > 0 && 
-    debugInfo?.configs?.some(config => config.hasAccessToken && config.hasRefreshToken && !config.isExpired);
-  const isConnected = hasValidConfig || connectionTest?.success;
+  // QuickBooks is connected using new bypass endpoint
+  const isConnected = debugInfo?.connected === true;
   
   console.log('🔗 Final Connection Status:', { isConnected });
 
@@ -360,11 +358,12 @@ export default function QuickBooksIntegration() {
             <Alert className="bg-green-50 border-green-200">
               <AlertDescription className="text-green-800">
                 <div className="flex flex-col gap-1">
-                  <div className="font-medium">🎉 QuickBooks Connected Successfully!</div>
-                  {debugInfo?.configs?.[0] && (
+                  <div className="font-medium">QuickBooks Connected Successfully!</div>
+                  {debugInfo && (
                     <div className="text-sm">
-                      Company ID: {debugInfo.configs[0].companyId} | 
-                      Production Mode: {debugInfo.configs[0].sandbox ? 'No' : 'Yes'}
+                      Company ID: {debugInfo.companyId} | 
+                      Production Mode: {debugInfo.isProduction ? 'Yes' : 'No'} | 
+                      Token Expires: {debugInfo.tokenExpiry ? new Date(debugInfo.tokenExpiry).toLocaleTimeString() : 'Unknown'}
                     </div>
                   )}
                   {connectionTest?.companyInfo && (

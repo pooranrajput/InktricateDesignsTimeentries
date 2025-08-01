@@ -43,6 +43,18 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Debug: Log which routes are registered
+  console.log('📍 Express routes registered:');
+  app._router.stack.forEach((layer, index) => {
+    if (layer.route) {
+      console.log(`${index}: ${Object.keys(layer.route.methods)} ${layer.route.path}`);
+    } else if (layer.name === 'router') {
+      console.log(`${index}: Router middleware`);
+    } else {
+      console.log(`${index}: ${layer.name || 'Anonymous'} middleware`);
+    }
+  });
+
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
