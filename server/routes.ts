@@ -722,7 +722,7 @@ export function registerRoutes(app: Express): Server {
       await db.delete(quickbooksConfig);
       console.log('🧹 Cleared all existing QuickBooks configurations');
       
-      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
       // FORCE PRODUCTION REDIRECT URI - ignore environment variable
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
@@ -791,7 +791,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔄 Cleared ALL QuickBooks tokens - ready for fresh production authentication');
       
       // FORCE PRODUCTION REAUTH URL - same logic as /auth endpoint
-      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
       
@@ -888,8 +888,8 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Performing direct token exchange with SAME credentials used in OAuth...');
       
       // Use environment variables for consistent credentials across OAuth flow
-      const correctClientId = process.env.QUICKBOOKS_CLIENT_ID;
-      const correctClientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
+      const correctClientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
+      const correctClientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
       
       console.log('🔧 USING ENVIRONMENT VARIABLE CREDENTIALS FOR CONSISTENCY:', {
         clientIdFromEnv: correctClientId?.substring(0, 20) + '...',
