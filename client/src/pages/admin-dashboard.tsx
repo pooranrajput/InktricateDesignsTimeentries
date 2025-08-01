@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-fixed";
 import NavigationHeader from "@/components/navigation-header";
 import StatsCard from "@/components/ui/stats-card";
 import EmployeeManagement from "@/components/admin/employee-management";

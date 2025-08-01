@@ -35,9 +35,18 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 export function registerRoutes(app: Express): Server {
   // CRITICAL: Add QuickBooks callback BEFORE authentication setup
   // QuickBooks callbacks must bypass authentication since they come from external service
+  
+  // Simple test route to verify routing works
+  app.get('/api/test-route', (req: any, res) => {
+    console.log('✅ Test route hit successfully');
+    res.json({ message: 'Test route working', timestamp: Date.now() });
+  });
+  
   app.get('/api/quickbooks/callback', async (req: any, res) => {
-    console.log('🆕 NO-AUTH QuickBooks Callback (bypasses authentication)...');
+    console.log('\n🆕 === QUICKBOOKS CALLBACK START ===');
     console.log('🔍 Raw Query:', req.query);
+    console.log('🔍 Headers:', req.headers);
+    console.log('🔍 URL:', req.url);
     console.log('🔍 Environment check:', {
       hasClientId: !!process.env.QUICKBOOKS_CLIENT_ID,
       hasClientSecret: !!process.env.QUICKBOOKS_CLIENT_SECRET,
@@ -50,18 +59,20 @@ export function registerRoutes(app: Express): Server {
       // Check for OAuth errors first
       if (error) {
         console.error('❌ QuickBooks OAuth Error:', { error, error_description });
-        return res.redirect(`/?quickbooks=error&reason=${error}`);
+        return res.redirect(`/?quickbooks=error&reason=${error}&details=${encodeURIComponent(error_description || 'OAuth error from QuickBooks')}`);
       }
       
       // Validate required parameters
       if (!code) {
         console.error('❌ No authorization code received');
-        return res.redirect('/?quickbooks=error&reason=no_code');
+        console.error('🔍 Full query params:', req.query);
+        return res.redirect('/?quickbooks=error&reason=no_code&details=No authorization code in callback');
       }
 
       if (!realmId) {
         console.error('❌ No company ID received');
-        return res.redirect('/?quickbooks=error&reason=no_company_id');
+        console.error('🔍 Full query params:', req.query);
+        return res.redirect('/?quickbooks=error&reason=no_company_id&details=Missing company/realm ID');
       }
 
       console.log('✅ Valid callback parameters received:', {
@@ -82,6 +93,14 @@ export function registerRoutes(app: Express): Server {
       
       console.log('🔄 Exchanging code for tokens with production credentials');
       
+      console.log('🔍 Token exchange request details:', {
+        clientIdLength: clientId?.length,
+        clientIdStart: clientId?.substring(0, 10),
+        hasClientSecret: !!clientSecret,
+        redirectUri,
+        codeStart: code?.substring(0, 20)
+      });
+
       const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
         method: 'POST',
         headers: {
@@ -100,9 +119,21 @@ export function registerRoutes(app: Express): Server {
         const errorText = await tokenResponse.text();
         console.error('❌ Token exchange failed:', {
           status: tokenResponse.status,
-          error: errorText
+          statusText: tokenResponse.statusText,
+          error: errorText,
+          headers: Object.fromEntries(tokenResponse.headers.entries())
         });
-        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}`);
+        
+        // Special handling for common OAuth errors
+        if (tokenResponse.status === 400) {
+          console.error('🚨 400 Bad Request - likely invalid authorization code or expired');
+          return res.redirect(`/?quickbooks=error&reason=invalid_code&details=Code may be expired or already used`);
+        } else if (tokenResponse.status === 401) {
+          console.error('🚨 401 Unauthorized - likely wrong client credentials');
+          return res.redirect(`/?quickbooks=error&reason=invalid_credentials&details=Client ID or Secret incorrect`);
+        }
+        
+        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}&details=${encodeURIComponent(errorText)}`);
       }
 
       const tokens = await tokenResponse.json();
