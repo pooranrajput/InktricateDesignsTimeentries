@@ -121,6 +121,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/callback', async (req: any, res) => {
     console.log('\n🆕 === QUICKBOOKS CALLBACK START ===');
     console.log('🔍 Raw Query:', req.query);
+    console.log('🔍 Full URL:', req.url);
     
     // Force immediate response to see if our route is being hit
     if (req.query.debug === 'true') {
@@ -133,24 +134,37 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const { code, state, realmId, error, error_description } = req.query;
-      console.log('Callback parameters:', { code: !!code, state, realmId, error });
+      console.log('🔍 Extracted parameters:', { 
+        code: code ? `${code.toString().substring(0, 10)}...` : 'MISSING',
+        state, 
+        realmId,
+        error,
+        error_description 
+      });
       
       if (error) {
-        console.log('OAuth error received:', error);
-        return res.redirect(`/?quickbooks=error&reason=${error}`);
+        console.log('❌ OAuth error received:', error);
+        return res.redirect(`/?quickbooks=error&reason=${error}&details=${encodeURIComponent(error_description || 'OAuth error')}`);
       }
       
       if (!code || !realmId) {
-        console.log('Missing required parameters:', { hasCode: !!code, hasRealmId: !!realmId });
-        return res.redirect('/?quickbooks=error&reason=missing_params');
+        console.log('❌ Missing required parameters:', { hasCode: !!code, hasRealmId: !!realmId });
+        return res.redirect('/?quickbooks=error&reason=missing_params&details=' + encodeURIComponent(`Missing: ${!code ? 'code' : ''} ${!realmId ? 'realmId' : ''}`));
       }
       
-      console.log('✅ Valid callback - proceeding with token exchange');
+      console.log('✅ Valid callback parameters - proceeding with token exchange');
       
       // Exchange authorization code for tokens
       const clientId = process.env.QUICKBOOKS_CLIENT_ID;
       const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      
+      console.log('🔄 Token exchange with:', {
+        clientIdLength: clientId?.length,
+        hasSecret: !!clientSecret,
+        redirectUri,
+        codeLength: code.toString().length
+      });
       
       const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
         method: 'POST',
@@ -161,43 +175,44 @@ export function registerRoutes(app: Express): Server {
         },
         body: new URLSearchParams({
           grant_type: 'authorization_code',
-          code: code,
+          code: code.toString(),
           redirect_uri: redirectUri,
         }),
       });
       
-      const tokenData = await tokenResponse.json();
-      console.log('Token exchange response:', tokenResponse.status);
+      console.log('🔍 Token response status:', tokenResponse.status);
       
       if (!tokenResponse.ok) {
-        console.error('Token exchange failed:', tokenData);
-        return res.redirect('/?quickbooks=error&reason=token_exchange_failed');
+        const errorText = await tokenResponse.text();
+        console.error('❌ Token exchange failed:', { status: tokenResponse.status, error: errorText });
+        return res.redirect(`/?quickbooks=error&reason=token_failed&status=${tokenResponse.status}&details=${encodeURIComponent(errorText.substring(0, 100))}`);
       }
       
-      console.log('✅ Token exchange successful!');
+      const tokenData = await tokenResponse.json();
+      console.log('✅ Token exchange successful! Storing in database...');
       
-      // Store tokens in database
+      // Clear existing config and store new tokens
       try {
         await db.delete(quickbooksConfig);
         await db.insert(quickbooksConfig).values({
-          companyId: realmId,
+          companyId: realmId.toString(),
           accessToken: tokenData.access_token,
           refreshToken: tokenData.refresh_token,
           tokenExpiry: new Date(Date.now() + (tokenData.expires_in * 1000)),
           createdAt: new Date(),
         });
         
-        console.log('✅ QuickBooks connected successfully!');
-        return res.redirect('/?quickbooks=success&company=' + realmId);
+        console.log('🎉 QuickBooks connected successfully! Company:', realmId);
+        return res.redirect(`/?quickbooks=success&company=${realmId}&fresh=true`);
         
       } catch (dbError) {
-        console.error('Database error:', dbError);
-        return res.redirect('/?quickbooks=error&reason=database_error');
+        console.error('❌ Database error:', dbError);
+        return res.redirect('/?quickbooks=error&reason=database_error&details=' + encodeURIComponent(dbError.message));
       }
       
     } catch (err) {
-      console.error('Callback error:', err);
-      return res.redirect('/?quickbooks=error&reason=server_error');
+      console.error('❌ Callback error:', err);
+      return res.redirect('/?quickbooks=error&reason=server_error&details=' + encodeURIComponent(err.message));
     }
   });
 
