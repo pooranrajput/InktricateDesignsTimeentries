@@ -72,18 +72,20 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
-  // Force development mode to serve frontend properly on Replit
-  console.log(`🔧 Environment: ${app.get("env")}, forcing development mode for frontend serving`);
-  
-  // Check if required files exist before setting up Vite
-  const clientPath = path.resolve(import.meta.dirname, "..", "client");
-  const indexPath = path.resolve(clientPath, "index.html");
-  console.log(`📁 Checking client path: ${clientPath}`);
-  console.log(`📄 Checking index.html: ${indexPath}`);
-  console.log(`✅ Client exists: ${fs.existsSync(clientPath)}`);
-  console.log(`✅ Index.html exists: ${fs.existsSync(indexPath)}`);
-  
-  await setupVite(app, server);
+  // Setup frontend serving based on environment
+  if (app.get("env") === "development") {
+    console.log(`🔧 Development mode: Setting up Vite`);
+    await setupVite(app, server);
+  } else {
+    console.log(`🔧 Production mode: Setting up static file serving`);
+    try {
+      serveStatic(app);
+    } catch (error) {
+      console.error(`❌ Static file serving failed:`, error);
+      console.log(`🔄 Falling back to Vite in production`);
+      await setupVite(app, server);
+    }
+  }
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
