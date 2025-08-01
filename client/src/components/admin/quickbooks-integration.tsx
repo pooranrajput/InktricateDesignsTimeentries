@@ -36,7 +36,7 @@ export default function QuickBooksIntegration() {
     };
   }>({
     queryKey: ['/api/quickbooks/test'],
-    enabled: true,
+    enabled: false, // Disable auto-fetch to prevent auth errors
   });
 
   // Get QuickBooks authorization URL
@@ -89,6 +89,7 @@ export default function QuickBooksIntegration() {
       }
     },
     onError: (error: Error) => {
+      console.error('🚨 Auth mutation error:', error);
       toast({
         title: "Authorization Failed",
         description: error.message,
