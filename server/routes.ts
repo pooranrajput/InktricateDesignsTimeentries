@@ -821,197 +821,92 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Handle QuickBooks OAuth callback - FRESH START
+  // QuickBooks callback handler - COMPLETELY CLEAN FRESH START
   app.get('/api/quickbooks/callback', async (req: any, res) => {
+    console.log('🆕 COMPLETELY CLEAN FRESH QuickBooks Callback...');
+    console.log('🔍 Raw Query:', req.query);
+    
     try {
-      console.log('🆕 FRESH QuickBooks Callback - Query params:', req.query);
-      const { code, state, error } = req.query;
-      let realmId = req.query.realmId;
-      
-      console.log('🔍 QuickBooks Callback Debug - Parsed params:', {
-        hasCode: !!code,
-        codeLength: code?.length,
-        state: state || 'UNDEFINED_STATE',
-        realmId: realmId || 'UNDEFINED_REALM_ID',
-        error: error || 'NO_ERROR'
-      });
-      
-      // DEBUG: Check for undefined values that cause QuickBooks error
-      if (!state || state === 'undefined') {
-        console.log('🚨 UNDEFINED STATE DETECTED - This causes QuickBooks "undefined didn\'t connect" error');
-        state = 'production-fallback';
-      }
-      
-      if (!realmId || realmId === 'undefined') {
-        console.log('🚨 UNDEFINED REALM_ID DETECTED - This causes QuickBooks "undefined didn\'t connect" error');
-        realmId = '9130351530529746'; // Use confirmed production company ID
-      }
+      const { code, state, realmId, error, error_description } = req.query;
       
       // Check for OAuth errors first
       if (error) {
-        console.error('🚨 OAuth Error from QuickBooks:', error);
-        return res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(error)}`);
+        console.error('❌ QuickBooks OAuth Error:', { error, error_description });
+        return res.redirect(`/?quickbooks=error&reason=${error}`);
       }
       
-      if (!code || !realmId) {
-        console.log('🚨 QuickBooks Callback Error - Missing required parameters');
-        console.log('🚨 This suggests OAuth authorization was denied or failed');
-        return res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=missing_params');
-      }
-
-      // COMPANY VALIDATION WITH FORCE OVERRIDE OPTION
-      const expectedProductionCompanyId = '9130351530529746';
-      const receivedSandboxCompanyId = '9341455047397094';
-      
-      if (realmId === receivedSandboxCompanyId) {
-        console.log('🚨 SANDBOX COMPANY DETECTED - FORCE OVERRIDE TO PRODUCTION');
-        console.log(`🚨 QuickBooks returned: ${realmId} (Sandbox Demo Company)`);
-        console.log(`🚨 User confirmed correct ID: ${expectedProductionCompanyId} (Production Company)`);
-        console.log('🔧 FORCING CONNECTION TO PRODUCTION COMPANY ID');
-        
-        // Override the company ID to use the confirmed production company
-        realmId = expectedProductionCompanyId;
-        console.log('✅ Company ID overridden to production company:', realmId);
-      } else if (realmId === expectedProductionCompanyId) {
-        console.log('✅ PRODUCTION COMPANY CONNECTED SUCCESSFULLY');
-        console.log(`✅ Company ID: ${realmId} matches confirmed production company`);
-      } else {
-        console.log('🔍 UNEXPECTED COMPANY DETECTED');
-        console.log(`🔍 Received: ${realmId} (Unknown Company)`);
-        console.log(`🔍 Expected: ${expectedProductionCompanyId} (Production Company)`);
-        console.log('🔧 User confirmed production ID, proceeding with override');
-        realmId = expectedProductionCompanyId;
-        console.log('✅ Company ID overridden to production company:', realmId);
+      // Validate required parameters
+      if (!code) {
+        console.error('❌ No authorization code received');
+        return res.redirect('/?quickbooks=error&reason=no_code');
       }
 
-      // DIRECT TOKEN EXCHANGE - using SAME credentials as OAuth authorization
-      console.log('🔍 Performing direct token exchange with SAME credentials used in OAuth...');
-      
-      // Use environment variables for consistent credentials across OAuth flow
-      const correctClientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
-      const correctClientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
-      
-      console.log('🔧 USING ENVIRONMENT VARIABLE CREDENTIALS FOR CONSISTENCY:', {
-        clientIdFromEnv: correctClientId?.substring(0, 20) + '...',
-        clientIdLength: correctClientId?.length,
-        secretFromEnv: correctClientSecret?.substring(0, 10) + '...',
-        secretLength: correctClientSecret?.length
+      if (!realmId) {
+        console.error('❌ No company ID received');
+        return res.redirect('/?quickbooks=error&reason=no_company_id');
+      }
+
+      console.log('✅ Valid callback parameters received:', {
+        code: code.substring(0, 20) + '...',
+        state,
+        realmId,
+        codeLength: code.length
       });
-      // FORCE PRODUCTION REDIRECT URI for token exchange consistency  
+
+      // Clear any existing QuickBooks data for fresh start
+      await storage.clearQuickBooksConfig();
+      console.log('🧹 Cleared existing QuickBooks configuration');
+
+      // Exchange authorization code for tokens
+      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
+      const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
-      // Direct token exchange
-      const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-      const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
+      console.log('🔄 Exchanging code for tokens with production credentials');
       
-      console.log('🔍 Using dashboard-verified credentials for token exchange:', {
-        clientIdStart: correctClientId.substring(0, 15) + '...',
-        clientSecretStart: correctClientSecret.substring(0, 10) + '...',
-        credentialsLength: credentials.length,
-        dashboardVerified: true
-      });
-      
-      const params = new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: redirectUri
-      });
-      
-      const response = await fetch(tokenEndpoint, {
+      const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${credentials}`,
+          'Accept': 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
+          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
         },
-        body: params.toString()
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectUri,
+        }),
       });
-      
-      console.log('🔍 Token Exchange Response Status:', response.status);
-      console.log('🔍 Token Exchange Response Headers:', Object.fromEntries(response.headers.entries()));
-      const responseData = await response.json();
-      console.log('🔍 Token Exchange Response:', responseData);
-      
-      // ENHANCED ERROR LOGGING
-      if (!response.ok) {
-        console.log('🚨 DETAILED ERROR ANALYSIS:');
-        console.log('🚨 Status:', response.status);
-        console.log('🚨 Error:', responseData.error);  
-        console.log('🚨 Description:', responseData.error_description);
-        console.log('🚨 Company ID used:', realmId);
-        console.log('🚨 Expected Company ID:', '9130351530529746');
-        console.log('🚨 Company ID Match:', realmId === '9130351530529746');
-        console.log('🚨 Authorization Code Length:', code.length);
-        console.log('🚨 Authorization Code Preview:', code.substring(0, 15) + '...');
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('❌ Token exchange failed:', {
+          status: tokenResponse.status,
+          error: errorText
+        });
+        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}`);
       }
-      
-      // Debug the exact request that was sent
-      console.log('🔍 Request Debug:', {
-        url: tokenEndpoint,
-        method: 'POST',
-        authHeader: `Basic ${credentials.substring(0, 20)}...`,
-        bodyParams: params.toString(),
-        clientIdUsed: correctClientId.substring(0, 20) + '...',
-        secretUsed: correctClientSecret.substring(0, 10) + '...'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Token exchange failed: ${response.status} - ${JSON.stringify(responseData)}`);
-      }
-      
-      // Store the tokens in database
-      await db.insert(quickbooksConfig).values({
+
+      const tokens = await tokenResponse.json();
+      console.log('✅ Token exchange successful');
+
+      // Store the tokens and configuration
+      await storage.storeQuickBooksTokens({
         companyId: realmId,
-        accessToken: responseData.access_token,
-        refreshToken: responseData.refresh_token,
-        tokenExpiry: new Date(Date.now() + (responseData.expires_in * 1000)),
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
         sandbox: false
-      }).onConflictDoUpdate({
-        target: quickbooksConfig.companyId,
-        set: {
-          accessToken: responseData.access_token,
-          refreshToken: responseData.refresh_token,
-          tokenExpiry: new Date(Date.now() + (responseData.expires_in * 1000)),
-          sandbox: false
-        }
       });
+
+      console.log('💾 QuickBooks configuration saved successfully');
+      console.log('🎉 CLEAN FRESH QuickBooks connection established!');
       
-      console.log('✅ QuickBooks authentication successful with correct Client ID!');
-      console.log('🔍 Tokens stored successfully for company:', realmId);
-      
-      // Redirect to production app URL with success message
-      res.redirect('https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=success');
-    } catch (error: any) {
-      console.error("🚨 QuickBooks Callback Error - Full error details:", error);
-      console.error("🚨 Error message:", error?.message);
-      console.error("🚨 Error stack:", error?.stack);
-      console.error("🚨 Error type:", typeof error);
-      console.error("🚨 Error stringified:", JSON.stringify(error, null, 2));
-      
-      // Log request details for debugging
-      console.error("🚨 Request query params:", req.query);
-      console.error("🚨 Request headers:", req.headers);
-      
-      // Check for specific error types
-      let errorDetails = 'unknown';
-      if (error?.message) {
-        errorDetails = error.message;
-      } else if (typeof error === 'string') {
-        errorDetails = error;
-      } else if (error?.error_description) {
-        errorDetails = error.error_description;
-      }
-      
-      console.error("🚨 Error details being sent:", errorDetails);
-      
-      // Check for company selection errors and provide helpful message
-      if (error?.message?.includes('WRONG COMPANY SELECTED')) {
-        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected sandbox company (ID: 9341455047397094) instead of your production company (ID: 9130351530529746). Please use the authorization URL again and select your REAL business QuickBooks account with ID 9130351530529746.')}`);
-      } else if (error?.message?.includes('SANDBOX/PRODUCTION MISMATCH')) {
-        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=mismatch&details=${encodeURIComponent('COMPANY SELECTION ERROR: You selected the sandbox demo account instead of your real business QuickBooks account. Please use the authorization URL again and select your production company (ID: 9130351530529746).')}`);
-      } else {
-        res.redirect(`https://inkticate-time-tracker-pooranrajput.replit.app/?quickbooks=error&details=${encodeURIComponent(errorDetails)}`);
-      }
+      res.redirect('/?quickbooks=success&fresh=true');
+
+    } catch (error) {
+      console.error('❌ Callback processing error:', error);
+      res.redirect('/?quickbooks=error&reason=server_error');
     }
   });
 
