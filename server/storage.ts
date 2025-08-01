@@ -69,6 +69,7 @@ export interface IStorage {
   
   // QuickBooks integration operations
   updateUserQuickBooksInfo(userId: string, quickbooksCustomerId: string, quickbooksItemId?: string): Promise<User>;
+  updateUser(userId: string, updates: Partial<User>): Promise<User>;
   updateTimeEntryQuickBooksInfo(timeEntryId: number, quickbooksTimeActivityId: string): Promise<TimeEntry>;
   getTimeEntry(id: number): Promise<TimeEntry | undefined>;
   getAllQuickBooksConfigs(): Promise<any[]>;
@@ -644,6 +645,23 @@ export class DatabaseStorage implements IStorage {
       .set({
         quickbooksCustomerId,
         quickbooksItemId,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...updates,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
