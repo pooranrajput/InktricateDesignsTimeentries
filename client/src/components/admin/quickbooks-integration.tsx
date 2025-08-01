@@ -36,7 +36,7 @@ export default function QuickBooksIntegration() {
     };
   }>({
     queryKey: ['/api/quickbooks/test'],
-    enabled: false, // Disable auto-fetch to prevent auth errors
+    enabled: true,
   });
 
   // Get QuickBooks authorization URL
@@ -44,43 +44,24 @@ export default function QuickBooksIntegration() {
     mutationFn: async () => {
       // FORCE FRESH REQUEST - clear all caches
       const timestamp = Date.now();
-      console.log('🔍 Making request to /api/quickbooks/auth...');
-      
-      try {
-        const response = await fetch(`/api/quickbooks/auth?fresh=${timestamp}`, {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        console.log('🔍 Response status:', response.status);
-        console.log('🔍 Response ok:', response.ok);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('🚨 API Error:', errorText);
-          throw new Error(`Failed to get authorization URL: ${response.status} - ${errorText}`);
+      const response = await fetch(`/api/quickbooks/auth?fresh=${timestamp}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
-        
-        const data = await response.json();
-        console.log('🔍 Response data:', data);
-        return data;
-      } catch (error) {
-        console.error('🚨 Network Error:', error);
-        throw error;
-      }
+      });
+      if (!response.ok) throw new Error('Failed to get authorization URL');
+      return response.json();
     },
     onSuccess: (data) => {
       console.log('PRODUCTION OAuth URL:', data.authUrl);
-      console.log('🔍 Button click successful - OAuth URL received');
       
-      // Always open the URL - the backend now generates the correct one
-      if (data.authUrl) {
-        console.log('✅ Opening QuickBooks authorization in new tab');
+      // Verify the URL uses correct Client ID and production endpoints
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+        console.log('✅ Production URL confirmed');
         
         // Clear ALL browser storage
         localStorage.clear();
@@ -90,24 +71,23 @@ export default function QuickBooksIntegration() {
         document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         
-        // Open the OAuth URL in a new tab
+        // Open fresh URL
         window.open(data.authUrl, '_blank', 'noopener,noreferrer');
         
         toast({
-          title: "QuickBooks Authorization Started",
-          description: "Opening QuickBooks authorization. Please complete the connection in the new tab.",
+          title: "Production Authorization Started",
+          description: "Opening QuickBooks authorization with production credentials.",
         });
       } else {
-        console.error('❌ No OAuth URL received:', data);
+        console.error('❌ Wrong Client ID or redirect URI in URL:', data.authUrl);
         toast({
-          title: "Error",
-          description: "Failed to get authorization URL. Please try again.",
+          title: "Configuration Error",
+          description: "OAuth URL contains incorrect credentials. Please try again.",
           variant: "destructive",
         });
       }
     },
     onError: (error: Error) => {
-      console.error('🚨 Auth mutation error:', error);
       toast({
         title: "Authorization Failed",
         description: error.message,
@@ -137,7 +117,7 @@ export default function QuickBooksIntegration() {
       console.log('PRODUCTION Re-auth URL:', data.authUrl);
       
       // Verify production credentials before opening
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
+      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
         console.log('✅ Production re-auth URL confirmed');
         
         // Clear all browser caches
@@ -321,40 +301,27 @@ export default function QuickBooksIntegration() {
               )}
             </div>
             
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  console.log('🔘 Connect to QuickBooks button clicked - DIRECT METHOD');
-                  
-                  // Use the working OAuth URL directly
-                  const directUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=button-direct-' + Date.now();
-                  
-                  console.log('🚀 Opening OAuth URL directly:', directUrl);
-                  window.open(directUrl, '_blank', 'noopener,noreferrer');
-                  
-                  toast({
-                    title: "QuickBooks Authorization Started",
-                    description: "Opening QuickBooks authorization page in new tab.",
-                  });
-                }}
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Connect to QuickBooks
-              </Button>
-              <Button
-                onClick={() => {
-                  console.log('🔄 Re-authenticate button clicked');
-                  const reauthUrl = 'https://appcenter.intuit.com/connect/oauth2?client_id=AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=reauth-direct-' + Date.now();
-                  window.open(reauthUrl, '_blank', 'noopener,noreferrer');
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Re-authenticate
-              </Button>
-            </div>
+            {!isConnected && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => authMutation.mutate()}
+                  disabled={authMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Connect to QuickBooks
+                </Button>
+                <Button
+                  onClick={() => reauthMutation.mutate()}
+                  disabled={reauthMutation.isPending}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {reauthMutation.isPending ? 'Re-authenticating...' : 'Re-authenticate'}
+                </Button>
+              </div>
+            )}
           </div>
 
           {isConnected && connectionTest?.companyInfo && (

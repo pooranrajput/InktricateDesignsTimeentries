@@ -13,9 +13,9 @@ export class QuickBooksService {
   private useSandbox: boolean;
 
   constructor() {
-    // FORCE PRODUCTION CREDENTIALS: Use production keys exclusively
-    const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
-    const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
+    // FORCE PRODUCTION: Hardcode production settings
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
     
     // FORCE PRODUCTION MODE: Completely disable sandbox
@@ -66,8 +66,8 @@ export class QuickBooksService {
       throw new Error(`Invalid Client ID: expected 50 characters, got ${clientId?.length || 0}`);
     }
     
-    if (clientId.charAt(10) !== 'I') {
-      throw new Error(`Client ID has wrong character at position 11: expected 'I', got '${clientId.charAt(10)}'`);
+    if (clientId.charAt(10) !== 'W') {
+      throw new Error(`Client ID has wrong character at position 11: expected 'W', got '${clientId.charAt(10)}'`);
     }
     
     // Manual URL construction with PRODUCTION ONLY parameters
@@ -374,7 +374,31 @@ export class QuickBooksService {
     });
   }
 
-
+  // Find existing vendor by name in QuickBooks
+  async findExistingVendor(qbo: any, vendorName: string) {
+    return new Promise((resolve, reject) => {
+      // Use SQL-like query which is more reliable for name searches
+      const query = `SELECT * FROM Vendor WHERE Name = '${vendorName.replace(/'/g, "\\'")}'`;
+      console.log(`🔍 Searching for vendor with query: ${query}`);
+      
+      qbo.findVendors(query, (err: any, vendors: any) => {
+        if (err) {
+          console.log(`⚠️ Error searching for vendor "${vendorName}":`, err);
+          resolve(null); // Return null if search fails, don't reject
+        } else {
+          const foundVendors = vendors?.QueryResponse?.Vendor || [];
+          console.log(`🔍 Search results for "${vendorName}":`, foundVendors.length, 'vendors found');
+          if (foundVendors.length > 0) {
+            console.log(`✅ Found existing vendor: ${foundVendors[0].Name} (ID: ${foundVendors[0].Id}, Track1099: ${foundVendors[0].Track1099})`);
+            resolve(foundVendors[0]);
+          } else {
+            console.log(`ℹ️ No existing vendor found for "${vendorName}"`);
+            resolve(null);
+          }
+        }
+      });
+    });
+  }
 
   // Create a QuickBooks bill for a contractor's payroll
   async createContractorBill(payrollRecord: any, vendor: any) {

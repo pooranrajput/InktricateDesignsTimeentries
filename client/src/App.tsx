@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -17,22 +16,6 @@ function Router() {
   const { user, isLoading } = useAuth();
   const { viewAsEmployee } = useViewToggle();
   const [location] = useLocation();
-
-  // Handle QuickBooks callback parameters
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const quickbooksStatus = urlParams.get('quickbooks');
-    const reason = urlParams.get('reason');
-    const details = urlParams.get('details');
-    
-    if (quickbooksStatus === 'success') {
-      // QuickBooks connection successful
-      console.log('✅ QuickBooks connected successfully');
-    } else if (quickbooksStatus === 'error') {
-      // QuickBooks connection failed
-      console.log('❌ QuickBooks connection failed:', { reason, details });
-    }
-  }, [location]);
 
   if (isLoading) {
     return (
