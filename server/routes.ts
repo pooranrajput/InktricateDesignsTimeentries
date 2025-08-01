@@ -1155,18 +1155,48 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Test QuickBooks connection (admin only)
+  // SIMPLE DEBUG TEST - NO AUTH
+  app.get('/api/debug-test', async (req: any, res) => {
+    res.json({ status: 'working', timestamp: new Date().toISOString() });
+  });
+
+  // Test QuickBooks connection (TEMPORARILY NO AUTH FOR DEBUGGING)
+  app.get('/api/quickbooks/test-noauth', async (req: any, res) => {
+    try {
+      console.log('🧪 DEBUGGING: Starting QuickBooks test connection WITHOUT AUTH');
+      const result = await quickbooksService.testConnection();
+      console.log('🧪 Test connection result:', result);
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error testing QuickBooks connection:", error);
+      res.status(500).json({ 
+        message: "Failed to test connection", 
+        error: error.message,
+        success: false 
+      });
+    }
+  });
+
+  // Test QuickBooks connection (with auth restored)
   app.get('/api/quickbooks/test', isAuthenticated, async (req: any, res) => {
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only admins can test QuickBooks connection" });
       }
       
+      console.log('🧪 Starting QuickBooks test connection for admin user:', req.user.id);
       const result = await quickbooksService.testConnection();
+      console.log('🧪 Test connection result:', result);
+      
       res.json(result);
     } catch (error: any) {
       console.error("Error testing QuickBooks connection:", error);
-      res.status(500).json({ message: "Failed to test connection" });
+      res.status(500).json({ 
+        message: "Failed to test connection", 
+        error: error.message,
+        success: false 
+      });
     }
   });
 

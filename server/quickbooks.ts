@@ -552,12 +552,30 @@ export class QuickBooksService {
       console.log('🔍 QuickBooks Debug - Starting connection test');
       await this.initializeClient();
       console.log('🔍 QuickBooks Debug - Client initialized successfully');
+      
+      // Test with a simpler API call first
+      console.log('🔍 QuickBooks Debug - Testing basic API access...');
       const companyInfo = await this.getCompanyInfo();
       console.log('🔍 QuickBooks Debug - Company info retrieved:', companyInfo);
-      return { success: true, companyInfo };
+      
+      return { 
+        success: true, 
+        companyInfo,
+        message: 'QuickBooks connection successful',
+        clientInitialized: !!this.qbo,
+        companyId: this.companyId
+      };
     } catch (error) {
-      console.log('🔍 QuickBooks Debug - Connection test failed:', error);
-      return { success: false, error: (error as Error).message };
+      console.error('🔍 QuickBooks Debug - Connection test failed:', error);
+      
+      // Return detailed error info
+      return { 
+        success: false, 
+        error: (error as Error).message,
+        stack: (error as Error).stack,
+        clientInitialized: !!this.qbo,
+        companyId: this.companyId
+      };
     }
   }
 
