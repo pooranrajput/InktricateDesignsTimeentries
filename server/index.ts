@@ -11,6 +11,8 @@ process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQ
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import fs from "fs";
 // import { backupService } from "./backup";
 // import { changeMonitor } from "./protection";
 
@@ -72,6 +74,15 @@ app.use((req, res, next) => {
 
   // Force development mode to serve frontend properly on Replit
   console.log(`🔧 Environment: ${app.get("env")}, forcing development mode for frontend serving`);
+  
+  // Check if required files exist before setting up Vite
+  const clientPath = path.resolve(import.meta.dirname, "..", "client");
+  const indexPath = path.resolve(clientPath, "index.html");
+  console.log(`📁 Checking client path: ${clientPath}`);
+  console.log(`📄 Checking index.html: ${indexPath}`);
+  console.log(`✅ Client exists: ${fs.existsSync(clientPath)}`);
+  console.log(`✅ Index.html exists: ${fs.existsSync(indexPath)}`);
+  
   await setupVite(app, server);
 
   // ALWAYS serve the app on port 5000
