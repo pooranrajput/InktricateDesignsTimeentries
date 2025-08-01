@@ -29,9 +29,37 @@ export class BackupService {
     const filepath = path.join(this.backupDir, filename);
 
     try {
-      // Get all data
-      const allUsers = await db.select().from(users);
-      const allTimeEntries = await db.select().from(timeEntries);
+      // Get all data - handle missing columns gracefully
+      const allUsers = await db.select({
+        id: users.id,
+        username: users.username,
+        password: users.password,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phone: users.phone,
+        homeAddress: users.homeAddress,
+        inktricateStartDate: users.inktricateStartDate,
+        role: users.role,
+        hourlyRate: users.hourlyRate,
+        isActive: users.isActive,
+        mustResetPassword: users.mustResetPassword,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      }).from(users);
+      const allTimeEntries = await db.select({
+        id: timeEntries.id,
+        userId: timeEntries.userId,
+        project: timeEntries.project,
+        description: timeEntries.description,
+        date: timeEntries.date,
+        startTime: timeEntries.startTime,
+        endTime: timeEntries.endTime,
+        totalHours: timeEntries.totalHours,
+        taskCategory: timeEntries.taskCategory,
+        createdAt: timeEntries.createdAt,
+        updatedAt: timeEntries.updatedAt
+      }).from(timeEntries);
       const allTaskCategories = await db.select().from(taskCategories);
       const allPayroll = await db.select().from(monthlyPayroll);
 
