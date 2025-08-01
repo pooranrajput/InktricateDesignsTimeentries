@@ -646,23 +646,46 @@ export class QuickBooksService {
     }
   }
 
-  // Sync all active contractors to QuickBooks
+  // Sync all active contractors to QuickBooks with PROPER DUPLICATE DETECTION
   async syncAllContractors(employees: any[]) {
-    console.log(`🚀 Starting contractor sync for ${employees.length} employees`);
+    console.log(`🔄 Starting PRODUCTION contractor sync with duplicate detection for ${employees.length} employees`);
+    console.log('📋 Using development-tested vendor lookup and mapping logic');
     
     try {
-      // Initialize the client before starting sync
-      await this.initializeClient();
+      const qbo = await this.initializeClient();
+      console.log('✅ QuickBooks client initialized for contractor sync');
       
-      if (!this.oauthClient || !this.companyId) {
-        throw new Error('QuickBooks not properly initialized after init attempt');
+      // Step 1: Get ALL existing vendors from QuickBooks first (like development)
+      console.log('📋 Retrieving ALL existing vendors from production QuickBooks...');
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors((err: any, vendorList: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(vendorList);
+          }
+        });
+      });
+      
+      const vendorArray = (vendors as any)?.QueryResponse?.Vendor || [];
+      console.log(`📊 Found ${vendorArray.length} existing vendors in production QuickBooks`);
+      
+      if (vendorArray.length > 0) {
+        console.log('\n👥 EXISTING PRODUCTION VENDORS:');
+        vendorArray.forEach((vendor: any) => {
+          console.log(`   ID: ${vendor.Id} - Name: "${vendor.Name}" (Active: ${vendor.Active})`);
+        });
       }
+      
     } catch (initError) {
       console.error('❌ Failed to initialize QuickBooks client:', initError);
       throw new Error('QuickBooks initialization failed');
     }
 
     const results = [];
+    let created = 0;
+    let linked = 0;
+    let failed = 0;
     
     for (const employee of employees) {
       console.log(`\n🔍 Processing employee:`, employee);

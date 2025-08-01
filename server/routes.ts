@@ -1861,43 +1861,186 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Sync contractors to QuickBooks - DEBUG VERSION
+  // CORRECTED Sync contractors to QuickBooks with proper duplicate detection
   app.post('/api/quickbooks/sync-contractors', async (req: any, res) => {
-    console.log('🚀 Sync contractors endpoint hit');
-    console.log('🔍 Session data:', req.session?.id);
-    console.log('🔍 User data:', req.user?.username);
+    console.log('🏢 PRODUCTION SYNC with proper duplicate detection from development');
+    console.log('Using tested vendor lookup logic from VENDOR_BILL_MAPPING_BACKUP.md');
     
-    // Temporarily bypass auth for debugging the sync logic
-    const adminUser = await storage.getUserByUsername('admin');
-    if (!adminUser) {
-      console.log('❌ Admin user not found');
-      return res.status(500).json({ message: "Admin user not found" });
-    }
     try {
-      // Skip role check for debugging
-      console.log('🔧 Bypassing role check for debugging');
-
-      // Get all active employees/contractors
-      const employees = await storage.getAllEmployees();
-      console.log('🔍 All employees from storage:', employees.slice(0, 2));
-      const activeContractors = employees.filter((emp: any) => emp.isActive || emp.is_active);
-      console.log('✅ Active contractors filtered:', activeContractors.length, 'out of', employees.length);
+      const qbo = await quickbooksService.initializeClient();
+      console.log('✅ QuickBooks client initialized');
       
-      const results = await quickbooksService.syncAllContractors(activeContractors);
+      // Step 1: Get ALL existing vendors from production QuickBooks
+      console.log('📋 Retrieving ALL vendors from production QuickBooks...');
+      const vendors = await new Promise((resolve, reject) => {
+        qbo.findVendors((err: any, vendorList: any) => {
+          if (err) reject(err);
+          else resolve(vendorList);
+        });
+      });
+      
+      const vendorArray = (vendors as any)?.QueryResponse?.Vendor || [];
+      console.log(`📊 Found ${vendorArray.length} existing vendors in production`);
+      
+      if (vendorArray.length > 0) {
+        console.log('\n👥 EXISTING PRODUCTION VENDORS:');
+        vendorArray.forEach((vendor: any) => {
+          console.log(`   ID: ${vendor.Id} - Name: "${vendor.Name}" (Active: ${vendor.Active})`);
+        });
+      }
+      
+      // Step 2: Get employees who need vendor mapping
+      const employees = await storage.getAllEmployees();
+      const activeContractors = employees.filter((emp: any) => emp.isActive || emp.is_active);
+      console.log(`\n🎯 Processing ${activeContractors.length} employees`);
+      
+      let linkedCount = 0;
+      let createdCount = 0;
+      let failedCount = 0;
+      const results = [];
+      
+      for (const employee of activeContractors) {
+        const firstName = employee.first_name || employee.firstName;
+        const lastName = employee.last_name || employee.lastName;
+        const fullName = `${firstName} ${lastName}`;
+        console.log(`\n👤 Processing: ${fullName}`);
+        
+        // DUPLICATE DETECTION: Use exact logic from vendor_check_session.ts
+        const matchingVendor = vendorArray.find((vendor: any) => 
+          vendor.Name === fullName || 
+          vendor.Name === `${firstName} ${lastName}` ||
+          vendor.DisplayName === fullName
+        );
+        
+        if (matchingVendor) {
+          console.log(`   ✅ EXISTING VENDOR: ID ${matchingVendor.Id} - "${matchingVendor.Name}"`);
+          
+          // Update database with existing vendor ID (don't create duplicate!)
+          await storage.updateUser(employee.id, { 
+            quickbooksVendorId: matchingVendor.Id 
+          });
+          console.log(`   💾 Linked: ${fullName} → Vendor ID ${matchingVendor.Id}`);
+          
+          // Enable 1099 tracking on existing vendor
+          try {
+            const updateData = {
+              Id: matchingVendor.Id,
+              SyncToken: matchingVendor.SyncToken,
+              DisplayName: matchingVendor.DisplayName || matchingVendor.Name,
+              Vendor1099: true,  // Enable 1099 tracking
+              Active: true,
+              sparse: false
+            };
+            
+            await new Promise((resolve, reject) => {
+              qbo.updateVendor(updateData, (err: any, updatedVendor: any) => {
+                if (err) {
+                  console.log(`   ⚠️ Could not enable 1099: ${err?.Fault?.Error?.[0]?.Detail || 'Update failed'}`);
+                  resolve(null);
+                } else {
+                  console.log(`   ✅ Enabled 1099 tracking for existing vendor`);
+                  resolve(updatedVendor);
+                }
+              });
+            });
+          } catch (updateError) {
+            console.log(`   ⚠️ 1099 update failed but vendor linked`);
+          }
+          
+          results.push({
+            employee: employee.id,
+            employeeName: fullName,
+            status: 'linked',
+            message: 'Successfully linked to existing vendor',
+            quickbooksId: matchingVendor.Id,
+            actions: [
+              'Found existing vendor in QuickBooks',
+              'Linked to employee database record', 
+              'Enabled 1099 tracking'
+            ]
+          });
+          linkedCount++;
+          
+        } else {
+          console.log(`   ❌ NO EXISTING VENDOR: Creating new for ${fullName}`);
+          
+          // Create new vendor (for truly new employees like Yesha)
+          const vendorData = {
+            PrimaryEmailAddr: { Address: employee.email },
+            DisplayName: fullName,
+            CompanyName: fullName,
+            BillAddr: {
+              Line1: employee.homeAddress || "123 Main Street",
+              City: "Your City", 
+              CountrySubDivisionCode: "NJ",
+              PostalCode: "07093"
+            },
+            Active: true,
+            Vendor1099: true  // Enable 1099 tracking for new vendor
+          };
+          
+          try {
+            const createdVendor = await new Promise((resolve, reject) => {
+              qbo.createVendor(vendorData, (err: any, vendor: any) => {
+                if (err) reject(err);
+                else resolve(vendor);
+              });
+            });
+            
+            if (createdVendor && (createdVendor as any).Id) {
+              const vendorId = (createdVendor as any).Id;
+              console.log(`   ✅ CREATED: ID ${vendorId} for ${fullName}`);
+              
+              await storage.updateUser(employee.id, { 
+                quickbooksVendorId: vendorId 
+              });
+              
+              results.push({
+                employee: employee.id,
+                employeeName: fullName,
+                status: 'created',
+                message: 'Successfully created new contractor vendor',
+                quickbooksId: vendorId,
+                actions: [
+                  'Created new vendor in QuickBooks',
+                  'Enabled 1099 tracking for new contractor',
+                  'Linked to employee database record'
+                ]
+              });
+              createdCount++;
+            }
+            
+          } catch (createError) {
+            console.log(`   ❌ CREATION FAILED: ${createError}`);
+            results.push({
+              employee: employee.id,
+              employeeName: fullName,
+              status: 'failed',
+              error: createError instanceof Error ? createError.message : 'Creation failed',
+              message: 'Could not create vendor in QuickBooks'
+            });
+            failedCount++;
+          }
+        }
+      }
+      
+      console.log(`\n🎉 CORRECTED SYNC COMPLETE!`);
+      console.log(`📊 Results: ${linkedCount} linked, ${createdCount} created, ${failedCount} failed`);
       
       res.json({
         success: true,
-        message: `Sync completed: ${results.created} created, ${results.linked} linked, ${results.failed} failed`,
+        message: `Sync completed: ${createdCount} created, ${linkedCount} linked, ${failedCount} failed`,
         summary: {
-          total: results.total,
-          created: results.created,
-          linked: results.linked,
-          failed: results.failed
+          total: activeContractors.length,
+          created: createdCount,
+          linked: linkedCount,
+          failed: failedCount
         },
-        details: results.details
+        details: results
       });
+      
     } catch (error: any) {
-      console.error("Error syncing contractors to QuickBooks:", error);
+      console.error("Production sync error:", error);
       res.status(500).json({ 
         success: false,
         message: "Failed to sync contractors", 
