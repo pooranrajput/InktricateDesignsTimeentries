@@ -35,4 +35,4 @@ The application employs a full-stack architecture:
 -   **UI Components**: `@radix-ui/*`, `tailwindcss`, `lucide-react`, `class-variance-authority`
 -   **Date Utilities**: `date-fns`
 -   **Build Tools**: `vite`, `typescript`, `tsx`
--   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: Successfully connected to production QuickBooks account (Company ID: 9130351530529746) with active tokens for contractor bill generation and 1099 tracking.
+-   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: Successfully connected to production QuickBooks account (Company ID: 9130351530529746) with active tokens for contractor bill generation and 1099 tracking. API routing issues resolved with bypass endpoints `/qb-direct-status` and `/qb-bill-months` that work around Vite middleware interception.
