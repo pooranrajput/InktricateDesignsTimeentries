@@ -88,10 +88,10 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start backup and protection systems
+    // Start backup and protection systems (backup temporarily disabled)
     console.log('🛡️  INITIALIZING DATA PROTECTION SYSTEMS...');
-    backupService.startAutomaticBackups();
+    // backupService.startAutomaticBackups(); // Temporarily disabled due to schema changes
     changeMonitor.startMonitoring();
-    console.log('✅ DATA PROTECTION ACTIVE - Multiple backup layers enabled');
+    console.log('✅ DATA PROTECTION ACTIVE - Change monitoring enabled');
   });
 })();
