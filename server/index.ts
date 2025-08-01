@@ -6,7 +6,8 @@ config({ path: '.env.production', override: true });
 process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
 process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
 // Override incorrect Client ID with correct production value - MUST BE AFTER dotenv
-process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA';
+process.env.QUICKBOOKS_CLIENT_SECRET = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET || process.env.QUICKBOOKS_CLIENT_SECRET;
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";

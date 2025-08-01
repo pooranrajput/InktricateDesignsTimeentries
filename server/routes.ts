@@ -73,8 +73,8 @@ export function registerRoutes(app: Express): Server {
       console.log('🧹 Cleared existing QuickBooks configuration');
 
       // Exchange authorization code for tokens
-      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
-      const clientSecret = process.env.QUICKBOOKS_PRODUCTION_CLIENT_SECRET;
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       
       console.log('🔄 Exchanging code for tokens with production credentials');
@@ -822,7 +822,7 @@ export function registerRoutes(app: Express): Server {
       await db.delete(quickbooksConfig);
       console.log('🧹 Cleared all existing QuickBooks configurations');
       
-      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
       // FORCE PRODUCTION REDIRECT URI - ignore environment variable
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
@@ -891,7 +891,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔄 Cleared ALL QuickBooks tokens - ready for fresh production authentication');
       
       // FORCE PRODUCTION REAUTH URL - same logic as /auth endpoint
-      const clientId = process.env.QUICKBOOKS_PRODUCTION_CLIENT_ID;
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
       const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
       const baseUrl = 'https://appcenter.intuit.com/connect/oauth2';
       
