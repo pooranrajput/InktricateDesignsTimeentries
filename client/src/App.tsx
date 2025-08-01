@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +17,19 @@ function Router() {
   const { user, isLoading } = useAuth();
   const { viewAsEmployee } = useViewToggle();
   const [location] = useLocation();
+
+  // Handle QuickBooks OAuth success callback
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('quickbooks') === 'success') {
+      // Clear the URL parameters and refresh the QuickBooks status
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Refresh the page after a short delay to show updated connection status
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  }, [location]);
 
   if (isLoading) {
     return (
