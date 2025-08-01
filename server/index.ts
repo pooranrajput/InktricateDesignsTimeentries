@@ -83,6 +83,15 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  
+  // CRITICAL: Add a specific middleware to ensure API routes are handled before Vite
+  app.use('/api/*', (req, res, next) => {
+    // If we reach this point, it means no API route matched
+    // This should not happen if routes are properly defined
+    console.log(`🚨 UNMATCHED API ROUTE: ${req.method} ${req.path}`);
+    res.status(404).json({ error: 'API endpoint not found', path: req.path });
+  });
+  
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {

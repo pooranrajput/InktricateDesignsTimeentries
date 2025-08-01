@@ -199,6 +199,124 @@ export function registerRoutes(app: Express): Server {
       console.error('Callback error:', err);
       return res.redirect('/?quickbooks=error&reason=server_error');
     }
+  }); 
+        code: code ? `${code.substring(0, 10)}...` : 'MISSING',
+        state, 
+        realmId,
+        error,
+        error_description 
+      });
+      
+      // Check for OAuth errors first
+      if (error) {
+        console.error('❌ QuickBooks OAuth Error:', { error, error_description });
+        return res.redirect(`/?quickbooks=error&reason=${error}&details=${encodeURIComponent(error_description || 'OAuth error from QuickBooks')}`);
+      }
+      
+      // Validate required parameters
+      if (!code) {
+        console.error('❌ No authorization code received');
+        console.error('🔍 Full query params:', req.query);
+        return res.redirect('/?quickbooks=error&reason=no_code&details=' + encodeURIComponent('No authorization code in callback'));
+      }
+
+      if (!realmId) {
+        console.error('❌ No company ID received');
+        console.error('🔍 Full query params:', req.query);
+        return res.redirect('/?quickbooks=error&reason=no_company_id&details=Missing company/realm ID');
+      }
+
+      console.log('✅ Valid callback parameters received:', {
+        code: code.substring(0, 20) + '...',
+        state,
+        realmId,
+        codeLength: code.length
+      });
+
+      // Clear any existing QuickBooks data for fresh start
+      try {
+        await db.delete(quickbooksConfig);
+        console.log('🧹 Cleared existing QuickBooks configuration');
+      } catch (dbError) {
+        console.log('⚠️ Could not clear existing config (may not exist):', dbError.message);
+      }
+
+      // Exchange authorization code for tokens
+      const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+      const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
+      const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+      
+      console.log('🔄 Exchanging code for tokens with production credentials');
+      
+      console.log('🔍 Token exchange request details:', {
+        clientIdLength: clientId?.length,
+        clientIdStart: clientId?.substring(0, 10),
+        hasClientSecret: !!clientSecret,
+        redirectUri,
+        codeStart: code?.substring(0, 20)
+      });
+
+      const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('❌ Token exchange failed:', {
+          status: tokenResponse.status,
+          statusText: tokenResponse.statusText,
+          error: errorText,
+          headers: Object.fromEntries(tokenResponse.headers.entries())
+        });
+        
+        // Special handling for common OAuth errors
+        if (tokenResponse.status === 400) {
+          console.error('🚨 400 Bad Request - likely invalid authorization code or expired');
+          return res.redirect(`/?quickbooks=error&reason=invalid_code&details=Code may be expired or already used`);
+        } else if (tokenResponse.status === 401) {
+          console.error('🚨 401 Unauthorized - likely wrong client credentials');
+          return res.redirect(`/?quickbooks=error&reason=invalid_credentials&details=Client ID or Secret incorrect`);
+        }
+        
+        return res.redirect(`/?quickbooks=error&reason=token_exchange&status=${tokenResponse.status}&details=${encodeURIComponent(errorText)}`);
+      }
+
+      const tokens = await tokenResponse.json();
+      console.log('✅ Token exchange successful');
+
+      // Store the tokens and configuration
+      await db.insert(quickbooksConfig).values({
+        companyId: realmId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
+        sandbox: false
+      });
+
+      console.log('💾 QuickBooks configuration saved successfully');
+      console.log('🎉 NO-AUTH QuickBooks connection established!');
+      
+      res.redirect('/?quickbooks=success&fresh=true');
+
+    } catch (error) {
+      console.error('❌ NO-AUTH Callback error:', {
+        message: error?.message || 'Unknown error',
+        stack: error?.stack || 'No stack trace',
+        error: error
+      });
+      
+      res.redirect(`/?quickbooks=error&reason=server_error&details=${encodeURIComponent(error?.message || 'Unknown error')}`);
+    }
   });
 
   // Auth middleware
