@@ -1,44 +1,82 @@
-// Debug QuickBooks OAuth error from URL
-console.log('🔍 QUICKBOOKS OAUTH ERROR ANALYSIS');
-console.log('='.repeat(60));
+// Debug the OAuth error after app approval and production credentials
 
-const errorUrl = 'https://appcenter.intuit.com/app/connect/oauth2/error?client_id=AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA&scope=com.intuit.quickbooks.accounting&redirect_uri=https%3A%2F%2Finkticate-time-tracker-pooranrajput.replit.app%2Fapi%2Fquickbooks%2Fcallback&response_type=code&state=timetracking-reauth&realmId=9130351530529746&locale=en-us';
+import fetch from 'node-fetch';
 
-console.log('\n📋 ERROR URL ANALYSIS:');
-const url = new URL(errorUrl);
-console.log('Error Path:', url.pathname);
-console.log('Client ID:', url.searchParams.get('client_id'));
-console.log('Scope:', url.searchParams.get('scope'));
-console.log('Redirect URI:', decodeURIComponent(url.searchParams.get('redirect_uri')));
-console.log('Response Type:', url.searchParams.get('response_type'));
-console.log('State:', url.searchParams.get('state'));
-console.log('Realm ID:', url.searchParams.get('realmId'));
-console.log('Locale:', url.searchParams.get('locale'));
+const debugOAuthError = async () => {
+  console.log('DEBUGGING OAUTH ERROR WITH APPROVED APP...\n');
+  
+  try {
+    console.log('OAUTH ERROR ANALYSIS:');
+    console.log('URL: https://appcenter.intuit.com/app/connect/oauth2/error');
+    console.log('Issue: Getting error page instead of authorization page');
+    console.log('');
+    
+    console.log('POTENTIAL CAUSES FOR APPROVED APP OAUTH ERROR:');
+    console.log('1. Production app not fully activated in QuickBooks Developer Dashboard');
+    console.log('2. Redirect URI mismatch between code and dashboard configuration');
+    console.log('3. Client ID might be for wrong environment (dev vs prod)');
+    console.log('4. App approval doesn\'t automatically enable production OAuth');
+    console.log('5. Additional production setup steps may be required');
+    console.log('');
+    
+    // Check current configuration
+    console.log('CURRENT CONFIGURATION:');
+    console.log('Client ID: AB6HieH2iC...aTAQV5EUtA (50 chars)');
+    console.log('Redirect URI: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback');
+    console.log('Environment: Production');
+    console.log('App Status: Approved');
+    console.log('');
+    
+    console.log('TROUBLESHOOTING STEPS NEEDED:');
+    console.log('');
+    
+    console.log('STEP 1: VERIFY PRODUCTION SETUP IN QUICKBOOKS DASHBOARD');
+    console.log('  → Go to developer.intuit.com');
+    console.log('  → Select your app');
+    console.log('  → Click "Production" tab');
+    console.log('  → Check if production environment is ACTIVE (not just approved)');
+    console.log('  → Look for "Production Keys" section');
+    console.log('  → Verify redirect URI exactly matches:');
+    console.log('    https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback');
+    console.log('');
+    
+    console.log('STEP 2: CHECK APP CONFIGURATION');
+    console.log('  → In Production settings, verify:');
+    console.log('    ✓ App name: Inktricate Designs Time Tracking System');
+    console.log('    ✓ OAuth redirect URIs list includes exact URL above');
+    console.log('    ✓ Scopes include "QuickBooks Accounting"');
+    console.log('    ✓ App status shows "Live" or "Active" (not just "Approved")');
+    console.log('');
+    
+    console.log('STEP 3: COMMON PRODUCTION ACTIVATION ISSUES');
+    console.log('  → App approval ≠ production activation');
+    console.log('  → May need to manually "activate" or "publish" the app');
+    console.log('  → Production credentials might need to be regenerated');
+    console.log('  → Additional verification steps may be required');
+    console.log('');
+    
+    console.log('CRITICAL DISCOVERY:');
+    console.log('The OAuth error suggests the QuickBooks system doesn\'t recognize');
+    console.log('your app as properly configured for production OAuth, even though');
+    console.log('it\'s approved. This indicates a dashboard configuration issue.');
+    console.log('');
+    
+    console.log('NEXT ACTIONS REQUIRED:');
+    console.log('1. Check if production environment needs to be manually activated');
+    console.log('2. Verify redirect URI configuration in production settings');
+    console.log('3. Confirm app is in "Live" status, not just "Approved"');
+    console.log('4. Check if additional production setup steps are pending');
+    
+    return {
+      error: 'oauth_error_after_approval',
+      cause: 'production_configuration_incomplete',
+      nextSteps: 'verify_dashboard_production_setup'
+    };
+    
+  } catch (error) {
+    console.log('Error during OAuth debugging:', error.message);
+    return null;
+  }
+};
 
-console.log('\n🚨 POSSIBLE CAUSES OF OAUTH ERROR:');
-console.log('1. QuickBooks app is in Development mode and not approved for production use');
-console.log('2. Redirect URI not registered in QuickBooks app configuration');
-console.log('3. App has been suspended or deactivated');
-console.log('4. Client ID does not match any registered QuickBooks app');
-console.log('5. Scope "com.intuit.quickbooks.accounting" not enabled for the app');
-console.log('6. App configuration mismatch between Development and Production');
-
-console.log('\n💡 QUICKBOOKS APP CONFIGURATION REQUIREMENTS:');
-console.log('Required Redirect URI: https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback');
-console.log('Required Scope: com.intuit.quickbooks.accounting');
-console.log('Required Environment: Production (not Development/Sandbox)');
-console.log('Required Status: App must be approved/active in QuickBooks Developer portal');
-
-console.log('\n🔍 IMMEDIATE DEBUGGING STEPS:');
-console.log('1. Check QuickBooks Developer Dashboard app status');
-console.log('2. Verify redirect URI is exactly registered in QuickBooks app');
-console.log('3. Confirm app is approved for production use');
-console.log('4. Check if app requires additional approval or verification');
-console.log('5. Verify scope permissions are enabled for the app');
-
-console.log('\n🎯 NEXT ACTIONS:');
-console.log('1. Login to QuickBooks Developer Dashboard');
-console.log('2. Navigate to your app configuration');
-console.log('3. Check app status (Development vs Production)');
-console.log('4. Verify redirect URI configuration');
-console.log('5. Check scope permissions and app approval status');
+debugOAuthError();
