@@ -1,8 +1,8 @@
-# Inktricate Designs Time Tracking System
+# Inktricate Designs Time Tracker
 
 ## Overview
 
-This is a comprehensive time tracking system for Inktricate Designs, a wedding industry business. It enables employees to log work hours and administrators to manage employees, track time entries, and generate payroll reports. Key capabilities include role-based access control, secure authentication, and a modern web interface. The system integrates with QuickBooks for efficient payroll and 1099 tracking, aiming to streamline financial operations and provide accurate contractor payment segregation.
+This is a comprehensive time tracking and payroll management system built for Inktricate Designs, a wedding and event planning company. The application allows employees to log their work hours and enables administrators to generate payroll reports and create contractor bills. The system is designed to integrate with QuickBooks for seamless contractor payment processing and 1099 tax reporting.
 
 ## User Preferences
 
@@ -10,30 +10,62 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application employs a full-stack architecture:
+### Frontend Architecture
+- **Framework**: React with TypeScript using Vite as the build tool
+- **UI Components**: Radix UI component library with Tailwind CSS for styling
+- **State Management**: TanStack React Query for server state management
+- **Form Handling**: React Hook Form with Zod validation resolvers
+- **Routing**: React Router for client-side navigation
+- **Build System**: Vite with custom path aliases and runtime error handling
 
--   **Frontend**: React-based single-page application with TypeScript, utilizing Wouter for routing, TanStack Query for server state, Shadcn/ui for components, and Tailwind CSS for styling. Vite is used for builds.
--   **Backend**: Express.js server on Node.js, providing RESTful APIs with Zod for data validation and centralized error handling.
--   **Database**: PostgreSQL with Drizzle ORM for type-safe operations. The schema (`shared/schema.ts`) includes tables for users, time entries, task categories, and sessions, with migrations managed by Drizzle Kit.
--   **Authentication**: Session-based authentication via Passport.js, using username/password. Sessions are stored in PostgreSQL. Scrypt-based password hashing is used for security. Role-based access control differentiates admin and employee permissions.
--   **UI/UX Decisions**: Leverages Shadcn/ui and Radix UI for accessible components, with Tailwind CSS for a customizable dark theme.
--   **Feature Specifications**:
-    -   Employee time entry and management.
-    -   Admin capabilities for employee management (create, update, deactivate, bulk import via CSV).
-    -   Payroll report generation with hourly rate calculations.
-    -   QuickBooks integration for bill generation and 1099 tracking.
+### Backend Architecture
+- **Runtime**: Node.js with Express.js server
+- **Language**: TypeScript with ES modules
+- **Session Management**: Express sessions with PostgreSQL storage using connect-pg-simple
+- **Authentication**: Username/password based with bcrypt hashing and role-based access control
+- **File Structure**: Modular architecture with separate client, server, and shared directories
+
+### Data Storage Solutions
+- **Primary Database**: PostgreSQL with Neon serverless hosting
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Schema Management**: Drizzle Kit for database migrations and schema management
+- **Session Storage**: PostgreSQL-backed session store for user authentication state
+
+### Authentication and Authorization
+- **Authentication Method**: Session-based authentication with encrypted passwords
+- **Password Security**: bcrypt with salt for password hashing
+- **Session Management**: Express sessions with PostgreSQL persistence
+- **Role-Based Access**: Admin and employee roles with different permission levels
+- **Security Features**: Password reset functionality and active user status management
+
+### Core Data Models
+- **Users**: Employee information including roles, hourly rates, contact details, and employment status
+- **Time Entries**: Work hour logging with task categories, dates, and project descriptions
+- **Task Categories**: Predefined work categories for time entry classification
+- **Monthly Payroll**: Aggregated payroll data with hours worked and gross pay calculations
+- **QuickBooks Integration**: Vendor and bill ID mapping for external accounting system sync
 
 ## External Dependencies
 
--   **Database**: `@neondatabase/serverless` (PostgreSQL connection)
--   **ORM**: `drizzle-orm`
--   **Web Framework**: `express`
--   **Authentication**: `passport`
--   **State Management**: `@tanstack/react-query`
--   **Form Handling**: `react-hook-form`
--   **Validation**: `zod`
--   **UI Components**: `@radix-ui/*`, `tailwindcss`, `lucide-react`, `class-variance-authority`
--   **Date Utilities**: `date-fns`
--   **Build Tools**: `vite`, `typescript`, `tsx`
--   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: PRODUCTION READY - App approved by QuickBooks (3 weeks active), confirmed by Intuit support, using production credentials, redirect URIs configured, ready for real business account connection (Company ID: 9130351530529746). Known issue: Callback routing requires investigation, but direct OAuth URL works for authentication.
--   **Current Issues**: React hook error in authentication provider causing frontend JavaScript errors, but backend payroll functionality remains operational.
+### QuickBooks Integration
+- **Purpose**: Contractor bill creation and 1099 tax reporting
+- **Implementation**: QuickBooks SDK with OAuth 2.0 authentication
+- **Data Sync**: Automatic vendor creation and bill generation from payroll data
+- **Sandbox Environment**: Development testing with QuickBooks sandbox accounts
+
+### Email Services
+- **Provider**: SendGrid for transactional email functionality
+- **Use Cases**: Password reset notifications and system alerts
+- **Configuration**: API key-based authentication with environment variables
+
+### Development Tools
+- **Package Management**: npm with comprehensive dependency management
+- **Type Safety**: Full TypeScript implementation across client and server
+- **Code Quality**: ESLint and TypeScript compiler checks
+- **Build Process**: Separate client and server build pipelines with esbuild optimization
+
+### Hosting and Deployment
+- **Platform**: Replit hosting environment
+- **Database**: Neon PostgreSQL serverless database
+- **Environment**: Production and development environment variable management
+- **Security**: Environment-based configuration for sensitive credentials
