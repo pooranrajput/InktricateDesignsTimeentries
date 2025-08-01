@@ -31,6 +31,18 @@ function Router() {
     } else if (quickbooksStatus === 'error') {
       // QuickBooks connection failed
       console.log('❌ QuickBooks connection failed:', { reason, details });
+      
+      // Show detailed error information
+      if (reason) {
+        console.error('QuickBooks Error Reason:', reason);
+      }
+      if (details) {
+        console.error('QuickBooks Error Details:', decodeURIComponent(details));
+      }
+      
+      // Show user-friendly error message
+      const errorMessage = `QuickBooks connection failed.\nReason: ${reason || 'No specific reason provided'}\nDetails: ${details ? decodeURIComponent(details) : 'This usually means the QuickBooks authorization page had an issue before reaching our callback.'}`;
+      alert(errorMessage);
     }
   }, [location]);
 
