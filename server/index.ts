@@ -27,11 +27,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Force cache busting for JavaScript assets to fix syntax error
-app.use('/assets', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+// Aggressive cache busting for all static assets
+app.use((req, res, next) => {
+  if (req.url.includes('.js') || req.url.includes('.css') || req.url.includes('/assets/')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Last-Modified', new Date().toUTCString());
+  }
   next();
 });
 
