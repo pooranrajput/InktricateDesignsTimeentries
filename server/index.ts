@@ -1,27 +1,10 @@
-// CRITICAL: Load production environment FIRST before any other imports
+// Load environment configuration
 import { config } from 'dotenv';
-config({ path: '.env.production', override: true });
-
-// CRITICAL FIX: Force override environment variables AFTER dotenv loading
-process.env.QUICKBOOKS_REDIRECT_URI = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
-process.env.REPLIT_DOMAINS = 'inkticate-time-tracker-pooranrajput.replit.app';
-// Override incorrect Client ID with correct production value - MUST BE AFTER dotenv
-process.env.QUICKBOOKS_CLIENT_ID = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
+config();
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { backupService } from "./backup";
-import { changeMonitor } from "./protection";
-
-console.log('🔧 Production Environment Override:', {
-  replotDomains: process.env.REPLIT_DOMAINS,
-  quickbooksRedirect: process.env.QUICKBOOKS_REDIRECT_URI,
-  quickbooksClient: process.env.QUICKBOOKS_CLIENT_ID?.substring(0, 10) + '...',
-  quickbooksClientChar11: process.env.QUICKBOOKS_CLIENT_ID?.charAt(10),
-  sandbox: process.env.QUICKBOOKS_SANDBOX,
-  clientIdLength: process.env.QUICKBOOKS_CLIENT_ID?.length
-});
 
 const app = express();
 app.use(express.json());
@@ -87,13 +70,6 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
-    console.log(`🌐 Server accessible at: http://0.0.0.0:${port}`);
-    console.log(`🌐 External URL: https://inkticate-time-tracker-pooranrajput.replit.app`);
-    
-    // Start backup and protection systems (backup temporarily disabled)
-    console.log('🛡️  INITIALIZING DATA PROTECTION SYSTEMS...');
-    // backupService.startAutomaticBackups(); // Temporarily disabled due to schema changes
-    changeMonitor.startMonitoring();
-    console.log('✅ DATA PROTECTION ACTIVE - Change monitoring enabled');
+    console.log(`🌐 Time Tracking App ready at: https://inkticate-time-tracker-pooranrajput.replit.app`);
   });
 })();
