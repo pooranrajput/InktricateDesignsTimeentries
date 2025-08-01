@@ -79,6 +79,48 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Bill lookup bypass - get specific bill details including account IDs
+  app.get('/qb-get-bill/:billId', async (req, res) => {
+    try {
+      const { billId } = req.params;
+      console.log(`🔍 Direct bill lookup for ID: ${billId}`);
+      
+      const bill = await quickbooksService.getBillById(billId);
+      console.log('📄 Bill details retrieved:', JSON.stringify(bill, null, 2));
+      
+      // Extract account information from line items
+      const billData = (bill as any);
+      if (billData && billData.Line) {
+        console.log('💰 Line items found:');
+        billData.Line.forEach((line: any, index: number) => {
+          console.log(`  Line ${index + 1}:`, {
+            Amount: line.Amount,
+            Description: line.Description,
+            DetailType: line.DetailType,
+            AccountRef: line.AccountBasedExpenseLineDetail?.AccountRef
+          });
+        });
+      }
+      
+      res.json({
+        billId,
+        bill: billData,
+        accountIds: billData?.Line?.map((line: any) => ({
+          amount: line.Amount,
+          description: line.Description,
+          accountId: line.AccountBasedExpenseLineDetail?.AccountRef?.value,
+          accountName: line.AccountBasedExpenseLineDetail?.AccountRef?.name
+        })) || []
+      });
+    } catch (error) {
+      console.error('Error retrieving bill details:', error);
+      res.json({ 
+        error: (error as Error).message,
+        billId: req.params.billId
+      });
+    }
+  });
+
   // Additional bypass routes for critical QuickBooks functions
   app.get('/qb-bill-months', async (req, res) => {
     try {
@@ -1650,6 +1692,48 @@ export function registerRoutes(app: Express): Server {
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error',
         details: error instanceof Error ? error.stack : String(error)
+      });
+    }
+  });
+
+  // Get bill details for account mapping
+  app.get('/api/quickbooks/get-bill/:billId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { billId } = req.params;
+      console.log(`🔍 Looking up QuickBooks bill ID: ${billId}`);
+      
+      const bill = await quickbooksService.getBillById(billId);
+      console.log('📄 Bill details retrieved:', JSON.stringify(bill, null, 2));
+      
+      // Extract account information from line items
+      const billData = (bill as any);
+      if (billData && billData.Line) {
+        console.log('💰 Line items found:');
+        billData.Line.forEach((line: any, index: number) => {
+          console.log(`  Line ${index + 1}:`, {
+            Amount: line.Amount,
+            Description: line.Description,
+            DetailType: line.DetailType,
+            AccountRef: line.AccountBasedExpenseLineDetail?.AccountRef
+          });
+        });
+      }
+      
+      res.json({
+        billId,
+        bill: billData,
+        accountIds: billData?.Line?.map((line: any) => ({
+          amount: line.Amount,
+          description: line.Description,
+          accountId: line.AccountBasedExpenseLineDetail?.AccountRef?.value,
+          accountName: line.AccountBasedExpenseLineDetail?.AccountRef?.name
+        })) || []
+      });
+    } catch (error) {
+      console.error('Error retrieving bill details:', error);
+      res.status(500).json({ 
+        error: (error as Error).message,
+        billId: req.params.billId
       });
     }
   });

@@ -424,7 +424,7 @@ export class QuickBooksService {
           DetailType: "AccountBasedExpenseLineDetail",
           AccountBasedExpenseLineDetail: {
             AccountRef: {
-              value: process.env.QB_PAYROLL_ACCOUNT || "1150040000", // "Wages" account ID 
+              value: "108", // Production "Payroll expenses:Wages" account ID (found from bill 3858)
             },
           },
           Description: `${monthName} ${payrollRecord.year} - ${vendor.firstName} ${vendor.lastName} Payroll`,
@@ -528,6 +528,22 @@ export class QuickBooksService {
     }
 
     return results;
+  }
+
+  // Get specific bill details by ID
+  async getBillById(billId: string) {
+    await this.initializeClient();
+    
+    return new Promise((resolve, reject) => {
+      this.qbo!.getBill(billId, (err: any, bill: any) => {
+        if (err) {
+          console.error('Error getting bill:', err);
+          reject(err);
+        } else {
+          resolve(bill);
+        }
+      });
+    });
   }
 
   // Get QuickBooks company information
