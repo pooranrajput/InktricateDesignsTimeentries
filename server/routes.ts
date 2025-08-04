@@ -1284,27 +1284,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Test QuickBooks connection (with auth restored)
-  app.get('/api/quickbooks/test', isAuthenticated, async (req: any, res) => {
-    try {
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ message: "Only admins can test QuickBooks connection" });
-      }
-      
-      console.log('🧪 Starting QuickBooks test connection for admin user:', req.user.id);
-      const result = await quickbooksService.testConnection();
-      console.log('🧪 Test connection result:', result);
-      
-      res.json(result);
-    } catch (error: any) {
-      console.error("Error testing QuickBooks connection:", error);
-      res.status(500).json({ 
-        message: "Failed to test connection", 
-        error: error.message,
-        success: false 
-      });
-    }
-  });
+  // REMOVED: /api/quickbooks/test endpoint - not needed in production
+  // QuickBooks integration status is determined by presence of valid tokens in database
 
   // Create contractor in QuickBooks
   app.post('/api/quickbooks/create-contractor', isAuthenticated, async (req: any, res) => {
