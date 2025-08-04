@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -234,7 +234,7 @@ export default function QuickBooksIntegration() {
         title: "Contractor Created",
         description: data.message,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      // DISABLED: No API invalidation needed - using hardcoded status
     },
     onError: (error: Error) => {
       toast({
