@@ -56,7 +56,4 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Clear any cached test endpoint queries completely
-queryClient.removeQueries({ queryKey: ['/api/quickbooks/test'] });
-queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
-queryClient.clear();
+// Query client configured for production use only
