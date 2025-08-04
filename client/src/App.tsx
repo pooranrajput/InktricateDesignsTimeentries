@@ -24,9 +24,9 @@ function Router() {
     if (urlParams.get('quickbooks') === 'success') {
       // Clear the URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Invalidate queries to refresh connection status
-      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/debug'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
+      // DISABLED: No need to invalidate - status is hardcoded in component
+      // queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/debug'] });
+      // queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
     }
   }, [location]);
 
