@@ -1,0 +1,232 @@
+background.js:80 [BackgroundStorage] Using browser.storage.persistent
+background.js:80 [BackgroundStorage] Using browser.storage.session
+background.js:80 Performance diagnostic: "initializeStorage" took 93.8ms to execute.
+background.js:80 Performance diagnostic: "initialize-feature-flags-cache" took 0.2ms to execute.
+background.js:126 👋 Initializing 1Password
+background.js:80 using deprecated parameters for the initialization function; pass a single object instead
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 channel: stable
+version: 8.11.3.3
+build: 81103003 (131.0.6778.86)
+browser: Chrome (131.0.6778.86)
+os: Windows (10.0)
+background.js:80 WASM: Initializing.  Log Level: Info
+background.js:80 Performance diagnostic: "initializeCoreInterface" took 141.5ms to execute.
+background.js:80 Performance diagnostic: "collectAllPreRegFeatureFlags" took 0.2ms to execute.
+background.js:80 Performance diagnostic: "initializeNativeAppConnection" took 1.6ms to execute.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2802201228>
+background.js:80 Hooray!; Unlocked account 3VS2LDMEAJC2PMTI6AKCAWO5EE with MUK; 🎉
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1156652652>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 Performance diagnostic: "unlockWithContextInitCache" took 378.8ms to execute.
+background.js:80 👍 Finished initializing 1Password
+background.js:80 Performance diagnostic: "initialize" took 745.8ms to execute.
+background.js:80 📥 Sync started for account 3VS2LDMEAJC2PMTI6AKCAWO5EE - syncing all
+background.js:80 Managed Apps - Feature flag is NOT enabled
+background.js:80 ✅ Sync completed for account 3VS2LDMEAJC2PMTI6AKCAWO5EE - took 288ms
+10Unchecked runtime.lastError: The message port closed before a response was received.Understand this errorAI
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1551328032>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1944596126>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <4094471950>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3907331196>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3570876378>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2009507626>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2007001448>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2254968415>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <265860950>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2135952211>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <484351894>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2327368883>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2401066796>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3545259003>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2027049190>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3274891108>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <468696264>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3414365924>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+9Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.Understand this errorAI
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1968923411>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3756353945>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2014859915>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1096756028>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <4088326938>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3707079620>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2186415291>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1843946606>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <752298710>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3040146588>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2953623761>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <509860805>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3781089005>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1475819855>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <4165263015>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3341366544>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <321380998>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <689399062>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <454028132>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3791252840>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1026403686>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3663762387>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <4240869380>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2869549812>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <657981865>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1593839680>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2851908646>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <4174032185>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+index-CEHVeU7L.js:300 📋 Component state: month=8, payrollData.length=0, isLoading=true
+index-CEHVeU7L.js:300 🔍 Fetching payroll data for 2025-8
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2208777366>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <3174523994>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+inkticate-time-tracker-pooranrajput.replit.app.png:1 
+        
+        
+       Failed to load resource: the server responded with a status of 404 ()Understand this errorAI
+/api/quickbooks/test:1 
+        
+        
+       Failed to load resource: the server responded with a status of 500 ()Understand this errorAI
+index-CEHVeU7L.js:300 📊 Payroll data received for 2025-8: Array(0)
+index-CEHVeU7L.js:300 📊 Data is array: true, length: 0
+2index-CEHVeU7L.js:300 📋 Component state: month=8, payrollData.length=0, isLoading=false
+injected.js:5 [USO] Button detection aborting due to timeout.
+background.js:80 DeviceTrust: access denied: [ missing backoffice permission, missing admin permission ] - aborting
+(anonymous) @ background.js:80Understand this warningAI
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <1752803479>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2969776501>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <2151777952>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+background.js:80 💫 Looking for desktop app com.1password.1password7
+background.js:80 📤 Sending <NmRequestAccounts> message to native core <44419645>
+background.js:80 Desktop app port disconnected. Error: Specified native messaging host not found.
+injected.js:5 Caught error handling <hide-notification> message
+(anonymous) @ injected.js:5
+Promise.catch
+n @ injected.js:5Understand this warningAI
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this errorAI
