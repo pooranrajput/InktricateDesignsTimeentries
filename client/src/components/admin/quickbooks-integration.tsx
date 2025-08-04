@@ -319,14 +319,42 @@ export default function QuickBooksIntegration() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">Connection Status:</span>
-              {/* Manual status display since API routes are having issues */}
-              <Badge variant="default" className="bg-green-100 text-green-800">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Connected: 9130351530529746 (Production)
-              </Badge>
+              {isTestingConnection ? (
+                <Badge variant="secondary">Checking...</Badge>
+              ) : debugInfo?.connected ? (
+                <Badge variant="default" className="bg-green-500 text-white border-green-500">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Connected: {debugInfo.companyId} (Production)
+                </Badge>
+              ) : (
+                <Badge variant="destructive">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Not Connected
+                </Badge>
+              )}
             </div>
             
-            {/* QuickBooks is already connected - no action needed */}
+            {!debugInfo?.connected && !isTestingConnection && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => authMutation.mutate()}
+                  disabled={authMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Connect to QuickBooks
+                </Button>
+                <Button
+                  onClick={() => reauthMutation.mutate()}
+                  disabled={reauthMutation.isPending}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Re-authenticate
+                </Button>
+              </div>
+            )}
           </div>
 
           {isConnected && (
