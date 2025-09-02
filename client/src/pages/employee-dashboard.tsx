@@ -110,8 +110,11 @@ export default function EmployeeDashboard() {
                   setSelectedMonth(parseInt(month));
                 }}
               >
-                <option value="2025-07">Current Month (July)</option>
-                <option value="2025-06">Previous Month (June)</option>
+                <option value="2025-09">September 2025</option>
+                <option value="2025-08">August 2025</option>
+                <option value="2025-07">July 2025</option>
+                <option value="2025-06">June 2025</option>
+                <option value="2025-05">May 2025</option>
               </select>
             </div>
           </div>
