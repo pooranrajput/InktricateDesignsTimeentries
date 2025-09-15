@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,21 +16,49 @@ export default function QuickBooksIntegration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // FIXED: Use hardcoded status - no API calls needed  
-  // Backend verified working: Bills 4315-4322 created successfully
-  const debugInfo = {
-    connected: true,
-    companyId: '9130351530529746',
-    sandbox: false,
-    isProduction: true,
-    message: 'Connection successful - Bills 4315-4322 created'
-  };
-  const isTestingConnection = false;
+  // REAL QuickBooks Status Check - fetch from API
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [isTestingConnection, setIsTestingConnection] = useState(true);
+  
+  // Check real QuickBooks connection status on component mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        setIsTestingConnection(true);
+        const response = await fetch('/api/quickbooks/status', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          setDebugInfo(data);
+        } else {
+          setDebugInfo({ connected: false, error: 'Failed to connect' });
+        }
+      } catch (error: any) {
+        console.error('QuickBooks status check failed:', error);
+        setDebugInfo({ connected: false, error: error.message });
+      } finally {
+        setIsTestingConnection(false);
+      }
+    };
+    checkStatus();
+  }, []);
 
-  // DISABLED: No API calls - use hardcoded data since backend is working
-  const existingBillMonths = [
-    { month: 7, year: 2025 } // July bills already exist
-  ];
+  // Fetch real existing bill months from QuickBooks API
+  const [existingBillMonths, setExistingBillMonths] = useState<any>([]);
+  
+  useEffect(() => {
+    const fetchBillMonths = async () => {
+      try {
+        const response = await fetch('/api/quickbooks/existing-bill-months', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          setExistingBillMonths(data.existingMonths || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch existing bill months:', error);
+      }
+    };
+    fetchBillMonths();
+  }, []);
 
   // Use the bypass status for connection test
   const connectionTest = debugInfo?.connected ? {
