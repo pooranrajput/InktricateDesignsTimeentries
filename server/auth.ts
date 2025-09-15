@@ -230,7 +230,6 @@ export async function bootstrapAdminUser() {
       
       const updatedAdmin = await storage.updatePassword(adminUsers[0].id, hashedPassword);
       console.log(`✅ Admin password updated with proper hash format`);
-      console.log(`📋 Username: ${adminUsers[0].username}, Password: ${defaultPassword}`);
       
       return updatedAdmin;
     }
@@ -278,7 +277,6 @@ export async function bootstrapAdminUser() {
     }
     
     console.log(`✅ Admin user bootstrapped successfully: ${adminUser.username} (${adminUser.email})`);
-    console.log(`📋 Default password: ${defaultPassword}`);
     console.log('⚠️  Please change password on first login for security');
     
     return adminUser;
