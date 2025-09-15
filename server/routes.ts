@@ -1235,8 +1235,19 @@ export function registerRoutes(app: Express): Server {
         });
       }
     } catch (error: any) {
-      console.error('🚨 Error fetching company info:', error);
-      res.status(500).json({ message: 'Failed to fetch company information' });
+      console.error('🚨 ERROR fetching company info:', error);
+      console.error('🚨 Error details:', {
+        message: error?.message,
+        stack: error?.stack?.substring(0, 500),
+        code: error?.code,
+        status: error?.status
+      });
+      res.status(500).json({ 
+        message: 'Failed to fetch company information',
+        error: error?.message,
+        details: error?.code || 'Unknown error',
+        debug: error?.status || 'No status'
+      });
     }
   });
 
@@ -1353,26 +1364,46 @@ export function registerRoutes(app: Express): Server {
 
   // Generate monthly contractor bills
   app.post('/api/quickbooks/generate-bills', isAuthenticated, async (req: any, res) => {
+    console.log('🔧 generate-bills v2 handler invoked');
     try {
       if (req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only admins can generate contractor bills" });
       }
       
-      const { year, month } = req.body;
+      // DEFENSIVE: No destructuring, check body exists first
+      const year = Number(req.body?.year);
+      const month = Number(req.body?.month);
+      
+      console.log('🔧 Parsed request:', { year, month, hasBody: !!req.body, rawBody: req.body });
       
       if (!year || !month) {
-        return res.status(400).json({ message: "Year and month are required" });
+        return res.status(400).json({ 
+          message: "Year and month are required",
+          debug: { body: req.body, hasBody: !!req.body, year, month }
+        });
       }
 
+      console.log(`🔄 Starting bill generation for ${month}/${year}...`);
       const results = await getQuickBooksService().generateMonthlyContractorBills(year, month);
+      console.log(`✅ Bill generation results:`, results);
       
       res.json({
         results,
-        message: `Generated ${results.filter(r => !r.error).length} contractor bills for ${month}/${year}`
+        message: `Generated ${results.filter((r: any) => !r.error).length} contractor bills for ${month}/${year}`,
+        debug: results
       });
-    } catch (error) {
-      console.error("Error generating contractor bills:", error);
-      res.status(500).json({ message: "Failed to generate contractor bills" });
+    } catch (error: any) {
+      console.error("❌ ERROR generating contractor bills:", error);
+      console.error("❌ Error details:", {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack?.substring(0, 500)
+      });
+      res.status(500).json({ 
+        message: "Failed to generate contractor bills", 
+        error: error?.message,
+        details: error?.code || 'Unknown error'
+      });
     }
   });
 

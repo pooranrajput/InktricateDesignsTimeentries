@@ -4,7 +4,7 @@ import OAuthClient from 'intuit-oauth';
 import QuickBooks from 'node-quickbooks';
 import { db } from './db';
 import { quickbooksConfig, users, timeEntries, monthlyPayroll } from '../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 
 export class QuickBooksService {
   private oauthClient: OAuthClient;
@@ -264,9 +264,16 @@ export class QuickBooksService {
     try {
       console.log('🔍 QuickBooks Debug - Initializing client with companyId:', companyId);
       
-      const config = await db.query.quickbooksConfig.findFirst({
-        where: companyId ? eq(quickbooksConfig.companyId, companyId) : undefined,
-      });
+      // CRITICAL: Get latest production config with proper filtering and ordering
+      const configs = await db.select().from(quickbooksConfig)
+        .where(and(
+          eq(quickbooksConfig.sandbox, false),
+          eq(quickbooksConfig.companyId, '9130351530529746')
+        ))
+        .orderBy(desc(quickbooksConfig.createdAt))
+        .limit(1);
+      
+      const config = configs[0];
 
       console.log('🔍 QuickBooks Debug - Config found:', !!config);
       console.log('🔍 QuickBooks Debug - Config details:', config ? {
@@ -279,7 +286,12 @@ export class QuickBooksService {
       } : 'No config');
 
       if (!config) {
-        throw new Error('QuickBooks not configured. Please complete OAuth setup first.');
+        throw new Error('Production QuickBooks configuration not found. Please re-authenticate with production company (9130351530529746).');
+      }
+
+      // CRITICAL: Hard guard against wrong company/sandbox
+      if (config.sandbox !== false || config.companyId !== '9130351530529746') {
+        throw new Error(`Config mismatch! Expected production company 9130351530529746, got ${config.companyId} (sandbox: ${config.sandbox}). Please re-authenticate.`);
       }
 
       // Check if token needs refresh
@@ -420,6 +432,9 @@ export class QuickBooksService {
         VendorRef: {
           value: vendor.vendorId || vendor.Id,
         },
+        APAccountRef: {
+          value: "33", // Accounts Payable account ID (standard QuickBooks account)
+        },
         TxnDate: formattedDate, // Use payroll period end date
         DueDate: formattedDate,
         Line: [{
@@ -441,6 +456,12 @@ export class QuickBooksService {
       this.qbo!.createBill(bill, (err: any, createdBill: any) => {
         if (err) {
           console.error('❌ Error creating bill:', err);
+          console.error('❌ Error details:', {
+            message: err?.message,
+            fault: err?.Fault || err?.fault,
+            response: err?.response?.body,
+            bill: bill
+          });
           reject(err);
         } else {
           console.log('✅ Bill created successfully:', createdBill?.Bill?.Id);
