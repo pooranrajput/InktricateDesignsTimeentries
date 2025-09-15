@@ -202,9 +202,13 @@ export class QuickBooksService {
     }
     
     const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-    const clientId = 'AB6HieH2iCWWSQ8jneSCittfIAKuPHIcujzio09raTAQV5EUtA';
-    const clientSecret = 'ezxQeCSAH2uQ3SpXAFKG0pezNOsNgFI26cIKEnDU';
+    const clientId = process.env.QUICKBOOKS_CLIENT_ID;
+    const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET;
     const redirectUri = 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback';
+    
+    if (!clientId || !clientSecret) {
+      throw new Error('QuickBooks credentials missing from environment during token exchange');
+    }
     
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     
@@ -286,7 +290,7 @@ export class QuickBooksService {
 
       // Initialize QuickBooks client for OAuth 2.0
       this.qbo = new QuickBooks(
-        'AB6HieH2iCWWSQ8jneSCIctfIAKuPHIcujzio09raTAQV5EUtA',   // consumerKey (Client ID)
+        process.env.QUICKBOOKS_CLIENT_ID,   // consumerKey (Client ID)
         process.env.QUICKBOOKS_CLIENT_SECRET, // consumerSecret (Client Secret)
         config.accessToken,                 // accessToken
         false,                             // No token secret for OAuth 2.0
