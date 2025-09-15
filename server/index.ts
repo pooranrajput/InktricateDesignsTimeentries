@@ -67,6 +67,11 @@ app.use((req, res, next) => {
     }
   });
 
+  // Prevent any /api requests from falling through to Vite SPA fallback
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ message: 'API endpoint not found' });
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes

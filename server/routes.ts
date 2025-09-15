@@ -15,8 +15,14 @@ import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
-// Initialize QuickBooks service
-const quickbooksService = new QuickBooksService();
+// Lazy-initialize QuickBooks service to prevent import-time failures
+let quickbooksService: QuickBooksService | null = null;
+const getQuickBooksService = () => {
+  if (!quickbooksService) {
+    quickbooksService = new QuickBooksService();
+  }
+  return quickbooksService;
+};
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -35,6 +41,11 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 export function registerRoutes(app: Express): Server {
   // BYPASS SOLUTION: Add direct routes BEFORE any middleware
   app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+  
+  // API aliases for bypass routes (Vite won't intercept /api paths)
+  app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
   
@@ -70,11 +81,11 @@ export function registerRoutes(app: Express): Server {
           tokenExpiry: config.tokenExpiry
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Direct QB status error:', error);
       res.status(500).json({ 
         connected: false, 
-        error: error.message 
+        error: error?.message || 'Unknown error' 
       });
     }
   });
@@ -85,7 +96,7 @@ export function registerRoutes(app: Express): Server {
       const { billId } = req.params;
       console.log(`🔍 Direct bill lookup for ID: ${billId}`);
       
-      const bill = await quickbooksService.getBillById(billId);
+      const bill = await getQuickBooksService().getBillById(billId);
       console.log('📄 Bill details retrieved:', JSON.stringify(bill, null, 2));
       
       // Extract account information from line items
@@ -1270,7 +1281,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/test-noauth', async (req: any, res) => {
     try {
       console.log('🧪 DEBUGGING: Starting QuickBooks test connection WITHOUT AUTH');
-      const result = await quickbooksService.testConnection();
+      const result = await getQuickBooksService().testConnection();
       console.log('🧪 Test connection result:', result);
       
       res.json(result);
@@ -1311,7 +1322,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const contractor = await quickbooksService.createContractor(user);
+      const contractor = await getQuickBooksService().createContractor(user);
       
       // Update user with QuickBooks contractor ID
       await storage.updateUserQuickBooksInfo(userId, (contractor as any).Id, (contractor as any).ItemRef?.value);
@@ -1353,7 +1364,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Year and month are required" });
       }
 
-      const results = await quickbooksService.generateMonthlyContractorBills(year, month);
+      const results = await getQuickBooksService().generateMonthlyContractorBills(year, month);
       
       res.json({
         results,
@@ -1384,7 +1395,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const timeActivity = await quickbooksService.createTimeActivity(timeEntry, user);
+      const timeActivity = await getQuickBooksService().createTimeActivity(timeEntry, user);
       
       // Update time entry with QuickBooks ID
       await storage.updateTimeEntryQuickBooksInfo(timeEntryId, (timeActivity as any).Id);
@@ -1399,7 +1410,7 @@ export function registerRoutes(app: Express): Server {
   // List all accounts to find the correct Wages account
   app.get('/api/quickbooks/list-accounts', isAuthenticated, async (req: any, res) => {
     try {
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       
       console.log('🔍 Listing all accounts...');
       
@@ -1446,7 +1457,7 @@ export function registerRoutes(app: Express): Server {
   // List all vendors to debug Track1099 status
   app.get('/api/quickbooks/list-vendors', isAuthenticated, async (req: any, res) => {
     try {
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       
       console.log(`🔍 Listing all vendors to check Track1099 status...`);
       
@@ -1523,7 +1534,7 @@ export function registerRoutes(app: Express): Server {
         throw new Error(`User ${user.firstName} ${user.lastName} does not have QuickBooks vendor ID. Please sync contractors first.`);
       }
       
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       console.log('💰 QuickBooks client initialized');
       
       // Use stored vendor ID directly (no lookup needed!)
@@ -1693,7 +1704,7 @@ export function registerRoutes(app: Express): Server {
       const { billId } = req.params;
       console.log(`🔍 Looking up QuickBooks bill ID: ${billId}`);
       
-      const bill = await quickbooksService.getBillById(billId);
+      const bill = await getQuickBooksService().getBillById(billId);
       console.log('📄 Bill details retrieved:', JSON.stringify(bill, null, 2));
       
       // Extract account information from line items
@@ -1737,7 +1748,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       const { billId } = req.params;
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       
       // Find the specific bill
       const bills = await new Promise((resolve, reject) => {
@@ -1770,7 +1781,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Admin only" });
       }
 
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       
       // Check vendors
       const vendors = await new Promise((resolve, reject) => {
@@ -1920,7 +1931,7 @@ export function registerRoutes(app: Express): Server {
       const testEmployee = activeContractors[0];
       console.log(`🧪 Testing sync for: ${testEmployee.firstName || 'No First'} ${testEmployee.lastName || 'No Last'}`);
       
-      const results = await quickbooksService.syncAllContractors([testEmployee]);
+      const results = await getQuickBooksService().syncAllContractors([testEmployee]);
       console.log('🔧 DEBUG: Sync results:', results);
       
       res.json({
@@ -1947,7 +1958,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       console.log(`🔍 Looking up vendor "${name}" in production QuickBooks...`);
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       
       const vendors = await new Promise((resolve, reject) => {
         qbo.findVendors((err: any, vendorList: any) => {
@@ -2013,7 +2024,7 @@ export function registerRoutes(app: Express): Server {
     console.log('Using tested vendor lookup logic from VENDOR_BILL_MAPPING_BACKUP.md');
     
     try {
-      const qbo = await quickbooksService.initializeClient();
+      const qbo = await getQuickBooksService().initializeClient();
       console.log('✅ QuickBooks client initialized');
       
       // Step 1: Get ALL existing vendors from production QuickBooks
