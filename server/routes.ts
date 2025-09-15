@@ -800,11 +800,44 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied: Admin privileges required to generate payroll" });
       }
       
-      const { year, month } = req.body;
+      // Enhanced validation with defaults for req.body
+      const now = new Date();
+      const bodyData = req.body ?? {};
+      console.log('📥 PAYROLL ROUTE: Received req.body:', JSON.stringify(bodyData));
+      
+      const payrollSchema = z.object({
+        year: z.number().int().min(2020).max(2030).optional(),
+        month: z.number().int().min(1).max(12).optional()
+      });
+      
+      let parsedBody;
+      try {
+        parsedBody = payrollSchema.parse(bodyData);
+      } catch (validationError) {
+        console.error('❌ PAYROLL VALIDATION ERROR:', validationError);
+        return res.status(400).json({ 
+          message: "Invalid input: year must be 2020-2030, month must be 1-12",
+          error: validationError
+        });
+      }
+      
+      const { year = now.getFullYear(), month = now.getMonth() + 1 } = parsedBody;
+      
+      console.log(`🔄 PAYROLL ROUTE: Generating payroll for ${month}/${year} using NEW auto-salary logic...`);
+      console.log(`💰 Starting auto-salary generation - will include Bindiya's $4000 monthly salary`);
+      
       const records = await storage.generateMonthlyPayroll(year, month);
+      console.log(`✅ PAYROLL ROUTE: Generated ${records.length} payroll records`);
+      
+      // Log Bindiya's record specifically
+      const bindiyaRecord = records.find(r => r.employeeName?.toLowerCase().includes('bindiya'));
+      if (bindiyaRecord) {
+        console.log(`💰 Bindiya's auto-salary generated: $${bindiyaRecord.grossPay} (${bindiyaRecord.totalHours} hours)`);
+      }
+      
       res.json(records);
     } catch (error) {
-      console.error("Error generating payroll:", error);
+      console.error("❌ PAYROLL ROUTE ERROR:", error);
       res.status(500).json({ message: "Failed to generate payroll" });
     }
   });
@@ -919,13 +952,13 @@ export function registerRoutes(app: Express): Server {
       
       // FORCE PRODUCTION OAUTH URL - identical to /auth endpoint
       const params = new URLSearchParams({
-        client_id: clientId,
+        client_id: clientId || '',
         scope: 'com.intuit.quickbooks.accounting',
-        redirect_uri: redirectUri,
+        redirect_uri: redirectUri || '',
         response_type: 'code',
         state: reauthState
         // REMOVED sandbox parameter - QuickBooks OAuth doesn't use this parameter
-      });
+      } as Record<string, string>);
       
       const authUrl = `${baseUrl}?${params.toString()}`;
       
@@ -1024,6 +1057,10 @@ export function registerRoutes(app: Express): Server {
       const tokenEndpoint = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
       const credentials = Buffer.from(`${correctClientId}:${correctClientSecret}`).toString('base64');
       
+      if (!correctClientId || !correctClientSecret) {
+        throw new Error('Missing QuickBooks client credentials');
+      }
+      
       console.log('🔍 Using dashboard-verified credentials for token exchange:', {
         clientIdStart: correctClientId.substring(0, 15) + '...',
         clientSecretStart: correctClientSecret.substring(0, 10) + '...',
@@ -1071,8 +1108,8 @@ export function registerRoutes(app: Express): Server {
         method: 'POST',
         authHeader: `Basic ${credentials.substring(0, 20)}...`,
         bodyParams: params.toString(),
-        clientIdUsed: correctClientId.substring(0, 20) + '...',
-        secretUsed: correctClientSecret.substring(0, 10) + '...'
+        clientIdUsed: correctClientId?.substring(0, 20) + '...' || 'undefined',
+        secretUsed: correctClientSecret?.substring(0, 10) + '...' || 'undefined'
       });
       
       if (!response.ok) {
@@ -1188,8 +1225,9 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Expected Production Company:', '9130351530529746');
       console.log('🔍 Is Sandbox Company:', config.companyId === '9341455047397094' ? 'YES' : 'NO');
 
-      // Fetch company info from QuickBooks API
-      const companyInfoUrl = `${config.baseUrl}/v3/companyinfo/${config.companyId}/companyinfo/1`;
+      // Fetch company info from QuickBooks API  
+      const baseUrl = config.sandbox ? 'https://sandbox-quickbooks.api.intuit.com' : 'https://quickbooks.api.intuit.com';
+      const companyInfoUrl = `${baseUrl}/v3/companyinfo/${config.companyId}/companyinfo/1`;
       const response = await fetch(companyInfoUrl, {
         headers: {
           'Authorization': `Bearer ${config.accessToken}`,
@@ -1446,7 +1484,7 @@ export function registerRoutes(app: Express): Server {
       console.log('🔍 Listing all accounts...');
       
       const result = await new Promise((resolve, reject) => {
-        qbo.findAccounts("SELECT * FROM Account", (err, accounts) => {
+        qbo.findAccounts("SELECT * FROM Account", (err: any, accounts: any) => {
           if (err) {
             console.error('❌ Account listing failed:', err);
             reject(err);
@@ -1455,14 +1493,14 @@ export function registerRoutes(app: Express): Server {
             console.log(`📋 Found ${accountList.length} total accounts`);
             
             // Filter for expense accounts and look for Wages
-            const expenseAccounts = accountList.filter(a => 
+            const expenseAccounts = accountList.filter((a: any) => 
               a.AccountType === 'Expense' || 
               a.Name.toLowerCase().includes('wage') ||
               a.Name.toLowerCase().includes('payroll') ||
               a.Name.toLowerCase().includes('contractor')
             );
             
-            const accountSummary = expenseAccounts.map(a => ({
+            const accountSummary = expenseAccounts.map((a: any) => ({
               Id: a.Id,
               Name: a.Name,
               AccountType: a.AccountType,
@@ -1475,7 +1513,7 @@ export function registerRoutes(app: Express): Server {
         });
       });
       
-      res.json({ success: true, ...result });
+      res.json({ success: true, ...(result as object) });
     } catch (error) {
       console.error('❌ Account listing failed:', error);
       res.status(500).json({ 
@@ -1493,7 +1531,7 @@ export function registerRoutes(app: Express): Server {
       console.log(`🔍 Listing all vendors to check Track1099 status...`);
       
       const result = await new Promise((resolve, reject) => {
-        qbo.findVendors("SELECT * FROM Vendor", (err, vendors) => {
+        qbo.findVendors("SELECT * FROM Vendor", (err: any, vendors: any) => {
           if (err) {
             console.error(`❌ Vendor listing failed:`, err);
             reject(err);
@@ -1501,7 +1539,7 @@ export function registerRoutes(app: Express): Server {
             const vendorList = vendors?.QueryResponse?.Vendor || [];
             console.log(`📋 Found ${vendorList.length} total vendors`);
             
-            const vendorSummary = vendorList.map(v => ({
+            const vendorSummary = vendorList.map((v: any) => ({
               Id: v.Id,
               Name: v.Name,
               Track1099: v.Track1099,
@@ -1514,7 +1552,7 @@ export function registerRoutes(app: Express): Server {
         });
       });
       
-      res.json({ success: true, ...result });
+      res.json({ success: true, ...(result as object) });
     } catch (error) {
       console.error('❌ Vendor listing failed:', error);
       res.status(500).json({ 
@@ -1610,10 +1648,10 @@ export function registerRoutes(app: Express): Server {
       const description = `${months[month-1]} ${year} - ${user.firstName} ${user.lastName} Payroll`;
       
       // Calculate payroll period end date
-      function getPayrollPeriodEndDate(month: number, year: number): string {
+      const getPayrollPeriodEndDate = (month: number, year: number): string => {
         const lastDay = new Date(year, month, 0);
         return lastDay.toISOString().split('T')[0];
-      }
+      };
       
       const payrollEndDate = getPayrollPeriodEndDate(month, year);
       
@@ -1869,7 +1907,7 @@ export function registerRoutes(app: Express): Server {
       console.log(`🔍 Search query: ${query}`);
       
       const result = await new Promise((resolve, reject) => {
-        qbo.findVendors(query, (err, vendors) => {
+        qbo.findVendors(query, (err: any, vendors: any) => {
           if (err) {
             console.error(`❌ Search failed:`, err);
             reject(err);
@@ -1913,7 +1951,7 @@ export function registerRoutes(app: Express): Server {
           
           console.log(`📤 Update data:`, updateData);
           
-          qbo.updateVendor(updateData, (updateErr, updatedVendor) => {
+          qbo.updateVendor(updateData, (updateErr: any, updatedVendor: any) => {
             if (updateErr) {
               console.error(`❌ Update failed:`, updateErr);
               if (updateErr.Fault && updateErr.Fault.Error) {
@@ -2088,8 +2126,8 @@ export function registerRoutes(app: Express): Server {
       const results = [];
       
       for (const employee of activeContractors) {
-        const firstName = employee.first_name || employee.firstName;
-        const lastName = employee.last_name || employee.lastName;
+        const firstName = employee.firstName;
+        const lastName = employee.lastName;
         const fullName = `${firstName} ${lastName}`;
         console.log(`\n👤 Processing: ${fullName}`);
         

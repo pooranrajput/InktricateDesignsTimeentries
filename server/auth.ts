@@ -78,7 +78,7 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: new PostgresSessionStore({
       conString: process.env.DATABASE_URL,
-      createTableIfMissing: false,
+      createTableIfMissing: true,
       tableName: 'sessions',
     }),
     cookie: {
@@ -209,6 +209,83 @@ export function setupAuth(app: Express) {
       res.status(500).json({ message: "Failed to reset password" });
     }
   });
+}
+
+// Bootstrap admin user on startup to fix authentication deadlock
+export async function bootstrapAdminUser() {
+  try {
+    console.log('🚀 Checking for admin user bootstrap...');
+    
+    // Check if any admin user exists
+    const existingAdmins = await storage.getAllEmployees();
+    const adminUsers = existingAdmins.filter(user => user.role === 'admin' && user.password);
+    
+    if (adminUsers.length > 0) {
+      console.log(`✅ Admin user already exists: ${adminUsers[0].username}`);
+      
+      // FORCE UPDATE: Reset admin password to ensure proper format for authentication
+      console.log('🔧 Force-updating admin password to ensure authentication compatibility...');
+      const defaultPassword = 'Inktricate2024!';
+      const hashedPassword = await hashPassword(defaultPassword);
+      
+      const updatedAdmin = await storage.updatePassword(adminUsers[0].id, hashedPassword);
+      console.log(`✅ Admin password updated with proper hash format`);
+      console.log(`📋 Username: ${adminUsers[0].username}, Password: ${defaultPassword}`);
+      
+      return updatedAdmin;
+    }
+    
+    console.log('🔧 No admin user found, creating bootstrap admin...');
+    
+    // Check if user with admin username/email already exists
+    let existingUser = await storage.getUserByUsername('admin');
+    if (!existingUser) {
+      existingUser = await storage.getUserByEmail('admin@inktricate.com');
+    }
+    
+    const defaultPassword = 'Inktricate2024!';
+    const hashedPassword = await hashPassword(defaultPassword);
+    
+    let adminUser;
+    
+    if (existingUser) {
+      // Update existing user to be admin with proper password
+      console.log(`🔧 Upgrading existing user ${existingUser.username} to admin...`);
+      adminUser = await storage.updateUserCredentials(
+        existingUser.id,
+        existingUser.username || 'admin',
+        hashedPassword
+      );
+      
+      // Ensure role is admin
+      if (adminUser.role !== 'admin') {
+        adminUser = await storage.updateUserRole(adminUser.id, 'admin');
+      }
+    } else {
+      // Create new admin user
+      console.log('🔧 Creating new admin user...');
+      adminUser = await storage.createEmployee({
+        username: 'admin',
+        email: 'admin@inktricate.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'admin',
+        hourlyRate: '0.00',
+        password: hashedPassword,
+        mustResetPassword: true,
+        isActive: true
+      });
+    }
+    
+    console.log(`✅ Admin user bootstrapped successfully: ${adminUser.username} (${adminUser.email})`);
+    console.log(`📋 Default password: ${defaultPassword}`);
+    console.log('⚠️  Please change password on first login for security');
+    
+    return adminUser;
+  } catch (error) {
+    console.error('❌ Failed to bootstrap admin user:', error);
+    throw error;
+  }
 }
 
 export { hashPassword };

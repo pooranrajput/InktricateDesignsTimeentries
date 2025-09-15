@@ -558,26 +558,60 @@ export class DatabaseStorage implements IStorage {
     const records = [];
 
     for (const employee of employees) {
-      // Get monthly hours for this employee
-      const { totalHours } = await this.getMonthlyHoursForUser(employee.id, year, month);
+      // Check if record already exists first
+      const [existing] = await db
+        .select()
+        .from(monthlyPayroll)
+        .where(
+          and(
+            eq(monthlyPayroll.userId, employee.id),
+            eq(monthlyPayroll.year, year),
+            eq(monthlyPayroll.month, month)
+          )
+        );
+
+      const monthlySalary = parseFloat(employee.monthlySalary || '0');
       
-      if (totalHours > 0) {
-        const hourlyRate = parseFloat(employee.hourlyRate || '0');
-        const grossPay = totalHours * hourlyRate;
-
-        // Check if record already exists
-        const [existing] = await db
-          .select()
-          .from(monthlyPayroll)
-          .where(
-            and(
-              eq(monthlyPayroll.userId, employee.id),
-              eq(monthlyPayroll.year, year),
-              eq(monthlyPayroll.month, month)
-            )
-          );
-
+      if (monthlySalary > 0) {
+        // AUTO-SALARY: Always use fixed monthly salary (like Bindiya's $4000)
+        console.log(`💰 Auto-generating monthly salary for ${employee.firstName} ${employee.lastName}: $${monthlySalary}`);
+        
         if (!existing) {
+          // Create new salary record
+          const [record] = await db
+            .insert(monthlyPayroll)
+            .values({
+              userId: employee.id,
+              year,
+              month,
+              totalHours: '0', // No time tracking required for salary
+              grossPay: monthlySalary.toFixed(2),
+              status: 'pending',
+            })
+            .returning();
+          records.push(record);
+        } else {
+          // Update existing record to use salary instead of hours
+          console.log(`🔄 Updating existing record to use salary instead of time entries`);
+          const [record] = await db
+            .update(monthlyPayroll)
+            .set({
+              totalHours: '0', // Override time entries
+              grossPay: monthlySalary.toFixed(2), // Use fixed salary
+            })
+            .where(eq(monthlyPayroll.id, existing.id))
+            .returning();
+          records.push(record);
+        }
+      } else if (!existing) {
+        // HOURLY: Traditional hourly calculation for employees without salary
+        const { totalHours } = await this.getMonthlyHoursForUser(employee.id, year, month);
+        
+        if (totalHours > 0) {
+          const hourlyRate = parseFloat(employee.hourlyRate || '0');
+          const grossPay = totalHours * hourlyRate;
+          
+          console.log(`⏰ Hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h @ $${hourlyRate} = $${grossPay}`);
           const [record] = await db
             .insert(monthlyPayroll)
             .values({

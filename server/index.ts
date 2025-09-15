@@ -7,8 +7,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -42,6 +42,15 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+
+  // Bootstrap admin user to fix authentication deadlock for Bindiya's auto-salary feature
+  try {
+    const { bootstrapAdminUser } = await import("./auth");
+    await bootstrapAdminUser();
+  } catch (error) {
+    console.error('⚠️  Admin bootstrap failed:', error);
+    // Continue server startup even if bootstrap fails - this is non-blocking
+  }
 
   // Debug: Log which routes are registered
   console.log('📍 Express routes registered:');

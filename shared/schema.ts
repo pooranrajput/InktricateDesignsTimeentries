@@ -40,6 +40,7 @@ export const users = pgTable("users", {
   inktricateStartDate: date("inktricate_start_date"),
   role: varchar("role").notNull().default("employee"), // 'admin' or 'employee'
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
+  monthlySalary: decimal("monthly_salary", { precision: 10, scale: 2 }), // Auto-generate bills for this amount monthly
   isActive: boolean("is_active").notNull().default(true),
   mustResetPassword: boolean("must_reset_password").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
