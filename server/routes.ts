@@ -325,7 +325,12 @@ export function registerRoutes(app: Express): Server {
       }
       
       const { id } = req.params;
-      const newPassword = "Inktricate2024!";
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      
       const hashedPassword = await hashPassword(newPassword);
       
       await storage.updatePassword(id, hashedPassword);
