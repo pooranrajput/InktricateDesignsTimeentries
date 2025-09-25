@@ -1298,7 +1298,8 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/quickbooks/status', async (req: any, res) => {
     try {
       console.log('🔍 Status endpoint called - checking QB configs...');
-      const configs = await storage.getAllQuickBooksConfigs();
+      // Direct database check to bypass QuickBooksService compilation issues
+      const configs = await db.select().from(quickbooksConfig);
       console.log(`📋 Found ${configs.length} QB configs`);
       
       const hasValidConfig = configs.length > 0 && 

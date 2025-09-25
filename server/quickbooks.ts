@@ -5,6 +5,45 @@ import QuickBooks from 'node-quickbooks';
 import { db } from './db';
 import { quickbooksConfig, users, timeEntries, monthlyPayroll } from '../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { URL, URLSearchParams } from 'url';
+
+// Type definitions for QuickBooks API responses
+interface QBVendor {
+  Id: string;
+  Name?: string;
+  DisplayName?: string;
+  SyncToken: string;
+  Active: boolean;
+  Vendor1099?: boolean;
+  Track1099?: boolean;
+  GivenName?: string;
+  FamilyName?: string;
+  CompanyName?: string;
+  PrimaryEmailAddr?: { Address: string };
+  PrimaryPhone?: any;
+  BillAddr?: any;
+  TaxIdentifier?: string;
+}
+
+interface QBBill {
+  Id: string;
+  SyncToken: string;
+  [key: string]: any;
+}
+
+interface Employee {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  socialSecurityNumber?: string;
+  taxId?: string;
+  quickbooksVendorId?: string;
+  quickbooksCustomerId?: string;
+  quickbooks_customer_id?: string;
+}
 
 export class QuickBooksService {
   private oauthClient: OAuthClient;
@@ -621,7 +660,7 @@ export class QuickBooksService {
   }
 
   // Create contractor as vendor in QuickBooks
-  async createContractor(employee: any) {
+  async createContractor(employee: Employee): Promise<QBVendor> {
     try {
       const qbo = await this.initializeClient();
       
@@ -636,7 +675,7 @@ export class QuickBooksService {
       }
       
       // Create vendor object with correct QuickBooks API structure
-      const vendor: any = {
+      const vendor: Partial<QBVendor> = {
         DisplayName: fullName,  // QuickBooks requires DisplayName for vendor creation
         Vendor1099: true,       // CORRECT FIELD: This vendor is a 1099 contractor
         Active: true            // Ensure vendor is active
@@ -657,7 +696,7 @@ export class QuickBooksService {
       console.log('📤 Creating QuickBooks vendor with data:', JSON.stringify(vendor, null, 2));
       
       return new Promise((resolve, reject) => {
-        qbo.createVendor(vendor, (err: any, createdVendor: any) => {
+        qbo.createVendor(vendor, (err: any, createdVendor: QBVendor) => {
           if (err) {
             console.error('❌ QuickBooks vendor creation failed for:', vendor.Name);
             console.error('❌ Vendor data sent:', JSON.stringify(vendor, null, 2));
@@ -688,7 +727,7 @@ export class QuickBooksService {
   }
 
   // Sync all active contractors to QuickBooks with PROPER DUPLICATE DETECTION
-  async syncAllContractors(employees: any[]) {
+  async syncAllContractors(employees: Employee[]) {
     console.log(`🔄 Starting PRODUCTION contractor sync with duplicate detection for ${employees.length} employees`);
     console.log('📋 Using development-tested vendor lookup and mapping logic');
     
@@ -699,7 +738,7 @@ export class QuickBooksService {
       // Step 1: Get ALL existing vendors from QuickBooks first (like development)
       console.log('📋 Retrieving ALL existing vendors from production QuickBooks...');
       const vendors = await new Promise((resolve, reject) => {
-        qbo.findVendors((err: any, vendorList: any) => {
+        qbo.findVendors((err: any, vendorList: { QueryResponse?: { Vendor?: QBVendor[] } }) => {
           if (err) {
             reject(err);
           } else {
@@ -708,12 +747,12 @@ export class QuickBooksService {
         });
       });
       
-      const vendorArray = (vendors as any)?.QueryResponse?.Vendor || [];
+      const vendorArray = vendors?.QueryResponse?.Vendor || [];
       console.log(`📊 Found ${vendorArray.length} existing vendors in production QuickBooks`);
       
       if (vendorArray.length > 0) {
         console.log('\n👥 EXISTING PRODUCTION VENDORS:');
-        vendorArray.forEach((vendor: any) => {
+        vendorArray.forEach((vendor: QBVendor) => {
           console.log(`   ID: ${vendor.Id} - Name: "${vendor.Name}" (Active: ${vendor.Active})`);
         });
       }
@@ -792,7 +831,7 @@ export class QuickBooksService {
             console.log(`🔧 Update data being sent:`, JSON.stringify(updateData, null, 2));
             
             const updateResult = await new Promise((resolve, reject) => {
-              qbo.updateVendor(updateData, (err: any, updatedVendor: any) => {
+              qbo.updateVendor(updateData, (err: any, updatedVendor: QBVendor) => {
                 if (err) {
                   console.error(`❌ Failed to update 1099 tracking for ${fullName}:`, JSON.stringify(err, null, 2));
                   if (err.Fault && err.Fault.Error) {
@@ -810,7 +849,7 @@ export class QuickBooksService {
             // Verify the update by reading the vendor back
             console.log(`🔍 Verifying update for ${fullName}...`);
             const verifyResult = await new Promise((resolve) => {
-              qbo.getVendor(existingVendor.Id, (err: any, vendor: any) => {
+              qbo.getVendor(existingVendor.Id, (err: any, vendor: QBVendor) => {
                 if (err) {
                   console.error(`⚠️ Could not verify update for ${fullName}:`, err);
                   resolve(null);
@@ -852,7 +891,7 @@ export class QuickBooksService {
         
         // Create new vendor if not found
         console.log(`➕ Creating new vendor for ${firstName} ${lastName}`);
-        const vendor = await this.createContractor(employee) as any;
+        const vendor = await this.createContractor(employee);
         
         // Update our database with the new QuickBooks vendor ID
         await db.update(users)
