@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig } from "@shared/schema";
+import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig, monthlyPayroll } from "@shared/schema";
 // import { QuickBooksService } from "./quickbooks"; // DISABLED - TypeScript compilation errors
 import { backupService } from "./backup";
 import { protectData } from "./protection";
@@ -11,19 +11,46 @@ import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import path from "path";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
-// Lazy-initialize QuickBooks service to prevent import-time failures
-// DISABLED - TypeScript compilation errors prevent QuickBooksService from loading
-// let quickbooksService: QuickBooksService | null = null;
-// const getQuickBooksService = () => {
-//   if (!quickbooksService) {
-//     quickbooksService = new QuickBooksService();
-//   }
-//   return quickbooksService;
-// };
+// Stub getQuickBooksService to prevent compilation errors
+// The actual QuickBooksService has TypeScript errors, so this stub prevents those errors from breaking the entire routes file
+const getQuickBooksService = (): any => {
+  return {
+    initializeClient: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors. Use /api/quickbooks/create-bills-direct instead.');
+    },
+    testConnection: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    },
+    createContractor: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    },
+    generateMonthlyContractorBills: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    },
+    createTimeActivity: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    },
+    getBillById: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    },
+    syncAllContractors: () => {
+      throw new Error('QuickBooksService is disabled due to compilation errors');
+    }
+  };
+};
+
+const QuickBooksService = class {
+  constructor() {
+    throw new Error('QuickBooksService is disabled due to compilation errors');
+  }
+  async initializeClient() {
+    throw new Error('QuickBooksService is disabled due to compilation errors');
+  }
+};
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -2323,6 +2350,129 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating emergency backup:", error);
       res.status(500).json({ message: "Failed to create emergency backup" });
+    }
+  });
+
+  // Direct QuickBooks bill creation (bypasses broken QuickBooksService)
+  app.post('/api/quickbooks/create-bills-direct', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const currentUser = await storage.getUser(userId);
+      
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Admin privileges required" });
+      }
+
+      const { year, month } = req.body;
+      console.log(`💰 Direct bill creation for ${month}/${year}...`);
+
+      // Get QuickBooks config from database
+      const [qbConfig] = await db.select().from(quickbooksConfig).limit(1);
+      if (!qbConfig) {
+        return res.status(400).json({ message: "QuickBooks not connected" });
+      }
+
+      // Initialize QuickBooks client directly
+      const OAuthClient = require('intuit-oauth');
+      const QuickBooks = require('node-quickbooks');
+      
+      const oauthClient = new OAuthClient({
+        clientId: process.env.QUICKBOOKS_CLIENT_ID,
+        clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
+        environment: qbConfig.sandbox ? 'sandbox' : 'production',
+        redirectUri: 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback',
+      });
+
+      oauthClient.setToken({
+        access_token: qbConfig.accessToken,
+        refresh_token: qbConfig.refreshToken,
+        expires_in: Math.floor((new Date(qbConfig.tokenExpiry).getTime() - Date.now()) / 1000),
+      });
+
+      const qbo = new QuickBooks(
+        process.env.QUICKBOOKS_CLIENT_ID,
+        process.env.QUICKBOOKS_CLIENT_SECRET,
+        qbConfig.accessToken,
+        false,
+        qbConfig.companyId,
+        !qbConfig.sandbox,
+        true,
+        null,
+        '2.0',
+        qbConfig.refreshToken
+      );
+
+      // Get paid payroll records for the month
+      const payrollRecords = await db
+        .select()
+        .from(monthlyPayroll)
+        .where(and(
+          eq(monthlyPayroll.year, year),
+          eq(monthlyPayroll.month, month),
+          eq(monthlyPayroll.status, 'paid')
+        ));
+
+      const results = [];
+      for (const record of payrollRecords) {
+        const user = await storage.getUser(record.userId);
+        if (!user || !user.quickbooksVendorId) {
+          console.log(`⚠️ Skipping ${user?.firstName} ${user?.lastName} - no QB vendor ID`);
+          continue;
+        }
+
+        // Create bill in QuickBooks
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        const bill = {
+          VendorRef: { value: user.quickbooksVendorId },
+          TxnDate: `${year}-${String(month).padStart(2, '0')}-01`,
+          DueDate: `${year}-${String(month).padStart(2, '0')}-15`,
+          Line: [{
+            DetailType: 'AccountBasedExpenseLineDetail',
+            Amount: parseFloat(record.grossPay),
+            AccountBasedExpenseLineDetail: {
+              AccountRef: { value: '108' } // Payroll expenses:Wages
+            },
+            Description: `${months[month - 1]} ${year} Payroll - ${user.firstName} ${user.lastName}`
+          }]
+        };
+
+        const createdBill = await new Promise((resolve, reject) => {
+          qbo.createBill(bill, (err: any, bill: any) => {
+            if (err) reject(err);
+            else resolve(bill);
+          });
+        });
+
+        // Update payroll record with QB bill ID
+        await db
+          .update(monthlyPayroll)
+          .set({ quickbooksBillId: (createdBill as any).Id })
+          .where(eq(monthlyPayroll.id, record.id));
+
+        results.push({
+          employee: `${user.firstName} ${user.lastName}`,
+          amount: record.grossPay,
+          billId: (createdBill as any).Id,
+          success: true
+        });
+
+        console.log(`✅ Created bill ${(createdBill as any).Id} for ${user.firstName} ${user.lastName}: $${record.grossPay}`);
+      }
+
+      res.json({ 
+        success: true, 
+        bills: results,
+        message: `Created ${results.length} bills successfully`
+      });
+    } catch (error: any) {
+      console.error("Error creating bills:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to create bills",
+        error: error.message 
+      });
     }
   });
 
