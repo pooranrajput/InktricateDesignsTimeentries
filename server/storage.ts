@@ -603,27 +603,68 @@ export class DatabaseStorage implements IStorage {
             .returning();
           records.push(record);
         }
-      } else if (!existing) {
-        // HOURLY: Traditional hourly calculation for employees without salary
-        const { totalHours } = await this.getMonthlyHoursForUser(employee.id, year, month);
+      } else {
+        // HOURLY: Calculate with task-specific rates (handles both new and existing records)
+        const { totalHours, entries } = await this.getMonthlyHoursForUser(employee.id, year, month);
         
         if (totalHours > 0) {
-          const hourlyRate = parseFloat(employee.hourlyRate || '0');
-          const grossPay = totalHours * hourlyRate;
+          // Calculate gross pay using task-specific rates (same logic as getMonthlyPayrollReport)
+          let grossPay = 0;
+          const standardHourlyRate = parseFloat(employee.hourlyRate || '0');
           
-          console.log(`⏰ Hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h @ $${hourlyRate} = $${grossPay}`);
-          const [record] = await db
-            .insert(monthlyPayroll)
-            .values({
-              userId: employee.id,
-              year,
-              month,
-              totalHours: totalHours.toString(),
-              grossPay: grossPay.toFixed(2),
-              status: 'pending',
-            })
-            .returning();
-          records.push(record);
+          for (const entry of entries) {
+            const entryHours = parseFloat(entry.totalHours || '0');
+            let hourlyRate = standardHourlyRate;
+            
+            // Check if this entry has a task-specific rate
+            if (entry.taskCategoryId) {
+              const taskAssignment = await db
+                .select()
+                .from(userTaskAssignments)
+                .where(
+                  and(
+                    eq(userTaskAssignments.userId, employee.id),
+                    eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
+                  )
+                )
+                .limit(1);
+              
+              if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
+                hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
+              }
+            }
+            
+            grossPay += entryHours * hourlyRate;
+          }
+          
+          if (!existing) {
+            // Create new hourly payroll record
+            console.log(`⏰ Creating hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h = $${grossPay.toFixed(2)} (task-specific rates applied)`);
+            const [record] = await db
+              .insert(monthlyPayroll)
+              .values({
+                userId: employee.id,
+                year,
+                month,
+                totalHours: totalHours.toString(),
+                grossPay: grossPay.toFixed(2),
+                status: 'pending',
+              })
+              .returning();
+            records.push(record);
+          } else {
+            // Update existing hourly payroll record with fresh calculations
+            console.log(`🔄 Updating hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h = $${grossPay.toFixed(2)} (task-specific rates applied)`);
+            const [record] = await db
+              .update(monthlyPayroll)
+              .set({
+                totalHours: totalHours.toString(),
+                grossPay: grossPay.toFixed(2),
+              })
+              .where(eq(monthlyPayroll.id, existing.id))
+              .returning();
+            records.push(record);
+          }
         }
       }
     }
