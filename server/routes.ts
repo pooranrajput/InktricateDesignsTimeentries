@@ -2353,6 +2353,167 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // WORKING BILL GENERATION - Uses direct QuickBooks API (bypasses QuickBooksService compilation issues)
+  app.post('/api/quickbooks/generate-monthly-bills', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only admins can generate bills" });
+      }
+
+      const { year, month } = req.body;
+      if (!year || !month) {
+        return res.status(400).json({ message: "Year and month are required" });
+      }
+
+      console.log(`💰 Generating bills for ${year}-${month}...`);
+
+      // Import QuickBooks and OAuth libraries dynamically
+      const QuickBooks = (await import('node-quickbooks')).default;
+      const OAuthClient = (await import('intuit-oauth')).default;
+
+      // Get QuickBooks config
+      let [qbConfig] = await db.select().from(quickbooksConfig).limit(1);
+      if (!qbConfig) {
+        return res.status(400).json({ message: "QuickBooks not connected" });
+      }
+
+      // Check if token is expired and refresh if needed
+      const tokenExpiry = new Date(qbConfig.tokenExpiry);
+      const now = new Date();
+      
+      if (tokenExpiry < now) {
+        console.log('⏰ Token expired, refreshing...');
+        
+        const oauthClient = new OAuthClient({
+          clientId: process.env.QUICKBOOKS_CLIENT_ID,
+          clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
+          environment: qbConfig.sandbox ? 'sandbox' : 'production',
+          redirectUri: 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback',
+        });
+
+        oauthClient.setToken({
+          access_token: qbConfig.accessToken,
+          refresh_token: qbConfig.refreshToken,
+          expires_in: Math.floor((tokenExpiry.getTime() - Date.now()) / 1000),
+        });
+
+        const authResponse = await oauthClient.refresh();
+        const newToken = authResponse.getToken();
+
+        await db
+          .update(quickbooksConfig)
+          .set({
+            accessToken: newToken.access_token,
+            refreshToken: newToken.refresh_token,
+            tokenExpiry: new Date(Date.now() + (newToken.expires_in * 1000)),
+          })
+          .where(eq(quickbooksConfig.id, qbConfig.id));
+
+        [qbConfig] = await db.select().from(quickbooksConfig).limit(1);
+        console.log('✅ Token refreshed successfully');
+      }
+
+      // Initialize QuickBooks client for PRODUCTION
+      const qbo = new QuickBooks(
+        process.env.QUICKBOOKS_CLIENT_ID,
+        process.env.QUICKBOOKS_CLIENT_SECRET,
+        qbConfig.accessToken,
+        false,
+        qbConfig.companyId,
+        false, // useSandbox: FALSE = production API
+        true,
+        null,
+        '2.0',
+        qbConfig.refreshToken
+      );
+
+      // Get paid payroll records for specified month
+      const payrollRecords = await db
+        .select()
+        .from(monthlyPayroll)
+        .where(and(
+          eq(monthlyPayroll.year, year),
+          eq(monthlyPayroll.month, month),
+          eq(monthlyPayroll.status, 'paid')
+        ));
+
+      console.log(`\n📋 Found ${payrollRecords.length} paid payroll records\n`);
+
+      const results = [];
+      for (const record of payrollRecords) {
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, record.userId))
+          .limit(1);
+
+        if (!user || !user.quickbooksVendorId) {
+          console.log(`⚠️  Skipping ${user?.firstName} ${user?.lastName} - no QB vendor ID`);
+          results.push({
+            employee: `${user?.firstName} ${user?.lastName}`,
+            status: 'skipped',
+            reason: 'No QuickBooks vendor ID'
+          });
+          continue;
+        }
+
+        console.log(`\n💰 Creating bill for ${user.firstName} ${user.lastName}`);
+
+        const bill = {
+          VendorRef: { value: user.quickbooksVendorId },
+          TxnDate: `${year}-${String(month).padStart(2, '0')}-01`,
+          DueDate: `${year}-${String(month).padStart(2, '0')}-15`,
+          Line: [{
+            DetailType: 'AccountBasedExpenseLineDetail',
+            Amount: parseFloat(record.grossPay),
+            AccountBasedExpenseLineDetail: {
+              AccountRef: { value: '108' }
+            },
+            Description: `${new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Payroll - ${user.firstName} ${user.lastName}`
+          }]
+        };
+
+        const createdBill = await new Promise((resolve, reject) => {
+          qbo.createBill(bill, (err: any, bill: any) => {
+            if (err) reject(err);
+            else resolve(bill);
+          });
+        });
+
+        const billId = (createdBill as any).Id;
+        console.log(`   ✅ Bill created: ${billId}`);
+
+        // Update payroll record with QB bill ID
+        await db
+          .update(monthlyPayroll)
+          .set({ quickbooksBillId: billId })
+          .where(eq(monthlyPayroll.id, record.id));
+
+        results.push({
+          employee: `${user.firstName} ${user.lastName}`,
+          amount: record.grossPay,
+          billId,
+          status: 'success'
+        });
+      }
+
+      console.log(`\n✅ Successfully created ${results.filter(r => r.status === 'success').length} bills!\n`);
+
+      res.json({
+        success: true,
+        message: `Created ${results.filter(r => r.status === 'success').length} bills for ${new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+        results
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error generating bills:', error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to generate bills'
+      });
+    }
+  });
+
   // Direct QuickBooks bill creation (bypasses broken QuickBooksService)
   app.post('/api/quickbooks/create-bills-direct', isAuthenticated, async (req: any, res) => {
     try {

@@ -16,71 +16,49 @@ export default function QuickBooksIntegration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // REAL QuickBooks Status Check - fetch from API
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [isTestingConnection, setIsTestingConnection] = useState(true);
+  // Fetch REAL QuickBooks connection status from API
+  const [qbStatus, setQbStatus] = useState<any>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   
-  // Check for OAuth success URL parameter and detect QuickBooks connection status
+  // Fetch connection status from API
   useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch('/api/quickbooks/status', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ QuickBooks status:', data);
+          setQbStatus(data);
+        } else {
+          console.log('❌ Failed to fetch QB status');
+          setQbStatus({ connected: false });
+        }
+      } catch (error) {
+        console.error('Error fetching QB status:', error);
+        setQbStatus({ connected: false });
+      } finally {
+        setIsLoadingStatus(false);
+      }
+    };
+
+    // Check for OAuth success URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     const quickbooksSuccess = urlParams.get('quickbooks') === 'success';
     
-    console.log('✅ QUICKBOOKS STATUS: Checking connection status...');
-    console.log('✅ OAuth success detected:', quickbooksSuccess);
-    console.log('✅ EVIDENCE: Bills 4544-4547 created successfully in production QuickBooks');
-    console.log('✅ EVIDENCE: Company ID 9130351530529746 confirmed working');
-    
     if (quickbooksSuccess) {
-      console.log('✅ OAuth success detected - QuickBooks connected successfully!');
-      setDebugInfo({
-        connected: true,
-        companyId: '9130351530529746',
-        isProduction: true,
-        lastVerified: new Date().toISOString(),
-        evidence: 'OAuth completed successfully - tokens stored'
-      });
-      setIsTestingConnection(false);
-      
+      console.log('✅ OAuth success detected - refreshing status');
       // Clean up URL parameters
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: newUrl }, '', newUrl);
-    } else {
-      // Check localStorage for stored connection status
-      const storedStatus = localStorage.getItem('qb-verified-status');
-      if (storedStatus) {
-        try {
-          const parsedStatus = JSON.parse(storedStatus);
-          console.log('✅ Using stored connection status:', parsedStatus);
-          setDebugInfo({
-            connected: true,
-            companyId: '9130351530529746',
-            isProduction: true,
-            lastVerified: parsedStatus.lastVerified || new Date().toISOString(),
-            evidence: 'Stored connection status'
-          });
-        } catch (e) {
-          console.log('Could not parse stored status, using verified working status');
-          setDebugInfo({
-            connected: true,
-            companyId: '9130351530529746',
-            isProduction: true,
-            lastVerified: new Date().toISOString(),
-            evidence: 'Backend integration verified - bills created successfully'
-          });
-        }
-      } else {
-        // Default to verified working status (bills 4544-4547 created successfully)
-        setDebugInfo({
-          connected: true,
-          companyId: '9130351530529746',
-          isProduction: true,
-          lastVerified: new Date().toISOString(),
-          evidence: 'Backend integration verified - bills created successfully'
-        });
-      }
-      setIsTestingConnection(false);
+      
+      toast({
+        title: "QuickBooks Connected",
+        description: "Successfully connected to QuickBooks!",
+      });
     }
-  }, []);
+
+    fetchStatus();
+  }, [toast]);
 
   // Fetch real existing bill months from QuickBooks API
   const [existingBillMonths, setExistingBillMonths] = useState<any>([]);
@@ -100,13 +78,8 @@ export default function QuickBooksIntegration() {
     fetchBillMonths();
   }, []);
 
-  // Use the bypass status for connection test
-  const connectionTest = debugInfo?.connected ? {
-    success: true,
-    companyInfo: {
-      CompanyName: debugInfo.isProduction ? 'Production Company' : 'Sandbox Company'
-    }
-  } : undefined;
+  // Check if QuickBooks is connected
+  const isConnected = qbStatus?.connected === true;
 
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
@@ -218,18 +191,18 @@ export default function QuickBooksIntegration() {
     },
   });
 
-  // Generate monthly contractor bills
+  // Generate monthly contractor bills - WORKING VERSION
   const generateBillsMutation = useMutation({
     mutationFn: async (data: { year: number; month: number }) => {
-      const response = await apiRequest('POST', '/api/quickbooks/generate-bills', data);
+      const response = await apiRequest('POST', '/api/quickbooks/generate-monthly-bills', data);
       return response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "Bills Generated",
-        description: data.message,
+        title: "Bills Generated Successfully! ",
+        description: data.message || `Created ${data.results?.filter((r: any) => r.status === 'success').length} bills`,
       });
-      // DISABLED: No need to invalidate - status is hardcoded
+      queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/existing-bill-months'] });
     },
     onError: (error: Error) => {
       toast({
@@ -326,23 +299,6 @@ export default function QuickBooksIntegration() {
     });
   };
 
-  // Debug connection status
-  console.log('🔍 Connection Status:', {
-    debugInfo,
-    'debugInfo.connected': debugInfo?.connected,
-    connectionTest,
-    isTestingConnection
-  });
-
-  // VERIFIED: QuickBooks backend integration is working - Bills 4544-4547 created successfully
-  // Company ID: 9130351530529746 (Production), backend fully operational
-  const isConnected = debugInfo?.connected === true;
-  
-  console.log('🔗 Final Connection Status:', { 
-    isConnected,
-    'debugInfo?.connected': debugInfo?.connected,
-    'should show green': debugInfo?.connected === true
-  });
 
   // Generate available months (only show months that don't have bills yet)
   const availableMonths = [
@@ -371,14 +327,35 @@ export default function QuickBooksIntegration() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">Connection Status:</span>
-              {/* FORCE GREEN - debugInfo.connected = true */}
-              <Badge variant="default" className="bg-green-500 text-white border-green-500">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Connected: 9130351530529746 (Production)
-              </Badge>
+              {isLoadingStatus ? (
+                <Badge variant="secondary">
+                  <Clock className="h-3 w-3 mr-1 animate-spin" />
+                  Checking...
+                </Badge>
+              ) : isConnected ? (
+                <Badge variant="default" className="bg-green-500 text-white border-green-500" data-testid="badge-qb-connected">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Connected: {qbStatus.companyId} ({qbStatus.sandbox ? 'Sandbox' : 'Production'})
+                </Badge>
+              ) : (
+                <Badge variant="destructive" data-testid="badge-qb-disconnected">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Not Connected
+                </Badge>
+              )}
             </div>
             
-            {/* HIDE BUTTONS - QuickBooks already connected */}
+            {!isConnected && (
+              <Button
+                onClick={() => authMutation.mutate()}
+                disabled={authMutation.isPending}
+                className="flex items-center gap-2"
+                data-testid="button-connect-quickbooks"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {authMutation.isPending ? 'Connecting...' : 'Connect to QuickBooks'}
+              </Button>
+            )}
           </div>
 
           {isConnected && (
@@ -387,12 +364,9 @@ export default function QuickBooksIntegration() {
                 <div className="flex flex-col gap-1">
                   <div className="font-medium">QuickBooks Connected Successfully!</div>
                   <div className="text-sm">
-                    Company ID: 9130351530529746 | 
-                    Production Mode: Yes | 
-                    Status: Active Connection
-                  </div>
-                  <div className="text-sm">
-                    Company: <strong>Your Production QuickBooks Account</strong>
+                    Company ID: {qbStatus.companyId} | 
+                    Mode: {qbStatus.sandbox ? 'Sandbox' : 'Production'} | 
+                    Status: Active
                   </div>
                 </div>
               </AlertDescription>
@@ -508,8 +482,9 @@ export default function QuickBooksIntegration() {
               
               <Button
                 onClick={handleGenerateBills}
-                disabled={!isConnected || generateBillsMutation.isPending || availableMonths.length === 0}
+                disabled={!isConnected || generateBillsMutation.isPending}
                 className="flex items-center gap-2"
+                data-testid="button-generate-bills"
               >
                 <DollarSign className="h-4 w-4" />
                 {generateBillsMutation.isPending ? 'Generating...' : 'Generate Bills'}
