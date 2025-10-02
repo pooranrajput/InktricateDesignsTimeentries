@@ -37,9 +37,21 @@ The application employs a full-stack architecture:
 -   **Build Tools**: `vite`, `typescript`, `tsx`
 -   **QuickBooks Integration**: OAuth 2.0 authentication with production credentials. Status: Successfully connected to production QuickBooks account (Company ID: 9130351530529746) with active tokens for contractor bill generation and 1099 tracking. API routing issues resolved with bypass endpoints `/qb-direct-status` and `/qb-bill-months` that work around Vite middleware interception.
 
-## Recent Changes (August 2025)
+## Recent Changes (October 2025)
 
--   **Monthly Payroll Report Fixed**: Resolved critical database schema mismatch that was causing payroll reports to show zero hours. Added missing QuickBooks integration columns (`is_quickbooks_billable`, `quickbooks_status`) to time_entries table. Report now correctly calculates and displays total hours, payroll amounts, and employee breakdowns.
+-   **Production Task Rate Correction**: Fixed critical hourly rate error for "Production" task category from $25/hour to correct $15/hour. This affected all employees and caused payroll calculation discrepancies.
+-   **Payroll Calculation Bug Fixed**: Resolved issue where `generateMonthlyPayroll` function was creating duplicate records instead of updating existing ones. Now correctly updates records and uses task-specific rates matching Monthly Report calculations.
+-   **September 2025 Payroll Corrected**: Manually updated all September payroll records with correct hours and amounts:
+    - Rhea Doshi: 70.25h → $1,556.25
+    - Alysha Mahagaonkar: 16.42h → $410.50
+    - Anjali Patel: 22.42h → $381.14
+    - Bindiya Rajput: $4,000.00 (salary)
+-   **September 2025 Bills Created**: Successfully created 4 vendor bills in production QuickBooks (Bills 4611-4614) totaling $6,347.89. All bills use correct account mapping (Account ID: 108 "Payroll expenses:Wages") and have QuickBooks bill IDs saved to database.
+-   **QuickBooks Production Configuration**: Resolved node-quickbooks library configuration to ensure production API usage instead of sandbox. Token refresh mechanism working correctly.
+
+## Previous Changes (August 2025)
+
+-   **Monthly Payroll Report Fixed**: Resolved critical database schema mismatch that was causing payroll reports to show zero hours. Added missing QuickBooks integration columns (`is_quickbooks_billable`, `quickbooks_status`) to time_entries table.
 -   **Vendor Management**: Successfully created and verified all contractor vendor records in production QuickBooks with proper 1099 tracking enabled.
 -   **Database Integrity**: Fixed Drizzle ORM field mapping issues between TypeScript schema and actual database columns.
--   **Production Bill Creation Complete**: Successfully implemented and tested complete vendor bill creation system. All July 2025 contractor bills created in production QuickBooks (Bills 4315-4318) using correct account mapping (Account ID: 108 "Payroll expenses:Wages"). System validated with 100% success rate for 4 contractors totaling $2,352.58.
+-   **Production Bill Creation Complete**: Successfully implemented and tested complete vendor bill creation system. All July 2025 contractor bills created in production QuickBooks (Bills 4315-4318) using correct account mapping (Account ID: 108 "Payroll expenses:Wages").
