@@ -14,12 +14,13 @@ async function hashPassword(password: string): Promise<string> {
 
 async function resetAdminPassword() {
   try {
-    console.log('🔐 Resetting admin password...');
+    console.log('🔐 Resetting admin passwords...');
     
     const newPassword = '8888888';
     const hashedPassword = await hashPassword(newPassword);
     
-    const [updatedUser] = await db
+    // Reset bindiya user password
+    const [bindiyaUser] = await db
       .update(users)
       .set({ 
         password: hashedPassword,
@@ -29,9 +30,28 @@ async function resetAdminPassword() {
       .where(eq(users.id, 'founder_bindiya_rajput'))
       .returning();
     
-    if (updatedUser) {
-      console.log('✅ Admin password reset successfully!');
-      console.log(`   Username: ${updatedUser.username}`);
+    if (bindiyaUser) {
+      console.log('✅ Bindiya admin password reset successfully!');
+      console.log(`   Username: ${bindiyaUser.username}`);
+      console.log(`   New Password: ${newPassword}`);
+    } else {
+      console.log('❌ Bindiya user not found');
+    }
+    
+    // Reset admin user password
+    const [adminUser] = await db
+      .update(users)
+      .set({ 
+        password: hashedPassword,
+        mustResetPassword: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, '43458679'))
+      .returning();
+    
+    if (adminUser) {
+      console.log('✅ Admin user password reset successfully!');
+      console.log(`   Username: ${adminUser.username}`);
       console.log(`   New Password: ${newPassword}`);
     } else {
       console.log('❌ Admin user not found');
