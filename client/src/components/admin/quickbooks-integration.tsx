@@ -301,14 +301,23 @@ export default function QuickBooksIntegration() {
 
 
   // Generate available months (only show months that don't have bills yet)
-  const availableMonths = [
+  const allMonths = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
     { value: 7, label: 'July' },
     { value: 8, label: 'August' },
     { value: 9, label: 'September' },
     { value: 10, label: 'October' },
     { value: 11, label: 'November' },
     { value: 12, label: 'December' }
-  ].filter(month => !existingBillMonths.some(existing => existing.month === month.value));
+  ];
+  const availableMonths = allMonths.filter(month =>
+    !existingBillMonths.some((existing: any) => existing.month === month.value && existing.year === selectedYear)
+  );
 
   return (
     <div className="space-y-6">

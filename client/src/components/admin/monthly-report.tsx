@@ -130,7 +130,7 @@ Generated on: ${new Date().toLocaleDateString()}
             <p className="text-muted-foreground text-sm">Generate and export monthly payroll calculations</p>
           </div>
           <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
-            <select 
+            <select
               className="border border-border bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary w-full sm:w-auto"
               value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
               onChange={(e) => {
@@ -139,15 +139,17 @@ Generated on: ${new Date().toLocaleDateString()}
                 setSelectedMonth(parseInt(month));
               }}
             >
-              <option value="2026-03">March 2026</option>
-              <option value="2026-02">February 2026</option>
-              <option value="2026-01">January 2026</option>
-              <option value="2025-12">December 2025</option>
-              <option value="2025-11">November 2025</option>
-              <option value="2025-10">October 2025</option>
-              <option value="2025-09">September 2025</option>
-              <option value="2025-08">August 2025</option>
-              <option value="2025-07">July 2025</option>
+              {(() => {
+                const options = [];
+                const now = new Date();
+                for (let i = -3; i <= 24; i++) {
+                  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                  const val = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                  const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+                  options.push(<option key={val} value={val}>{label}</option>);
+                }
+                return options;
+              })()}
             </select>
             <div className="flex space-x-2">
               <Button 

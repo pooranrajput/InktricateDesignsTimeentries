@@ -166,7 +166,7 @@ export default function PayrollManagement() {
             <div className="flex items-center gap-4 mt-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Month:</span>
-                <select 
+                <select
                   className="border border-border bg-background text-foreground rounded-lg px-2 py-1 text-sm"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -174,6 +174,9 @@ export default function PayrollManagement() {
                   <option value={1}>January</option>
                   <option value={2}>February</option>
                   <option value={3}>March</option>
+                  <option value={4}>April</option>
+                  <option value={5}>May</option>
+                  <option value={6}>June</option>
                   <option value={7}>July</option>
                   <option value={8}>August</option>
                   <option value={9}>September</option>
@@ -182,16 +185,22 @@ export default function PayrollManagement() {
                   <option value={12}>December</option>
                 </select>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Year:</span>
-                <select 
+                <select
                   className="border border-border bg-background text-foreground rounded-lg px-2 py-1 text-sm"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 >
-                  <option value={2026}>2026</option>
-                  <option value={2025}>2025</option>
+                  {(() => {
+                    const currentYear = new Date().getFullYear();
+                    const years = [];
+                    for (let y = currentYear + 1; y >= currentYear - 3; y--) {
+                      years.push(<option key={y} value={y}>{y}</option>);
+                    }
+                    return years;
+                  })()}
                 </select>
               </div>
             </div>
