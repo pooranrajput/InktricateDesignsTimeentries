@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword as authHashPassword, comparePasswords } from "./auth";
 import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig, monthlyPayroll } from "@shared/schema";
 // import { QuickBooksService } from "./quickbooks"; // DISABLED - TypeScript compilation errors
 import { backupService } from "./backup";
@@ -66,111 +66,24 @@ const isAuthenticated = (req: any, res: any, next: any) => {
   next();
 };
 
+// Middleware to check if user is admin
+const isAdmin = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: "Access denied: Admin privileges required" });
+  }
+  next();
+};
+
 export function registerRoutes(app: Express): Server {
-  // BYPASS SOLUTION: Add direct routes BEFORE any middleware
+  // Health check (no auth needed - used by load balancers/monitoring)
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-  
-  // API aliases for bypass routes (Vite won't intercept /api paths)
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-  
-  app.get('/qb-direct-status', async (req, res) => {
-    try {
-      console.log('🔍 Direct QB status check (bypassing all middleware)...');
-      const configs = await db.select().from(quickbooksConfig);
-      
-      if (configs.length === 0) {
-        return res.json({ connected: false, message: 'No QuickBooks configuration found' });
-      }
-      
-      const config = configs[0];
-      const hasValidConfig = config.accessToken && config.refreshToken && 
-        (!config.tokenExpiry || new Date() < config.tokenExpiry);
-      
-      if (hasValidConfig) {
-        console.log(`✅ QB Status: Connected to company ${config.companyId}`);
-        res.json({
-          connected: true,
-          companyId: config.companyId,
-          sandbox: config.sandbox,
-          tokenExpiry: config.tokenExpiry,
-          isProduction: config.companyId === '9130351530529746',
-          message: 'QuickBooks connection active'
-        });
-      } else {
-        console.log('❌ QB Status: Invalid or expired configuration');
-        res.json({ 
-          connected: false, 
-          companyId: config.companyId,
-          reason: 'Invalid or expired tokens',
-          tokenExpiry: config.tokenExpiry
-        });
-      }
-    } catch (error: any) {
-      console.error('Direct QB status error:', error);
-      res.status(500).json({ 
-        connected: false, 
-        error: error?.message || 'Unknown error' 
-      });
-    }
-  });
-
-  // Bill lookup bypass - get specific bill details including account IDs
-  app.get('/qb-get-bill/:billId', async (req, res) => {
-    try {
-      const { billId } = req.params;
-      console.log(`🔍 Direct bill lookup for ID: ${billId}`);
-      
-      const bill = await getQuickBooksService().getBillById(billId);
-      console.log('📄 Bill details retrieved:', JSON.stringify(bill, null, 2));
-      
-      // Extract account information from line items
-      const billData = (bill as any);
-      if (billData && billData.Line) {
-        console.log('💰 Line items found:');
-        billData.Line.forEach((line: any, index: number) => {
-          console.log(`  Line ${index + 1}:`, {
-            Amount: line.Amount,
-            Description: line.Description,
-            DetailType: line.DetailType,
-            AccountRef: line.AccountBasedExpenseLineDetail?.AccountRef
-          });
-        });
-      }
-      
-      res.json({
-        billId,
-        bill: billData,
-        accountIds: billData?.Line?.map((line: any) => ({
-          amount: line.Amount,
-          description: line.Description,
-          accountId: line.AccountBasedExpenseLineDetail?.AccountRef?.value,
-          accountName: line.AccountBasedExpenseLineDetail?.AccountRef?.name
-        })) || []
-      });
-    } catch (error) {
-      console.error('Error retrieving bill details:', error);
-      res.json({ 
-        error: (error as Error).message,
-        billId: req.params.billId
-      });
-    }
-  });
-
-  // Additional bypass routes for critical QuickBooks functions
-  app.get('/qb-bill-months', async (req, res) => {
-    try {
-      const year = parseInt(req.query.year as string) || 2025;
-      // For now, return empty array since this is mainly for UI filtering
-      // In a full implementation, this would query the QuickBooks API for existing bills
-      res.json([]);
-    } catch (error) {
-      console.error('Bill months error:', error);
-      res.json([]);
-    }
   });
 
   // Auth middleware
@@ -233,7 +146,6 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Verify current password
-      const { comparePasswords, hashPassword } = require('./auth');
       const isCurrentPasswordValid = await comparePasswords(currentPassword, user.password);
       
       if (!isCurrentPasswordValid) {
@@ -355,14 +267,14 @@ export function registerRoutes(app: Express): Server {
       const { id } = req.params;
       const { newPassword } = req.body;
       
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
       }
       
       const hashedPassword = await hashPassword(newPassword);
       
       await storage.updatePassword(id, hashedPassword);
-      res.json({ newPassword });
+      res.json({ message: "Password reset successfully" });
     } catch (error) {
       console.error("Error resetting password:", error);
       res.status(500).json({ message: "Failed to reset password" });
@@ -416,7 +328,9 @@ export function registerRoutes(app: Express): Server {
         isActive: true
       });
       
-      res.json({ ...newEmployee, password: defaultPassword });
+      // Return employee data without the plaintext password
+      const { password: _, ...safeEmployee } = newEmployee as any;
+      res.json(safeEmployee);
     } catch (error) {
       console.error("Error creating employee:", error);
       res.status(500).json({ message: "Failed to create employee" });
@@ -431,11 +345,16 @@ export function registerRoutes(app: Express): Server {
       
       let start: Date | undefined;
       let end: Date | undefined;
-      
-      if (startDate) start = new Date(startDate as string);
-      if (endDate) end = new Date(endDate as string);
-      
-      // SECURITY: Each user can ONLY see their own time entries
+
+      if (startDate) {
+        start = new Date(startDate as string);
+        if (isNaN(start.getTime())) return res.status(400).json({ message: "Invalid startDate" });
+      }
+      if (endDate) {
+        end = new Date(endDate as string);
+        if (isNaN(end.getTime())) return res.status(400).json({ message: "Invalid endDate" });
+      }
+
       const timeEntries = await storage.getUserTimeEntries(userId, start, end);
       res.json(timeEntries);
     } catch (error) {
@@ -522,12 +441,15 @@ export function registerRoutes(app: Express): Server {
         taskCategoryId,
       });
       
-      // Calculate total hours
+      // Calculate total hours (handles overnight shifts)
       const startTime = new Date(`2024-01-01 ${timeEntryData.startTime}`);
-      const endTime = new Date(`2024-01-01 ${timeEntryData.endTime}`);
+      let endTime = new Date(`2024-01-01 ${timeEntryData.endTime}`);
+      if (endTime <= startTime) {
+        endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
+      }
       const diffMs = endTime.getTime() - startTime.getTime();
-      const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
-      
+      const totalHours = diffMs / (1000 * 60 * 60);
+
       // Create the time entry with properly typed totalHours
       const timeEntry = await storage.createTimeEntry({
         ...timeEntryData,
@@ -560,12 +482,15 @@ export function registerRoutes(app: Express): Server {
       
       const updateData = updateTimeEntrySchema.parse(req.body);
       
-      // Recalculate total hours if times are updated
+      // Recalculate total hours if times are updated (handles overnight shifts)
       if (updateData.startTime && updateData.endTime) {
         const startTime = new Date(`2024-01-01 ${updateData.startTime}`);
-        const endTime = new Date(`2024-01-01 ${updateData.endTime}`);
+        let endTime = new Date(`2024-01-01 ${updateData.endTime}`);
+        if (endTime <= startTime) {
+          endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
+        }
         const diffMs = endTime.getTime() - startTime.getTime();
-        const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
+        const totalHours = diffMs / (1000 * 60 * 60);
         (updateData as any).totalHours = totalHours.toFixed(2);
       }
       
@@ -833,44 +758,28 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied: Admin privileges required to generate payroll" });
       }
       
-      // Enhanced validation with defaults for req.body
       const now = new Date();
       const bodyData = req.body ?? {};
-      console.log('📥 PAYROLL ROUTE: Received req.body:', JSON.stringify(bodyData));
-      
+
       const payrollSchema = z.object({
         year: z.number().int().min(2020).max(2030).optional(),
         month: z.number().int().min(1).max(12).optional()
       });
-      
+
       let parsedBody;
       try {
         parsedBody = payrollSchema.parse(bodyData);
       } catch (validationError) {
-        console.error('❌ PAYROLL VALIDATION ERROR:', validationError);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Invalid input: year must be 2020-2030, month must be 1-12",
-          error: validationError
         });
       }
-      
+
       const { year = now.getFullYear(), month = now.getMonth() + 1 } = parsedBody;
-      
-      console.log(`🔄 PAYROLL ROUTE: Generating payroll for ${month}/${year} using NEW auto-salary logic...`);
-      console.log(`💰 Starting auto-salary generation - will include Bindiya's $4000 monthly salary`);
-      
       const records = await storage.generateMonthlyPayroll(year, month);
-      console.log(`✅ PAYROLL ROUTE: Generated ${records.length} payroll records`);
-      
-      // Log Bindiya's record specifically
-      const bindiyaRecord = records.find(r => r.employeeName?.toLowerCase().includes('bindiya'));
-      if (bindiyaRecord) {
-        console.log(`💰 Bindiya's auto-salary generated: $${bindiyaRecord.grossPay} (${bindiyaRecord.totalHours} hours)`);
-      }
-      
       res.json(records);
     } catch (error) {
-      console.error("❌ PAYROLL ROUTE ERROR:", error);
+      console.error("Error generating payroll:", error);
       res.status(500).json({ message: "Failed to generate payroll" });
     }
   });
@@ -899,8 +808,8 @@ export function registerRoutes(app: Express): Server {
 
   // QuickBooks Integration Routes
   
-  // Get QuickBooks authorization URL - FRESH START
-  app.get('/api/quickbooks/auth', async (req: any, res) => {
+  // Get QuickBooks authorization URL
+  app.get('/api/quickbooks/auth', isAdmin, async (req: any, res) => {
     try {
       console.log('🆕 FRESH QuickBooks Authorization Starting...');
       
@@ -1400,42 +1309,22 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // SIMPLE DEBUG TEST - NO AUTH
-  app.get('/api/debug-test', async (req: any, res) => {
-    res.json({ status: 'working', timestamp: new Date().toISOString() });
-  });
-
-
-
-  // Test QuickBooks connection (TEMPORARILY NO AUTH FOR DEBUGGING)
-  app.get('/api/quickbooks/test-noauth', async (req: any, res) => {
+  // QuickBooks connection test (admin only)
+  app.get('/api/quickbooks/test', isAdmin, async (req: any, res) => {
     try {
-      console.log('🧪 DEBUGGING: Starting QuickBooks test connection WITHOUT AUTH');
-      const result = await getQuickBooksService().testConnection();
-      console.log('🧪 Test connection result:', result);
-      
-      res.json(result);
-    } catch (error: any) {
-      console.error("Error testing QuickBooks connection:", error);
-      res.status(500).json({ 
-        message: "Failed to test connection", 
-        error: error.message,
-        success: false 
+      const configs = await db.select().from(quickbooksConfig);
+      if (configs.length === 0) {
+        return res.json({ connected: false, message: 'No QuickBooks configuration found' });
+      }
+      const config = configs[0];
+      res.json({
+        connected: !!config.accessToken,
+        companyId: config.companyId,
+        isProduction: !config.sandbox,
       });
+    } catch (error: any) {
+      res.status(500).json({ connected: false, error: error?.message });
     }
-  });
-
-  // Handle any remaining /api/quickbooks/test calls - return hardcoded success (no auth required)
-  app.get('/api/quickbooks/test', async (req: any, res) => {
-    // Return hardcoded success since production QuickBooks is working (Bills 4315-4322 created)
-    // No authentication required - this is just a status check
-    res.json({
-      connected: true,
-      companyId: '9130351530529746',
-      companyName: 'Production Company',
-      message: "Connection successful - Bills 4315-4322 created",
-      isProduction: true
-    });
   });
 
   // Create contractor in QuickBooks

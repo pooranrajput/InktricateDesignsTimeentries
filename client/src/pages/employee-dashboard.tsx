@@ -59,17 +59,11 @@ export default function EmployeeDashboard() {
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  // Calculate pay considering task-specific rates
+  // Calculate estimated pay using user's hourly rate
   const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
     const hours = parseFloat(entry.totalHours || '0');
     const userRate = user?.hourlyRate;
-    let rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0')); // Default rate
-    
-    // Check if this is Production work (special $15/hour rate)
-    if (entry.project?.toLowerCase() === 'production') {
-      rate = 15;
-    }
-    
+    const rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0'));
     return sum + (hours * rate);
   }, 0);
   const workingDays = timeEntriesArray.length;
@@ -155,11 +149,6 @@ export default function EmployeeDashboard() {
                     <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
                     </p>
-                    {user?.username === 'rhea' && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Production: $15/hr • Other: ${user.hourlyRate}/hr
-                      </p>
-                    )}
                   </div>
                 </div>
               </CardContent>

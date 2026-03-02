@@ -43,26 +43,13 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Bootstrap admin user to fix authentication deadlock for Bindiya's auto-salary feature
+  // Bootstrap admin user if none exists
   try {
     const { bootstrapAdminUser } = await import("./auth");
     await bootstrapAdminUser();
   } catch (error) {
-    console.error('⚠️  Admin bootstrap failed:', error);
-    // Continue server startup even if bootstrap fails - this is non-blocking
+    console.error('Admin bootstrap failed:', error);
   }
-
-  // Debug: Log which routes are registered
-  console.log('📍 Express routes registered:');
-  app._router.stack.forEach((layer, index) => {
-    if (layer.route) {
-      console.log(`${index}: ${Object.keys(layer.route.methods)} ${layer.route.path}`);
-    } else if (layer.name === 'router') {
-      console.log(`${index}: Router middleware`);
-    } else {
-      console.log(`${index}: ${layer.name || 'Anonymous'} middleware`);
-    }
-  });
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -96,6 +83,5 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
-    console.log(`🌐 Time Tracking App ready at: https://inkticate-time-tracker-pooranrajput.replit.app`);
   });
 })();
