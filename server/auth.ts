@@ -225,7 +225,7 @@ export async function bootstrapAdminUser() {
       
       // FORCE UPDATE: Reset admin password to ensure proper format for authentication
       console.log('🔧 Force-updating admin password to ensure authentication compatibility...');
-      const defaultPassword = 'Inktricate2024!';
+      const defaultPassword = '88888888';
       const hashedPassword = await hashPassword(defaultPassword);
       
       const updatedAdmin = await storage.updatePassword(adminUsers[0].id, hashedPassword);
@@ -242,7 +242,7 @@ export async function bootstrapAdminUser() {
       existingUser = await storage.getUserByEmail('admin@inktricate.com');
     }
     
-    const defaultPassword = 'Inktricate2024!';
+    const defaultPassword = '88888888';
     const hashedPassword = await hashPassword(defaultPassword);
     
     let adminUser;
