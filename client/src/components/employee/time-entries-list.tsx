@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,9 @@ interface TimeEntriesListProps {
 
 export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: TimeEntriesListProps) {
   const { toast } = useToast();
+  const { data: assignedTasks = [] } = useQuery({
+    queryKey: ["/api/user/tasks"],
+  });
   const [editingEntry, setEditingEntry] = useState<any>(null);
   const [editForm, setEditForm] = useState({
     date: "",
@@ -261,11 +264,11 @@ export default function TimeEntriesList({ timeEntries, isLoading, onUpdate }: Ti
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="wedding-invites">Wedding Invitations</SelectItem>
-                  <SelectItem value="place-cards">Place Cards</SelectItem>
-                  <SelectItem value="wooden-fixtures">Wooden Fixtures</SelectItem>
-                  <SelectItem value="design-consultation">Design Consultation</SelectItem>
-                  <SelectItem value="production">Production Work</SelectItem>
+                  {(assignedTasks as any[]).map((task: any) => (
+                    <SelectItem key={task.id} value={task.name.toLowerCase()}>
+                      {task.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

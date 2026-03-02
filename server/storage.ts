@@ -208,9 +208,12 @@ export class DatabaseStorage implements IStorage {
 
   // Time entry operations
   async createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry> {
-    // Calculate total hours from start and end times
+    // Calculate total hours from start and end times (handles overnight shifts)
     const startTime = new Date(`1970-01-01T${timeEntry.startTime}`);
-    const endTime = new Date(`1970-01-01T${timeEntry.endTime}`);
+    let endTime = new Date(`1970-01-01T${timeEntry.endTime}`);
+    if (endTime <= startTime) {
+      endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
+    }
     const diffMs = endTime.getTime() - startTime.getTime();
     const totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
     
@@ -234,7 +237,10 @@ export class DatabaseStorage implements IStorage {
         const startTime = updates.startTime || current[0].startTime;
         const endTime = updates.endTime || current[0].endTime;
         const start = new Date(`1970-01-01T${startTime}`);
-        const end = new Date(`1970-01-01T${endTime}`);
+        let end = new Date(`1970-01-01T${endTime}`);
+        if (end <= start) {
+          end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+        }
         const diffMs = end.getTime() - start.getTime();
         updateData.totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
       }
@@ -360,90 +366,56 @@ export class DatabaseStorage implements IStorage {
     }>;
   }> {
     const employees = await this.getAllEmployees();
-    
+
+    // Batch-load all task assignments to avoid N+1 queries
+    const allTaskAssignments = await db.select().from(userTaskAssignments);
+    const taskAssignmentMap = new Map<string, typeof allTaskAssignments[0]>();
+    for (const ta of allTaskAssignments) {
+      taskAssignmentMap.set(`${ta.userId}:${ta.taskCategoryId}`, ta);
+    }
+
     const employeeReports = [];
     let totalHours = 0;
     let totalPayroll = 0;
 
     for (const employee of employees) {
       const { totalHours: empHours, entries } = await this.getMonthlyHoursForUser(employee.id, year, month);
-      
-      // Calculate pay with task-specific rates
-      let grossPay = 0;
+
       const standardHourlyRate = parseFloat(employee.hourlyRate || "0");
-      
-      for (const entry of entries) {
-        const entryHours = parseFloat(entry.totalHours || "0");
-        let hourlyRate = standardHourlyRate;
-        
-        // Check if this entry has a task-specific rate
+
+      // Helper to get the rate for an entry (uses pre-loaded map)
+      const getRateForEntry = (entry: TimeEntry): number => {
         if (entry.taskCategoryId) {
-          const taskAssignment = await db
-            .select()
-            .from(userTaskAssignments)
-            .where(
-              and(
-                eq(userTaskAssignments.userId, employee.id),
-                eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
-              )
-            )
-            .limit(1);
-          
-          if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
-            hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
+          const ta = taskAssignmentMap.get(`${employee.id}:${entry.taskCategoryId}`);
+          if (ta?.taskSpecificHourlyRate) {
+            return parseFloat(ta.taskSpecificHourlyRate);
           }
         }
-        
-        grossPay += entryHours * hourlyRate;
-      }
-      
-      // Create task breakdown for this employee
-      const taskBreakdown: Array<{
-        taskName: string;
-        hours: number;
-        rate: number;
-        pay: number;
-      }> = [];
+        return standardHourlyRate;
+      };
+
+      // Calculate gross pay
+      let grossPay = 0;
       const taskTotals: Record<string, { hours: number; rate: number }> = {};
-      
+
       for (const entry of entries) {
-        const taskName = entry.project;
         const entryHours = parseFloat(entry.totalHours || "0");
-        let hourlyRate = standardHourlyRate;
-        
-        // Check if this entry has a task-specific rate
-        if (entry.taskCategoryId) {
-          const taskAssignment = await db
-            .select()
-            .from(userTaskAssignments)
-            .where(
-              and(
-                eq(userTaskAssignments.userId, employee.id),
-                eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
-              )
-            )
-            .limit(1);
-          
-          if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
-            hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
-          }
-        }
-        
+        const hourlyRate = getRateForEntry(entry);
+        grossPay += entryHours * hourlyRate;
+
+        const taskName = entry.project;
         if (!taskTotals[taskName]) {
           taskTotals[taskName] = { hours: 0, rate: hourlyRate };
         }
-        
         taskTotals[taskName].hours += entryHours;
       }
-      
-      Object.entries(taskTotals).forEach(([taskName, data]) => {
-        taskBreakdown.push({
-          taskName,
-          hours: data.hours,
-          rate: data.rate,
-          pay: data.hours * data.rate,
-        });
-      });
+
+      const taskBreakdown = Object.entries(taskTotals).map(([taskName, data]) => ({
+        taskName,
+        hours: data.hours,
+        rate: data.rate,
+        pay: data.hours * data.rate,
+      }));
 
       employeeReports.push({
         user: employee,
@@ -452,7 +424,7 @@ export class DatabaseStorage implements IStorage {
         entries,
         taskBreakdown,
       });
-      
+
       totalHours += empHours;
       totalPayroll += grossPay;
     }
@@ -553,9 +525,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async generateMonthlyPayroll(year: number, month: number): Promise<any[]> {
-    // Get all active employees
     const employees = await this.getAllEmployees();
     const records = [];
+
+    // Batch-load all task assignments to avoid N+1 queries
+    const allTaskAssignments = await db.select().from(userTaskAssignments);
+    const taskAssignmentMap = new Map<string, typeof allTaskAssignments[0]>();
+    for (const ta of allTaskAssignments) {
+      taskAssignmentMap.set(`${ta.userId}:${ta.taskCategoryId}`, ta);
+    }
 
     for (const employee of employees) {
       // Check if record already exists first
@@ -573,11 +551,8 @@ export class DatabaseStorage implements IStorage {
       const monthlySalary = parseFloat(employee.monthlySalary || '0');
       
       if (monthlySalary > 0) {
-        // AUTO-SALARY: Always use fixed monthly salary (like Bindiya's $4000)
-        console.log(`💰 Auto-generating monthly salary for ${employee.firstName} ${employee.lastName}: $${monthlySalary}`);
-        
+        // Fixed monthly salary employees
         if (!existing) {
-          // Create new salary record
           const [record] = await db
             .insert(monthlyPayroll)
             .values({
@@ -591,8 +566,6 @@ export class DatabaseStorage implements IStorage {
             .returning();
           records.push(record);
         } else {
-          // Update existing record to use salary instead of hours
-          console.log(`🔄 Updating existing record to use salary instead of time entries`);
           const [record] = await db
             .update(monthlyPayroll)
             .set({
@@ -604,42 +577,28 @@ export class DatabaseStorage implements IStorage {
           records.push(record);
         }
       } else {
-        // HOURLY: Calculate with task-specific rates (handles both new and existing records)
+        // HOURLY: Calculate with task-specific rates (uses pre-loaded assignment map)
         const { totalHours, entries } = await this.getMonthlyHoursForUser(employee.id, year, month);
-        
+
         if (totalHours > 0) {
-          // Calculate gross pay using task-specific rates (same logic as getMonthlyPayrollReport)
           let grossPay = 0;
           const standardHourlyRate = parseFloat(employee.hourlyRate || '0');
-          
+
           for (const entry of entries) {
             const entryHours = parseFloat(entry.totalHours || '0');
             let hourlyRate = standardHourlyRate;
-            
-            // Check if this entry has a task-specific rate
+
             if (entry.taskCategoryId) {
-              const taskAssignment = await db
-                .select()
-                .from(userTaskAssignments)
-                .where(
-                  and(
-                    eq(userTaskAssignments.userId, employee.id),
-                    eq(userTaskAssignments.taskCategoryId, entry.taskCategoryId)
-                  )
-                )
-                .limit(1);
-              
-              if (taskAssignment.length > 0 && taskAssignment[0].taskSpecificHourlyRate) {
-                hourlyRate = parseFloat(taskAssignment[0].taskSpecificHourlyRate);
+              const ta = taskAssignmentMap.get(`${employee.id}:${entry.taskCategoryId}`);
+              if (ta?.taskSpecificHourlyRate) {
+                hourlyRate = parseFloat(ta.taskSpecificHourlyRate);
               }
             }
-            
+
             grossPay += entryHours * hourlyRate;
           }
           
           if (!existing) {
-            // Create new hourly payroll record
-            console.log(`⏰ Creating hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h = $${grossPay.toFixed(2)} (task-specific rates applied)`);
             const [record] = await db
               .insert(monthlyPayroll)
               .values({
@@ -653,8 +612,6 @@ export class DatabaseStorage implements IStorage {
               .returning();
             records.push(record);
           } else {
-            // Update existing hourly payroll record with fresh calculations
-            console.log(`🔄 Updating hourly payroll for ${employee.firstName} ${employee.lastName}: ${totalHours}h = $${grossPay.toFixed(2)} (task-specific rates applied)`);
             const [record] = await db
               .update(monthlyPayroll)
               .set({

@@ -53,13 +53,16 @@ export default function TimeEntryForm({ onSuccess }: TimeEntryFormProps) {
   const endTime = watch("endTime");
   const project = watch("project");
 
-  // Calculate hours when times change
+  // Calculate hours when times change (handles overnight shifts)
   React.useEffect(() => {
     if (startTime && endTime) {
       const start = new Date(`2024-01-01 ${startTime}`);
-      const end = new Date(`2024-01-01 ${endTime}`);
+      let end = new Date(`2024-01-01 ${endTime}`);
+      if (end <= start) {
+        end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+      }
       const diffMs = end.getTime() - start.getTime();
-      const hours = Math.max(0, diffMs / (1000 * 60 * 60));
+      const hours = diffMs / (1000 * 60 * 60);
       setCalculatedHours(hours);
     } else {
       setCalculatedHours(0);

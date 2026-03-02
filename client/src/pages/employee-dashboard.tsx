@@ -59,17 +59,11 @@ export default function EmployeeDashboard() {
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  // Calculate pay considering task-specific rates
+  // Calculate estimated pay using user's hourly rate
   const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
     const hours = parseFloat(entry.totalHours || '0');
     const userRate = user?.hourlyRate;
-    let rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0')); // Default rate
-    
-    // Check if this is Production work (special $15/hour rate)
-    if (entry.project?.toLowerCase() === 'production') {
-      rate = 15;
-    }
-    
+    const rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0'));
     return sum + (hours * rate);
   }, 0);
   const workingDays = timeEntriesArray.length;
@@ -101,7 +95,7 @@ export default function EmployeeDashboard() {
             </div>
             
             <div className="flex items-center space-x-3">
-              <select 
+              <select
                 className="w-full sm:w-auto border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
                 onChange={(e) => {
@@ -110,17 +104,18 @@ export default function EmployeeDashboard() {
                   setSelectedMonth(parseInt(month));
                 }}
               >
-                <option value="2026-03">March 2026</option>
-                <option value="2026-02">February 2026</option>
-                <option value="2026-01">January 2026</option>
-                <option value="2025-12">December 2025</option>
-                <option value="2025-11">November 2025</option>
-                <option value="2025-10">October 2025</option>
-                <option value="2025-09">September 2025</option>
-                <option value="2025-08">August 2025</option>
-                <option value="2025-07">July 2025</option>
-                <option value="2025-06">June 2025</option>
-                <option value="2025-05">May 2025</option>
+                {(() => {
+                  const options = [];
+                  const now = new Date();
+                  // Show current month + 3 months ahead, plus 24 months back
+                  for (let i = -3; i <= 24; i++) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const val = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                    const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+                    options.push(<option key={val} value={val}>{label}</option>);
+                  }
+                  return options;
+                })()}
               </select>
             </div>
           </div>
@@ -154,11 +149,6 @@ export default function EmployeeDashboard() {
                     <p className="text-2xl font-bold text-foreground">
                       {entriesLoading ? "..." : `$${estimatedPay.toFixed(2)}`}
                     </p>
-                    {user?.username === 'rhea' && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Production: $15/hr • Other: ${user.hourlyRate}/hr
-                      </p>
-                    )}
                   </div>
                 </div>
               </CardContent>

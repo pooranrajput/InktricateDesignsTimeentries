@@ -24,42 +24,22 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    console.log('🔐 comparePasswords called with:', { supplied: supplied.length + ' chars', stored: stored.substring(0, 20) + '...' });
-    
     // Handle new format: salt:hash
     if (stored.includes(':')) {
       const parts = stored.split(':');
-      console.log('🔐 Split parts:', { count: parts.length, part1Length: parts[0]?.length, part2Length: parts[1]?.length });
-      
-      if (parts.length !== 2) {
-        console.error('Invalid password format (colon):', stored.substring(0, 20));
-        return false;
-      }
+      if (parts.length !== 2) return false;
       const [salt, hash] = parts;
-      console.log('🔐 Salt and hash extracted:', { saltLength: salt?.length, hashLength: hash?.length });
-      
-      if (!salt || !hash) {
-        console.error('Missing salt or hash in colon format');
-        return false;
-      }
-      
-      console.log('🔐 About to call scryptAsync with salt length:', salt.length);
+      if (!salt || !hash) return false;
       const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
       const hashedBuf = Buffer.from(hash, 'hex');
       return timingSafeEqual(hashedBuf, suppliedBuf);
     }
-    
+
     // Handle old format: hash.salt (fallback)
     const parts = stored.split(".");
-    if (parts.length !== 2) {
-      console.error('Invalid password format (dot):', stored.substring(0, 20));
-      return false;
-    }
+    if (parts.length !== 2) return false;
     const [hashed, salt] = parts;
-    if (!hashed || !salt) {
-      console.error('Missing hash or salt in dot format');
-      return false;
-    }
+    if (!hashed || !salt) return false;
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     return timingSafeEqual(hashedBuf, suppliedBuf);
@@ -83,9 +63,9 @@ export function setupAuth(app: Express) {
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      httpOnly: false, // Allow client access for debugging
-      secure: false, // Set to true in production with HTTPS
-      sameSite: 'lax', // Allow cross-site requests
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' || !!process.env.REPL_SLUG,
+      sameSite: 'lax',
     },
   };
 
@@ -106,24 +86,14 @@ export function setupAuth(app: Express) {
         }
         
         if (!user || !user.isActive) {
-          console.log('🔐 User not found or inactive:', { found: !!user, active: user?.isActive });
           return done(null, false);
         }
-        
+
         if (!user.password) {
-          console.log('🔐 User has no password');
           return done(null, false);
         }
-        
-        console.log('🔐 Comparing passwords for user:', user.username);
-        console.log('🔐 Password format check:', { 
-          hasColon: user.password.includes(':'), 
-          length: user.password.length,
-          firstChars: user.password.substring(0, 10)
-        });
-        
+
         const isValid = await comparePasswords(password, user.password);
-        console.log('🔐 Password valid:', isValid);
         
         if (!isValid) {
           return done(null, false);
@@ -183,86 +153,42 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
-  });
-
-  // Password reset
-  app.post("/api/reset-password", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const { newPassword } = req.body;
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
-      }
-
-      const hashedPassword = await hashPassword(newPassword);
-      const user = await storage.updatePassword(req.user!.id.toString(), hashedPassword);
-      
-      res.json({ message: "Password updated successfully" });
-    } catch (error) {
-      console.error("Password reset error:", error);
-      res.status(500).json({ message: "Failed to reset password" });
-    }
-  });
+  // Note: /api/user and /api/reset-password are defined in routes.ts to avoid duplicate route handlers
 }
 
-// Bootstrap admin user on startup to fix authentication deadlock
+// Bootstrap admin user on startup - only creates if no admin exists (never resets existing passwords)
 export async function bootstrapAdminUser() {
   try {
-    console.log('🚀 Checking for admin user bootstrap...');
-    
-    // Check if any admin user exists
     const existingAdmins = await storage.getAllEmployees();
     const adminUsers = existingAdmins.filter(user => user.role === 'admin' && user.password);
-    
+
     if (adminUsers.length > 0) {
-      console.log(`✅ Admin user already exists: ${adminUsers[0].username}`);
-      
-      // FORCE UPDATE: Reset admin password to ensure proper format for authentication
-      console.log('🔧 Force-updating admin password to ensure authentication compatibility...');
-      const defaultPassword = '88888888';
-      const hashedPassword = await hashPassword(defaultPassword);
-      
-      const updatedAdmin = await storage.updatePassword(adminUsers[0].id, hashedPassword);
-      console.log(`✅ Admin password updated with proper hash format`);
-      
-      return updatedAdmin;
+      // Admin already exists - do NOT reset their password
+      return adminUsers[0];
     }
-    
-    console.log('🔧 No admin user found, creating bootstrap admin...');
-    
-    // Check if user with admin username/email already exists
+
+    // No admin found - create one
     let existingUser = await storage.getUserByUsername('admin');
     if (!existingUser) {
       existingUser = await storage.getUserByEmail('admin@inktricate.com');
     }
-    
-    const defaultPassword = '88888888';
+
+    const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'ChangeMe2024!';
     const hashedPassword = await hashPassword(defaultPassword);
-    
+
     let adminUser;
-    
+
     if (existingUser) {
-      // Update existing user to be admin with proper password
-      console.log(`🔧 Upgrading existing user ${existingUser.username} to admin...`);
       adminUser = await storage.updateUserCredentials(
         existingUser.id,
         existingUser.username || 'admin',
         hashedPassword
       );
-      
-      // Ensure role is admin
+
       if (adminUser.role !== 'admin') {
         adminUser = await storage.updateUserRole(adminUser.id, 'admin');
       }
     } else {
-      // Create new admin user
-      console.log('🔧 Creating new admin user...');
       adminUser = await storage.createEmployee({
         username: 'admin',
         email: 'admin@inktricate.com',
@@ -275,15 +201,13 @@ export async function bootstrapAdminUser() {
         isActive: true
       });
     }
-    
-    console.log(`✅ Admin user bootstrapped successfully: ${adminUser.username} (${adminUser.email})`);
-    console.log('⚠️  Please change password on first login for security');
-    
+
+    console.log('Admin user bootstrapped - please change password on first login');
     return adminUser;
   } catch (error) {
-    console.error('❌ Failed to bootstrap admin user:', error);
+    console.error('Failed to bootstrap admin user:', error);
     throw error;
   }
 }
 
-export { hashPassword };
+export { hashPassword, comparePasswords };
