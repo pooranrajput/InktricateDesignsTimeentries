@@ -11,8 +11,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, ExternalLink, DollarSign, Clock, Users } from 'lucide-react';
 
 export default function QuickBooksIntegration() {
-  const [selectedYear, setSelectedYear] = useState(2025); // Use test data year
-  const [selectedMonth, setSelectedMonth] = useState(11); // Default to November (next available month)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -453,9 +453,10 @@ export default function QuickBooksIntegration() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
                     <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2024">2024</SelectItem>
+                    <SelectItem value="2023">2023</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

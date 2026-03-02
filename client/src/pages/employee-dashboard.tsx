@@ -13,7 +13,7 @@ export default function EmployeeDashboard() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
   const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(9); // Default to September
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   
   // Redirect to auth if not authenticated
@@ -110,6 +110,12 @@ export default function EmployeeDashboard() {
                   setSelectedMonth(parseInt(month));
                 }}
               >
+                <option value="2026-03">March 2026</option>
+                <option value="2026-02">February 2026</option>
+                <option value="2026-01">January 2026</option>
+                <option value="2025-12">December 2025</option>
+                <option value="2025-11">November 2025</option>
+                <option value="2025-10">October 2025</option>
                 <option value="2025-09">September 2025</option>
                 <option value="2025-08">August 2025</option>
                 <option value="2025-07">July 2025</option>

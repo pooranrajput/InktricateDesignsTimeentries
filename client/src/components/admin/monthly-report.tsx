@@ -139,19 +139,15 @@ Generated on: ${new Date().toLocaleDateString()}
                 setSelectedMonth(parseInt(month));
               }}
             >
-              {/* Show all months with timesheet data (July-December 2025) */}
-              <option value="2025-07">July 2025</option>
-              <option value="2025-08">August 2025</option>
-              <option value="2025-09">September 2025</option>
-              <option value="2025-10">October 2025</option>
-              <option value="2025-11">November 2025</option>
+              <option value="2026-03">March 2026</option>
+              <option value="2026-02">February 2026</option>
+              <option value="2026-01">January 2026</option>
               <option value="2025-12">December 2025</option>
-              {/* Current month if different */}
-              {currentDate.getFullYear() === 2025 && currentDate.getMonth() + 1 < 7 && (
-                <option value={`${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`}>
-                  {getMonthName(currentDate.getMonth() + 1)} {currentDate.getFullYear()}
-                </option>
-              )}
+              <option value="2025-11">November 2025</option>
+              <option value="2025-10">October 2025</option>
+              <option value="2025-09">September 2025</option>
+              <option value="2025-08">August 2025</option>
+              <option value="2025-07">July 2025</option>
             </select>
             <div className="flex space-x-2">
               <Button 

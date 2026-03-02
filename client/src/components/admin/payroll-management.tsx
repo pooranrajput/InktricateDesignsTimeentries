@@ -16,8 +16,8 @@ export default function PayrollManagement() {
 
   // Month/year selector for payroll management
   const currentDate = new Date();
-  const [selectedYear, setSelectedYear] = useState(2025); // Default to our test data year
-  const [selectedMonth, setSelectedMonth] = useState(8); // Default to August for next testing
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
   // Fetch monthly payroll data
   const { data: payrollData = [], isLoading } = useQuery({
@@ -171,6 +171,9 @@ export default function PayrollManagement() {
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                 >
+                  <option value={1}>January</option>
+                  <option value={2}>February</option>
+                  <option value={3}>March</option>
                   <option value={7}>July</option>
                   <option value={8}>August</option>
                   <option value={9}>September</option>
@@ -187,6 +190,7 @@ export default function PayrollManagement() {
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 >
+                  <option value={2026}>2026</option>
                   <option value={2025}>2025</option>
                 </select>
               </div>
