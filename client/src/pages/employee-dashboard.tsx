@@ -94,7 +94,7 @@ export default function EmployeeDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-foreground">Time Tracking</h2>
               <p className="text-muted-foreground">Record your daily work hours</p>
@@ -102,7 +102,7 @@ export default function EmployeeDashboard() {
             
             <div className="flex items-center space-x-3">
               <select 
-                className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full sm:w-auto border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 value={`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`}
                 onChange={(e) => {
                   const [year, month] = e.target.value.split('-');
