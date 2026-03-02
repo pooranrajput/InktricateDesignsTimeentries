@@ -27,34 +27,39 @@ export default function QuickBooksIntegration() {
         const response = await fetch('/api/quickbooks/status', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ QuickBooks status:', data);
           setQbStatus(data);
         } else {
-          console.log('❌ Failed to fetch QB status');
           setQbStatus({ connected: false });
         }
       } catch (error) {
-        console.error('Error fetching QB status:', error);
         setQbStatus({ connected: false });
       } finally {
         setIsLoadingStatus(false);
       }
     };
 
-    // Check for OAuth success URL parameter
+    // Check for OAuth success/error URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const quickbooksSuccess = urlParams.get('quickbooks') === 'success';
-    
-    if (quickbooksSuccess) {
-      console.log('✅ OAuth success detected - refreshing status');
+    const quickbooksResult = urlParams.get('quickbooks');
+
+    if (quickbooksResult) {
       // Clean up URL parameters
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: newUrl }, '', newUrl);
-      
-      toast({
-        title: "QuickBooks Connected",
-        description: "Successfully connected to QuickBooks!",
-      });
+
+      if (quickbooksResult === 'success') {
+        toast({
+          title: "QuickBooks Connected",
+          description: "Successfully connected to QuickBooks!",
+        });
+      } else if (quickbooksResult === 'error') {
+        const details = urlParams.get('details') || 'Unknown error';
+        toast({
+          title: "QuickBooks Connection Failed",
+          description: details,
+          variant: "destructive",
+        });
+      }
     }
 
     fetchStatus();
@@ -78,8 +83,9 @@ export default function QuickBooksIntegration() {
     fetchBillMonths();
   }, []);
 
-  // Check if QuickBooks is connected
+  // Check if QuickBooks is connected or needs re-authorization
   const isConnected = qbStatus?.connected === true;
+  const needsReauth = qbStatus?.needsReauth === true;
 
   // Get QuickBooks authorization URL
   const authMutation = useMutation({
@@ -99,32 +105,16 @@ export default function QuickBooksIntegration() {
       return response.json();
     },
     onSuccess: (data) => {
-      console.log('PRODUCTION OAuth URL:', data.authUrl);
-      
-      // Verify the URL uses correct Client ID and production endpoints
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
-        console.log('✅ Production URL confirmed');
-        
-        // Clear ALL browser storage
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Clear QuickBooks cookies
-        document.cookie = 'intuit_tid=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        document.cookie = 'qbn.appCenter.token=; path=/; domain=.intuit.com; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        
-        // Open fresh URL
+      if (data.authUrl) {
         window.open(data.authUrl, '_blank', 'noopener,noreferrer');
-        
         toast({
-          title: "Production Authorization Started",
-          description: "Opening QuickBooks authorization with production credentials.",
+          title: "Authorization Started",
+          description: "Opening QuickBooks authorization. Complete the login in the new tab, then return here.",
         });
       } else {
-        console.error('❌ Wrong Client ID or redirect URI in URL:', data.authUrl);
         toast({
-          title: "Configuration Error",
-          description: "OAuth URL contains incorrect credentials. Please try again.",
+          title: "Error",
+          description: "No authorization URL returned from server.",
           variant: "destructive",
         });
       }
@@ -132,59 +122,6 @@ export default function QuickBooksIntegration() {
     onError: (error: Error) => {
       toast({
         title: "Authorization Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Re-authenticate QuickBooks (clear expired tokens) - FORCE FRESH
-  const reauthMutation = useMutation({
-    mutationFn: async () => {
-      // Force fresh request identical to connect button
-      const timestamp = Date.now();
-      const response = await fetch(`/api/quickbooks/auth?reauth=${timestamp}`, {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to get re-authentication URL');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      console.log('PRODUCTION Re-auth URL:', data.authUrl);
-      
-      // Verify production credentials before opening
-      if (data.authUrl.includes('AB6HieH2iCWWSQ8jneSC') && data.authUrl.includes('inkticate-time-tracker-pooranrajput.replit.app')) {
-        console.log('✅ Production re-auth URL confirmed');
-        
-        // Clear all browser caches
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        window.open(data.authUrl, '_blank');
-        
-        toast({
-          title: "Production Re-authentication Started",
-          description: "Opening QuickBooks with production credentials.",
-        });
-      } else {
-        console.error('❌ Wrong credentials in re-auth URL:', data.authUrl);
-        toast({
-          title: "Configuration Error",
-          description: "Re-auth URL contains incorrect credentials.",
-          variant: "destructive",
-        });
-      }
-      // DISABLED: No need to invalidate - status is hardcoded
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Re-authentication Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -341,6 +278,11 @@ export default function QuickBooksIntegration() {
                   <Clock className="h-3 w-3 mr-1 animate-spin" />
                   Checking...
                 </Badge>
+              ) : needsReauth ? (
+                <Badge variant="destructive" data-testid="badge-qb-expired">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Token Expired - Reconnect Required
+                </Badge>
               ) : isConnected ? (
                 <Badge variant="default" className="bg-green-500 text-white border-green-500" data-testid="badge-qb-connected">
                   <CheckCircle className="h-3 w-3 mr-1" />
@@ -353,8 +295,8 @@ export default function QuickBooksIntegration() {
                 </Badge>
               )}
             </div>
-            
-            {!isConnected && (
+
+            {(!isConnected || needsReauth) && (
               <Button
                 onClick={() => authMutation.mutate()}
                 disabled={authMutation.isPending}
@@ -362,19 +304,32 @@ export default function QuickBooksIntegration() {
                 data-testid="button-connect-quickbooks"
               >
                 <ExternalLink className="h-4 w-4" />
-                {authMutation.isPending ? 'Connecting...' : 'Connect to QuickBooks'}
+                {authMutation.isPending ? 'Connecting...' : needsReauth ? 'Reconnect to QuickBooks' : 'Connect to QuickBooks'}
               </Button>
             )}
           </div>
 
-          {isConnected && (
+          {needsReauth && (
+            <Alert className="bg-red-50 border-red-200">
+              <AlertDescription className="text-red-800">
+                <div className="flex flex-col gap-1">
+                  <div className="font-medium">QuickBooks Token Expired</div>
+                  <div className="text-sm">
+                    {qbStatus?.reason || 'Your QuickBooks refresh token has expired (tokens expire after 100 days). Click "Reconnect to QuickBooks" above to re-authorize.'}
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isConnected && !needsReauth && (
             <Alert className="bg-green-50 border-green-200">
               <AlertDescription className="text-green-800">
                 <div className="flex flex-col gap-1">
                   <div className="font-medium">QuickBooks Connected Successfully!</div>
                   <div className="text-sm">
-                    Company ID: {qbStatus.companyId} | 
-                    Mode: {qbStatus.sandbox ? 'Sandbox' : 'Production'} | 
+                    Company ID: {qbStatus.companyId} |
+                    Mode: {qbStatus.sandbox ? 'Sandbox' : 'Production'} |
                     Status: Active
                   </div>
                 </div>

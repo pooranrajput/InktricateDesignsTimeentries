@@ -1231,37 +1231,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Simple QuickBooks connection status (no auth required for UI)
+  // QuickBooks connection status
   app.get('/api/quickbooks/status', async (req: any, res) => {
     try {
-      console.log('🔍 Status endpoint called - checking QB configs...');
-      // Direct database check to bypass QuickBooksService compilation issues
       const configs = await db.select().from(quickbooksConfig);
-      console.log(`📋 Found ${configs.length} QB configs`);
 
       if (configs.length === 0) {
-        console.log('❌ No QB configs found');
         return res.json({ connected: false });
       }
 
-      // Find config with valid tokens (access token or refresh token)
       const config = configs.find((c: any) => c.accessToken && c.refreshToken);
       if (!config) {
-        console.log('❌ No config with tokens found');
         return res.json({ connected: false });
       }
 
       // If access token is expired, try to refresh it
       const tokenExpired = config.tokenExpiry && new Date() >= new Date(config.tokenExpiry);
       if (tokenExpired && config.refreshToken) {
-        console.log('⏰ Access token expired, attempting refresh for status check...');
         try {
           const OAuthClient = (await import('intuit-oauth')).default;
           const oauthClient = new OAuthClient({
             clientId: process.env.QUICKBOOKS_CLIENT_ID,
             clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
             environment: config.sandbox ? 'sandbox' : 'production',
-            redirectUri: 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback',
+            redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 'https://inkticate-time-tracker-pooranrajput.replit.app/api/quickbooks/callback',
           });
 
           oauthClient.setToken({
@@ -1282,7 +1275,6 @@ export function registerRoutes(app: Express): Server {
             })
             .where(eq(quickbooksConfig.id, config.id));
 
-          console.log('✅ Token refreshed successfully during status check');
           return res.json({
             connected: true,
             companyId: config.companyId,
@@ -1290,13 +1282,16 @@ export function registerRoutes(app: Express): Server {
             tokenExpiry: new Date(Date.now() + (newToken.expires_in * 1000))
           });
         } catch (refreshError: any) {
-          console.error('❌ Token refresh failed during status check:', refreshError.message);
-          // Refresh token may have expired (100-day limit) - connection is truly lost
-          return res.json({ connected: false, reason: 'Token refresh failed - please reconnect' });
+          // Refresh token expired (100-day limit) - must re-authorize
+          return res.json({
+            connected: false,
+            needsReauth: true,
+            reason: 'Refresh token expired. Please reconnect to QuickBooks.',
+            companyId: config.companyId,
+          });
         }
       }
 
-      console.log(`✅ Valid config found: Company ${config.companyId}, Sandbox: ${config.sandbox}`);
       res.json({
         connected: true,
         companyId: config.companyId,
