@@ -23,28 +23,22 @@ export default function PayrollManagement() {
   const { data: payrollData = [], isLoading } = useQuery({
     queryKey: ["/api/payroll", selectedYear, selectedMonth],
     queryFn: async () => {
-      console.log(`🔍 Fetching payroll data for ${selectedYear}-${selectedMonth}`);
       const response = await fetch(`/api/payroll?year=${selectedYear}&month=${selectedMonth}`, {
         credentials: 'include'
       });
       if (!response.ok) {
-        console.error(`❌ Payroll fetch failed: ${response.status} ${response.statusText}`);
         if (response.status === 401) {
-          console.log('🔄 Authentication required - redirecting to login');
           window.location.href = '/login';
           return [];
         }
         throw new Error(`Failed to fetch payroll data: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`📊 Payroll data received for ${selectedYear}-${selectedMonth}:`, data);
-      console.log(`📊 Data is array: ${Array.isArray(data)}, length: ${data.length}`);
       return data;
     },
     retry: false,
   });
 
-  console.log(`📋 Component state: month=${selectedMonth}, payrollData.length=${payrollData.length}, isLoading=${isLoading}`);
 
   // Mark employee as paid mutation
   const markAsPaidMutation = useMutation({
@@ -293,8 +287,8 @@ export default function PayrollManagement() {
                 </div>
                 
                 {record.paidAt && (
-                  <div className="mt-3 pt-3 border-t border-slate-100">
-                    <p className="text-xs text-slate-500">
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
                       Paid on {new Date(record.paidAt).toLocaleDateString()} 
                       {record.paidByUser && ` by ${record.paidByUser.firstName} ${record.paidByUser.lastName}`}
                     </p>
@@ -323,21 +317,21 @@ export default function PayrollManagement() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Period</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm font-medium text-foreground">Period</p>
+                  <p className="text-sm text-muted-foreground">
                     {getMonthName(viewingPayroll.month)} {viewingPayroll.year}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Total Hours</p>
-                  <p className="text-sm text-slate-600">{viewingPayroll.totalHours} hours</p>
+                  <p className="text-sm font-medium text-foreground">Total Hours</p>
+                  <p className="text-sm text-muted-foreground">{viewingPayroll.totalHours} hours</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Gross Pay</p>
-                  <p className="text-sm text-slate-600">${parseFloat(viewingPayroll.grossPay).toFixed(2)}</p>
+                  <p className="text-sm font-medium text-foreground">Gross Pay</p>
+                  <p className="text-sm text-muted-foreground">${parseFloat(viewingPayroll.grossPay).toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Status</p>
+                  <p className="text-sm font-medium text-foreground">Status</p>
                   <Badge className={getStatusColor(viewingPayroll.status)}>
                     {viewingPayroll.status === 'paid' ? 'Paid' : 'Pending'}
                   </Badge>
@@ -388,7 +382,7 @@ export default function PayrollManagement() {
             <DialogTitle>Confirm Payment</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to mark{" "}
               <span className="font-medium">
                 {confirmingPayment?.user?.firstName} {confirmingPayment?.user?.lastName}
@@ -408,7 +402,7 @@ export default function PayrollManagement() {
               </div>
             </div>
             
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               This will send an email notification to the employee confirming their payment.
             </p>
             

@@ -355,32 +355,9 @@ export default function QuickBooksIntegration() {
                 </Button>
               </div>
               
-              <Alert>
-                <AlertDescription>
-                  This will create all active contractors as vendors in QuickBooks for billing and 1099 reporting.
-                </AlertDescription>
-              </Alert>
-              
-              {/* 1099 Setup Guide */}
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertDescription>
-                  <div className="space-y-3">
-                    <div className="font-medium text-blue-900">📋 Complete 1099 Setup in QuickBooks</div>
-                    <div className="text-sm text-blue-800">
-                      After syncing contractors, complete these steps in QuickBooks to see "Track payments for 1099" checkboxes checked:
-                    </div>
-                    <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
-                      <li>Go to <strong>Taxes → 1099 filings</strong> in QuickBooks</li>
-                      <li>Complete the 1099 setup wizard through "Step 2 - Accounts"</li>
-                      <li><strong>Critical:</strong> Check "Box 7: Nonemployee Compensation" and map your contractor expense accounts</li>
-                      <li>Click "Save & Finish Later" (filing not required for sandbox)</li>
-                    </ol>
-                    <div className="text-xs text-blue-700">
-                      💡 The API correctly sets Vendor1099=true, but QuickBooks only shows checkboxes after account mapping is complete.
-                    </div>
-                  </div>
-                </AlertDescription>
-              </Alert>
+              <p className="text-sm text-muted-foreground">
+                Syncs all active contractors as vendors in QuickBooks for billing and 1099 reporting.
+              </p>
             </div>
           )}
 
@@ -465,63 +442,8 @@ export default function QuickBooksIntegration() {
               </Button>
             </div>
 
-            <Alert>
-              <AlertDescription>
-                <div className="space-y-2">
-                  <div><strong>Generate Bills:</strong> Creates invoices for all contractors with logged time in the selected period.</div>
-                  <div><strong>Test Payroll Bill:</strong> Creates a single payroll bill using the new "Wages" category and "Month Year - Name Payroll" description format.</div>
-                </div>
-              </AlertDescription>
-            </Alert>
           </div>
 
-          <Separator />
-
-          {/* Features List */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <h3 className="text-lg font-medium">QuickBooks Features</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Contractor Management</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Create contractors as vendors in QuickBooks</li>
-                  <li>• Track 1099 contractor information</li>
-                  <li>• Sync hourly rates and contact details</li>
-                </ul>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">Automated Billing</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Generate monthly contractor invoices</li>
-                  <li>• Include time tracking details</li>
-                  <li>• Track billable vs non-billable time</li>
-                </ul>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">Time Tracking Sync</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Sync time entries to QuickBooks</li>
-                  <li>• Project-based time tracking</li>
-                  <li>• Automatic time activity creation</li>
-                </ul>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">Reporting</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Monthly payroll reports</li>
-                  <li>• Contractor payment tracking</li>
-                  <li>• Integration with QB reporting</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

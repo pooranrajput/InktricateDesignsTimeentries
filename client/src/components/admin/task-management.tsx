@@ -345,7 +345,7 @@ export default function TaskManagement() {
                   id="taskColor"
                   value={newTask.color}
                   onChange={(e) => setNewTask({ ...newTask, color: e.target.value })}
-                  className="w-10 h-10 rounded border border-slate-300"
+                  className="w-10 h-10 rounded border border-border"
                 />
                 <Input
                   value={newTask.color}
@@ -377,7 +377,7 @@ export default function TaskManagement() {
             <DialogTitle>Assign Task: {selectedTask?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Select employees to assign this task category to:
             </p>
             
@@ -396,7 +396,7 @@ export default function TaskManagement() {
                   placeholder="15.00"
                   className="mt-1"
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Leave empty to use employee's standard hourly rate
                 </p>
               </div>
@@ -404,10 +404,10 @@ export default function TaskManagement() {
             
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {employees.map((employee: any) => (
-                <label key={employee.id} className="flex items-center space-x-2 p-2 hover:bg-slate-50 rounded">
+                <label key={employee.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
                   <input 
                     type="checkbox" 
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                     checked={selectedEmployees.includes(employee.id)}
                     onChange={(e) => {
                       if (e.target.checked) {
@@ -418,7 +418,7 @@ export default function TaskManagement() {
                     }}
                   />
                   <span className="text-sm">{employee.firstName} {employee.lastName} ({employee.email})</span>
-                  <span className="text-xs text-slate-500 ml-auto">
+                  <span className="text-xs text-muted-foreground ml-auto">
                     Standard: ${employee.hourlyRate}/hr
                   </span>
                 </label>
@@ -472,7 +472,7 @@ export default function TaskManagement() {
               <Label htmlFor="editTaskColor">Color</Label>
               <div className="flex space-x-2">
                 <div 
-                  className="w-10 h-10 rounded border border-slate-200 flex-shrink-0"
+                  className="w-10 h-10 rounded border border-border flex-shrink-0"
                   style={{ backgroundColor: editTask.color }}
                 ></div>
                 <Input

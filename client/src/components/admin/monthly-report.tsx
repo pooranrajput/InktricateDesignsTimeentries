@@ -113,8 +113,8 @@ Generated on: ${new Date().toLocaleDateString()}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
-            <div className="h-32 bg-slate-200 rounded"></div>
+            <div className="h-4 bg-muted rounded w-1/3"></div>
+            <div className="h-32 bg-muted rounded"></div>
           </div>
         </CardContent>
       </Card>
@@ -252,7 +252,7 @@ Generated on: ${new Date().toLocaleDateString()}
               )}
             </div>
           )) || (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               No payroll data available for {getMonthName(selectedMonth)} {selectedYear}
             </div>
           )}
