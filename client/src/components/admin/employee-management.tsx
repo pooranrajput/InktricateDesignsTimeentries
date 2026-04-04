@@ -440,7 +440,7 @@ export default function EmployeeManagement() {
                 id="role"
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="employee">Employee</option>
                 <option value="admin">Admin</option>

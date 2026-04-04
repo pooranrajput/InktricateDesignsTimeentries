@@ -11,65 +11,41 @@ import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import UserProfile from "@/pages/user-profile";
-import { EmergencyRecoveryPage } from "@/pages/emergency-recovery";
 
 function Router() {
   const { user, isLoading } = useAuth();
   const { viewAsEmployee } = useViewToggle();
-  const [location] = useLocation();
-
-  // Handle QuickBooks OAuth success callback
-  React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('quickbooks') === 'success') {
-      // Clear the URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // DISABLED: No need to invalidate - status is hardcoded in component
-      // queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/debug'] });
-      // queryClient.invalidateQueries({ queryKey: ['/api/quickbooks/test'] });
-    }
-  }, [location]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
     );
   }
 
-  // If not authenticated, show auth page
   if (!user) {
     return (
       <Switch>
         <Route path="/auth" component={AuthPage} />
-        <Route path="*">
-          <AuthPage />
-        </Route>
+        <Route path="*"><AuthPage /></Route>
       </Switch>
     );
   }
 
-  // If user needs to reset password, show auth page
   if (user.mustResetPassword) {
     return <AuthPage />;
   }
 
-  // Authenticated routing based on role and view toggle
   const isAdmin = user.role === "admin";
   const shouldShowEmployeeView = !isAdmin || (isAdmin && viewAsEmployee);
-  
+
   return (
     <Switch>
       <Route path="/auth">
-        {/* If already authenticated and no password reset needed, redirect to dashboard */}
         {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
       </Route>
       <Route path="/profile" component={UserProfile} />
-      <Route path="/emergency-recovery" component={EmergencyRecoveryPage} />
       <Route path="/time-tracking" component={EmployeeDashboard} />
       <Route path="/admin">
         {isAdmin ? <AdminDashboard /> : <EmployeeDashboard />}

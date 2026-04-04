@@ -284,7 +284,7 @@ export default function PayrollManagement() {
                       <Button 
                         size="sm"
                         onClick={() => setConfirmingPayment(record)}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Mark Paid
@@ -294,8 +294,8 @@ export default function PayrollManagement() {
                 </div>
                 
                 {record.paidAt && (
-                  <div className="mt-3 pt-3 border-t border-slate-100">
-                    <p className="text-xs text-slate-500">
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
                       Paid on {new Date(record.paidAt).toLocaleDateString()} 
                       {record.paidByUser && ` by ${record.paidByUser.firstName} ${record.paidByUser.lastName}`}
                     </p>
@@ -324,21 +324,21 @@ export default function PayrollManagement() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Period</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm font-medium text-foreground">Period</p>
+                  <p className="text-sm text-muted-foreground">
                     {getMonthName(viewingPayroll.month)} {viewingPayroll.year}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Total Hours</p>
-                  <p className="text-sm text-slate-600">{viewingPayroll.totalHours} hours</p>
+                  <p className="text-sm font-medium text-foreground">Total Hours</p>
+                  <p className="text-sm text-muted-foreground">{viewingPayroll.totalHours} hours</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Gross Pay</p>
-                  <p className="text-sm text-slate-600">${parseFloat(viewingPayroll.grossPay).toFixed(2)}</p>
+                  <p className="text-sm font-medium text-foreground">Gross Pay</p>
+                  <p className="text-sm text-muted-foreground">${parseFloat(viewingPayroll.grossPay).toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Status</p>
+                  <p className="text-sm font-medium text-foreground">Status</p>
                   <Badge className={getStatusColor(viewingPayroll.status)}>
                     {viewingPayroll.status === 'paid' ? 'Paid' : 'Pending'}
                   </Badge>
@@ -346,12 +346,12 @@ export default function PayrollManagement() {
               </div>
               
               {viewingPayroll.status === 'pending' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-muted border border-border rounded-lg p-4">
                   <div className="flex items-start space-x-2">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-yellow-800">Payment Pending</h4>
-                      <p className="text-sm text-yellow-700">
+                      <h4 className="font-medium text-foreground">Payment Pending</h4>
+                      <p className="text-sm text-muted-foreground">
                         Click "Mark Paid" after processing payment through your banking portal.
                         This will send an email notification to the employee.
                       </p>
@@ -370,7 +370,7 @@ export default function PayrollManagement() {
                       setViewingPayroll(null);
                       setConfirmingPayment(viewingPayroll);
                     }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Mark as Paid
@@ -389,7 +389,7 @@ export default function PayrollManagement() {
             <DialogTitle>Confirm Payment</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to mark{" "}
               <span className="font-medium">
                 {confirmingPayment?.user?.firstName} {confirmingPayment?.user?.lastName}
@@ -397,19 +397,19 @@ export default function PayrollManagement() {
               as paid for {getMonthName(confirmingPayment?.month)} {confirmingPayment?.year}?
             </p>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-muted border border-border rounded-lg p-4">
               <div className="flex items-start space-x-2">
-                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <CheckCircle className="w-5 h-5 text-primary mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-800">Payment Amount</h4>
-                  <p className="text-sm text-blue-700">
+                  <h4 className="font-medium text-foreground">Payment Amount</h4>
+                  <p className="text-sm text-muted-foreground">
                     ${parseFloat(confirmingPayment?.grossPay || 0).toFixed(2)} for {confirmingPayment?.totalHours} hours
                   </p>
                 </div>
               </div>
             </div>
             
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               This will send an email notification to the employee confirming their payment.
             </p>
             
@@ -420,7 +420,7 @@ export default function PayrollManagement() {
               <Button 
                 onClick={handleConfirmPayment}
                 disabled={markAsPaidMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {markAsPaidMutation.isPending ? "Processing..." : "Confirm Payment"}
               </Button>
