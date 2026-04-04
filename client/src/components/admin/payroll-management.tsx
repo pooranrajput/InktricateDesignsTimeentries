@@ -83,14 +83,23 @@ export default function PayrollManagement() {
   // Generate payroll records mutation
   const generatePayrollMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/payroll/generate", { year: selectedYear, month: selectedMonth });
+      const res = await apiRequest("POST", "/api/payroll/generate", { year: selectedYear, month: selectedMonth });
+      return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/payroll", selectedYear, selectedMonth] });
-      toast({
-        title: "Payroll Generated",
-        description: "Monthly payroll records have been created",
-      });
+      if (data?.warning) {
+        toast({
+          title: "Payroll Generated (with warning)",
+          description: data.warning,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Payroll Generated",
+          description: "Monthly payroll records have been created",
+        });
+      }
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
