@@ -2053,12 +2053,26 @@ export function registerRoutes(app: Express): Server {
   });
 
   // CORRECTED Sync contractors to QuickBooks with proper duplicate detection
-  app.post('/api/quickbooks/sync-contractors', async (req: any, res) => {
+  app.post('/api/quickbooks/sync-contractors', isAuthenticated, async (req: any, res) => {
     console.log('🏢 PRODUCTION SYNC with proper duplicate detection from development');
-    console.log('Using tested vendor lookup logic from VENDOR_BILL_MAPPING_BACKUP.md');
     
     try {
-      const qbo = await getQuickBooksService().initializeClient();
+      const QuickBooks = (await import('node-quickbooks')).default;
+      const [qbConfig] = await db.select().from(quickbooksConfig).limit(1);
+      if (!qbConfig) return res.status(400).json({ success: false, message: 'QuickBooks not connected' });
+
+      const qbo = new QuickBooks(
+        process.env.QUICKBOOKS_CLIENT_ID,
+        process.env.QUICKBOOKS_CLIENT_SECRET,
+        qbConfig.accessToken,
+        false,
+        qbConfig.companyId,
+        false,
+        true,
+        null,
+        '2.0',
+        qbConfig.refreshToken
+      );
       console.log('✅ QuickBooks client initialized');
       
       // Step 1: Get ALL existing vendors from production QuickBooks
