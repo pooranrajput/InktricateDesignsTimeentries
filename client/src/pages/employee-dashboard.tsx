@@ -53,17 +53,26 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
+  const { data: taskCategories = [] } = useQuery({
+    queryKey: ["/api/task-categories"],
+    retry: false,
+  });
+
   // Calculate monthly stats with proper task-specific rates
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
+  const taskCategoriesArray = Array.isArray(taskCategories) ? taskCategories : [];
   const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
     sum + parseFloat(entry.totalHours || '0'), 0
   );
   
-  // Calculate estimated pay using user's hourly rate
+  // Calculate estimated pay using task-specific rates
+  // Production = $15/hr always; other categories = user's hourlyRate
   const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
     const hours = parseFloat(entry.totalHours || '0');
-    const userRate = user?.hourlyRate;
-    const rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0'));
+    const category = taskCategoriesArray.find((c: any) => c.id === entry.taskCategoryId);
+    const isProduction = category?.name === 'Production';
+    const userRate = parseFloat((user?.hourlyRate ?? '0').toString());
+    const rate = isProduction ? 15 : userRate;
     return sum + (hours * rate);
   }, 0);
   const workingDays = timeEntriesArray.length;
