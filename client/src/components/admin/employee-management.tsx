@@ -53,8 +53,6 @@ export default function EmployeeManagement() {
     queryFn: () => {
       if (!viewingEmployee) return [];
       const url = `/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`;
-      console.log('Fetching timesheet:', url);
-      console.log('Date range:', timesheetStartDate.toISOString().split('T')[0], 'to', timesheetEndDate.toISOString().split('T')[0]);
       return fetch(url, { credentials: 'include' }).then(res => {
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         return res.json();

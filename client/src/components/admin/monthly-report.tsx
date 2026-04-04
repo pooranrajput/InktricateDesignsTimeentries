@@ -47,7 +47,6 @@ export default function MonthlyReport() {
 
   const handleExport = (format: 'excel' | 'pdf') => {
     if (!reportData || !reportData.employeeReports?.length) {
-      console.log('No data available for export');
       return;
     }
 
