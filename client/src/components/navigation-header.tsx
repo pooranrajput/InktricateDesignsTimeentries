@@ -33,7 +33,8 @@ export default function NavigationHeader() {
               <img
                 src="https://images.squarespace-cdn.com/content/v1/6490bc5d65728852ce40b805/1c310731-bb1d-41a1-99ef-b6a3e3932e3e/inktricatelogo-01.png?format=300w"
                 alt="Inktricate Designs"
-                className="h-8 sm:h-10 w-auto"
+                className="h-8 sm:h-10 w-auto dark:invert-0"
+                style={{ filter: 'brightness(0)' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               <div className="hidden sm:block">
