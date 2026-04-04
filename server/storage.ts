@@ -548,8 +548,14 @@ export class DatabaseStorage implements IStorage {
           )
         );
 
+      // Skip already-paid records to prevent corrupting historical data
+      if (existing?.status === 'paid') {
+        records.push(existing);
+        continue;
+      }
+
       const monthlySalary = parseFloat(employee.monthlySalary || '0');
-      
+
       if (monthlySalary > 0) {
         // Fixed monthly salary employees
         if (!existing) {

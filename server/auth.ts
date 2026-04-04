@@ -53,7 +53,7 @@ export function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
   
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || (() => { throw new Error('SESSION_SECRET environment variable is required'); })(),
     resave: false,
     saveUninitialized: false,
     store: new PostgresSessionStore({
@@ -111,6 +111,9 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id.toString());
+      if (!user || !user.isActive) {
+        return done(null, false);
+      }
       done(null, user);
     } catch (error) {
       done(error, null);
@@ -119,7 +122,8 @@ export function setupAuth(app: Express) {
 
   // Auth routes
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+    const { password: _, ...safeUser } = req.user as any;
+    res.status(200).json(safeUser);
   });
 
   app.post("/api/logout", (req, res, next) => {

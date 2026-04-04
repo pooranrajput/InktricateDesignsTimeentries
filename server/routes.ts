@@ -7,13 +7,13 @@ import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbo
 import { backupService } from "./backup";
 import { protectData } from "./protection";
 import { z } from "zod";
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
+import { randomBytes } from "crypto";
 import path from "path";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
-const scryptAsync = promisify(scrypt);
+// Use hashPassword from auth.ts (single source of truth)
+const hashPassword = authHashPassword;
 
 // Stub getQuickBooksService to prevent compilation errors
 // The actual QuickBooksService has TypeScript errors, so this stub prevents those errors from breaking the entire routes file
@@ -51,12 +51,6 @@ const QuickBooksService = class {
     throw new Error('QuickBooksService is disabled due to compilation errors');
   }
 };
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -117,8 +111,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // SECURITY: Users can see their own complete profile including hourly rate
-      res.json(user);
+      // SECURITY: Users can see their own profile but NOT password hash
+      const { password: _, ...safeUser } = user as any;
+      res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -197,8 +192,9 @@ export function registerRoutes(app: Express): Server {
       const { id } = req.params;
       const { hourlyRate } = req.body;
       
-      if (!hourlyRate || isNaN(parseFloat(hourlyRate))) {
-        return res.status(400).json({ message: "Valid hourly rate required" });
+      const parsedRate = parseFloat(hourlyRate);
+      if (!hourlyRate || isNaN(parsedRate) || parsedRate < 0) {
+        return res.status(400).json({ message: "Valid hourly rate required (must be 0 or greater)" });
       }
       
       const updatedUser = await storage.updateUserHourlyRate(id, hourlyRate);
@@ -225,7 +221,12 @@ export function registerRoutes(app: Express): Server {
       if (!role || !['admin', 'employee'].includes(role)) {
         return res.status(400).json({ message: "Valid role required (admin or employee)" });
       }
-      
+
+      // Prevent admin from demoting themselves (could lock out the system)
+      if (id === userId && role === 'employee') {
+        return res.status(400).json({ message: "You cannot demote yourself. Ask another admin to change your role." });
+      }
+
       const updatedUser = await storage.updateUserRole(id, role);
       res.json(updatedUser);
     } catch (error) {
@@ -243,8 +244,14 @@ export function registerRoutes(app: Express): Server {
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
-      
+
       const { id } = req.params;
+
+      // Prevent admin from deactivating themselves
+      if (id === userId) {
+        return res.status(400).json({ message: "You cannot deactivate yourself." });
+      }
+
       const deactivatedUser = await storage.deactivateUser(id);
       res.json(deactivatedUser);
     } catch (error) {
@@ -273,7 +280,8 @@ export function registerRoutes(app: Express): Server {
       
       const hashedPassword = await hashPassword(newPassword);
       
-      await storage.updatePassword(id, hashedPassword);
+      // Update password and force user to change it on next login
+      await storage.updateUserCredentials(id, (await storage.getUser(id))?.username || '', hashedPassword);
       res.json({ message: "Password reset successfully" });
     } catch (error) {
       console.error("Error resetting password:", error);
@@ -508,14 +516,23 @@ export function registerRoutes(app: Express): Server {
         taskCategoryId,
       });
       
+      // Validate start and end times are not identical
+      if (timeEntryData.startTime === timeEntryData.endTime) {
+        return res.status(400).json({ message: "Start time and end time cannot be the same" });
+      }
+
       // Calculate total hours (handles overnight shifts)
-      const startTime = new Date(`2024-01-01 ${timeEntryData.startTime}`);
-      let endTime = new Date(`2024-01-01 ${timeEntryData.endTime}`);
-      if (endTime <= startTime) {
+      const startTime = new Date(`2024-01-01T${timeEntryData.startTime}`);
+      let endTime = new Date(`2024-01-01T${timeEntryData.endTime}`);
+      if (endTime < startTime) {
         endTime = new Date(endTime.getTime() + 24 * 60 * 60 * 1000);
       }
       const diffMs = endTime.getTime() - startTime.getTime();
       const totalHours = diffMs / (1000 * 60 * 60);
+
+      if (totalHours > 24) {
+        return res.status(400).json({ message: "Time entry cannot exceed 24 hours" });
+      }
 
       // Create the time entry with properly typed totalHours
       const timeEntry = await storage.createTimeEntry({
@@ -733,10 +750,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
-      const { name, description } = req.body;
+      const { name, description, color } = req.body;
       const taskData = {
         name,
         description,
+        color: color || '#6B7280',
         createdBy: userId,
         isActive: true
       };
@@ -1312,7 +1330,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // QuickBooks connection status
-  app.get('/api/quickbooks/status', async (req: any, res) => {
+  app.get('/api/quickbooks/status', isAdmin, async (req: any, res) => {
     try {
       const configs = await db.select().from(quickbooksConfig);
 
@@ -1522,7 +1540,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // List all accounts to find the correct Wages account
-  app.get('/api/quickbooks/list-accounts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quickbooks/list-accounts', isAdmin, async (req: any, res) => {
     try {
       const qbo = await getQuickBooksService().initializeClient();
       
@@ -1569,7 +1587,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // List all vendors to debug Track1099 status
-  app.get('/api/quickbooks/list-vendors', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quickbooks/list-vendors', isAdmin, async (req: any, res) => {
     try {
       const qbo = await getQuickBooksService().initializeClient();
       
@@ -1813,7 +1831,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get bill details for account mapping
-  app.get('/api/quickbooks/get-bill/:billId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quickbooks/get-bill/:billId', isAdmin, async (req: any, res) => {
     try {
       const { billId } = req.params;
       console.log(`🔍 Looking up QuickBooks bill ID: ${billId}`);
@@ -1935,7 +1953,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Test Track1099 update for a specific vendor
-  app.post('/api/quickbooks/test-track1099', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quickbooks/test-track1099', isAdmin, async (req: any, res) => {
     try {
       const { vendorName } = req.body;
       if (!vendorName) {
@@ -2026,7 +2044,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Test endpoint for QuickBooks sync debugging
-  app.post('/api/quickbooks/debug-sync', async (req: any, res) => {
+  app.post('/api/quickbooks/debug-sync', isAdmin, async (req: any, res) => {
     try {
       console.log('🔧 DEBUG: Starting contractor sync test');
       
@@ -2064,7 +2082,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Find specific vendor by name in production QuickBooks
-  app.post('/api/quickbooks/find-vendor', async (req: any, res) => {
+  app.post('/api/quickbooks/find-vendor', isAdmin, async (req: any, res) => {
     try {
       const { name } = req.body;
       if (!name) {
@@ -2133,7 +2151,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // CORRECTED Sync contractors to QuickBooks with proper duplicate detection
-  app.post('/api/quickbooks/sync-contractors', async (req: any, res) => {
+  app.post('/api/quickbooks/sync-contractors', isAdmin, async (req: any, res) => {
     console.log('🏢 PRODUCTION SYNC with proper duplicate detection from development');
     console.log('Using tested vendor lookup logic from VENDOR_BILL_MAPPING_BACKUP.md');
     

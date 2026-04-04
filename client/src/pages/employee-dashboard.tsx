@@ -149,7 +149,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Task breakdown - shows where the pay comes from */}
-        {taskBreakdown.length > 1 && (
+        {taskBreakdown.length > 0 && (
           <Card className="border-0 shadow-sm mb-5">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground mb-2">Pay Breakdown</p>

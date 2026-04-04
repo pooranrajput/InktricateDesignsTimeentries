@@ -28,7 +28,7 @@ export default function PayrollManagement() {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          window.location.href = '/login';
+          window.location.href = '/auth';
           return [];
         }
         throw new Error(`Failed to fetch payroll data: ${response.status}`);
@@ -60,7 +60,7 @@ export default function PayrollManagement() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }
@@ -101,7 +101,7 @@ export default function PayrollManagement() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }

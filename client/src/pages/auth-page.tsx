@@ -18,8 +18,9 @@ const loginSchema = z.object({
 });
 
 const resetPasswordSchema = z.object({
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Please confirm your password"),
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Please confirm your password"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -54,6 +55,7 @@ export default function AuthPage() {
   const resetForm = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
+      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
@@ -89,6 +91,7 @@ export default function AuthPage() {
   const resetPasswordMutation = useMutation({
     mutationFn: async (data: ResetPasswordFormData) => {
       const res = await apiRequest("POST", "/api/reset-password", {
+        currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
       return await res.json();
@@ -145,6 +148,21 @@ export default function AuthPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={resetForm.handleSubmit(onResetPassword)} className="space-y-4">
+              <div>
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  {...resetForm.register("currentPassword")}
+                  placeholder="Enter your current password"
+                />
+                {resetForm.formState.errors.currentPassword && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {resetForm.formState.errors.currentPassword.message}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <Label htmlFor="newPassword">New Password</Label>
                 <div className="relative">

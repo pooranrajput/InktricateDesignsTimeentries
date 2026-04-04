@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -39,21 +39,18 @@ function Router() {
 
   const isAdmin = user.role === "admin";
   const shouldShowEmployeeView = !isAdmin || (isAdmin && viewAsEmployee);
+  const Dashboard = shouldShowEmployeeView ? EmployeeDashboard : AdminDashboard;
 
   return (
     <Switch>
-      <Route path="/auth">
-        {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
-      </Route>
+      <Route path="/auth"><Redirect to="/" /></Route>
       <Route path="/profile" component={UserProfile} />
       <Route path="/time-tracking" component={EmployeeDashboard} />
       <Route path="/admin">
         {isAdmin ? <AdminDashboard /> : <EmployeeDashboard />}
       </Route>
-      <Route path="/">
-        {shouldShowEmployeeView ? <EmployeeDashboard /> : <AdminDashboard />}
-      </Route>
-      <Route path="*" component={NotFound} />
+      <Route path="/" component={Dashboard} />
+      <Route component={NotFound} />
     </Switch>
   );
 }

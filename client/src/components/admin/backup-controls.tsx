@@ -11,7 +11,7 @@ export function BackupControls() {
   
   const createBackupMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/admin/backup/create', 'POST', {});
+      return await apiRequest('POST', '/api/admin/backup/create', {});
     },
     onSuccess: (data) => {
       toast({
@@ -30,7 +30,7 @@ export function BackupControls() {
 
   const emergencyBackupMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/admin/backup/emergency', 'POST', {});
+      return await apiRequest('POST', '/api/admin/backup/emergency', {});
     },
     onSuccess: (data) => {
       toast({
