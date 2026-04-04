@@ -132,8 +132,8 @@ Generated on: ${new Date().toLocaleDateString()}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
-            <div className="h-32 bg-slate-200 rounded"></div>
+            <div className="h-4 bg-muted rounded w-1/3"></div>
+            <div className="h-32 bg-muted rounded"></div>
           </div>
         </CardContent>
       </Card>
@@ -234,7 +234,7 @@ Generated on: ${new Date().toLocaleDateString()}
                     <p className="text-xs text-muted-foreground">{report.user.email}</p>
                   </div>
                 </div>
-                <Badge className={report.totalHours > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                <Badge className={report.totalHours > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}>
                   {report.totalHours > 0 ? 'Ready' : 'Pending'}
                 </Badge>
               </div>
@@ -249,7 +249,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Gross Pay</p>
-                  <p className="font-semibold text-green-600">${report.grossPay.toFixed(2)}</p>
+                  <p className="font-semibold text-primary">${report.grossPay.toFixed(2)}</p>
                 </div>
               </div>
               
@@ -271,7 +271,7 @@ Generated on: ${new Date().toLocaleDateString()}
               )}
             </div>
           )) || (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               No payroll data available for {getMonthName(selectedMonth)} {selectedYear}
             </div>
           )}
@@ -326,7 +326,7 @@ Generated on: ${new Date().toLocaleDateString()}
                     ${report.grossPay.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={report.totalHours > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                    <Badge className={report.totalHours > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}>
                       {report.totalHours > 0 ? 'Ready' : 'Pending'}
                     </Badge>
                   </td>
