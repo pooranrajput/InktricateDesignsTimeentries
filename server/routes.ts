@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword as authHashPassword, comparePasswords } from "./auth";
-import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig, monthlyPayroll } from "@shared/schema";
+import { insertTimeEntrySchema, updateTimeEntrySchema, updateUserSchema, quickbooksConfig, monthlyPayroll, users } from "@shared/schema";
 // import { QuickBooksService } from "./quickbooks"; // DISABLED - TypeScript compilation errors
 import { backupService } from "./backup";
 import { protectData } from "./protection";
