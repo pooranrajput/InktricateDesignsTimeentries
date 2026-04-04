@@ -337,6 +337,73 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Employee pay summary - calculates correct estimated pay using task-specific rates
+  app.get('/api/my-pay-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { year, month } = req.query;
+
+      if (!year || !month) {
+        return res.status(400).json({ message: "Year and month are required" });
+      }
+
+      const yearNum = parseInt(year as string);
+      const monthNum = parseInt(month as string);
+
+      const { totalHours, entries } = await storage.getMonthlyHoursForUser(userId, yearNum, monthNum);
+
+      // Get user's base rate
+      const user = await storage.getUser(userId);
+      const standardHourlyRate = parseFloat(user?.hourlyRate || '0');
+
+      // Get task assignments for this user to find task-specific rates
+      const userTasks = await storage.getUserAssignedTasks(userId);
+      const taskRateMap = new Map<number, number>();
+      for (const task of userTasks) {
+        if (task.taskSpecificRate) {
+          taskRateMap.set(task.id, parseFloat(task.taskSpecificRate));
+        }
+      }
+
+      // Calculate pay per entry using correct rates
+      let estimatedPay = 0;
+      const taskTotals: Record<string, { hours: number; rate: number }> = {};
+
+      for (const entry of entries) {
+        const entryHours = parseFloat(entry.totalHours || '0');
+        let hourlyRate = standardHourlyRate;
+
+        if (entry.taskCategoryId && taskRateMap.has(entry.taskCategoryId)) {
+          hourlyRate = taskRateMap.get(entry.taskCategoryId)!;
+        }
+
+        estimatedPay += entryHours * hourlyRate;
+
+        const taskName = entry.project || 'Other';
+        if (!taskTotals[taskName]) {
+          taskTotals[taskName] = { hours: 0, rate: hourlyRate };
+        }
+        taskTotals[taskName].hours += entryHours;
+      }
+
+      const taskBreakdown = Object.entries(taskTotals).map(([taskName, data]) => ({
+        taskName,
+        hours: data.hours,
+        rate: data.rate,
+        pay: data.hours * data.rate,
+      }));
+
+      res.json({
+        totalHours,
+        estimatedPay,
+        taskBreakdown,
+      });
+    } catch (error) {
+      console.error("Error fetching pay summary:", error);
+      res.status(500).json({ message: "Failed to fetch pay summary" });
+    }
+  });
+
   // Time entry routes - SECURITY CRITICAL: Users can only see their own time entries
   app.get('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
@@ -776,8 +843,21 @@ export function registerRoutes(app: Express): Server {
       }
 
       const { year = now.getFullYear(), month = now.getMonth() + 1 } = parsedBody;
+
+      // Check if any existing records are already paid - warn admin
+      const existingRecords = await storage.getMonthlyPayrollRecords(year, month);
+      const paidRecords = existingRecords.filter((r: any) => r.status === 'paid');
+
       const records = await storage.generateMonthlyPayroll(year, month);
-      res.json(records);
+
+      if (paidRecords.length > 0) {
+        return res.json({
+          records,
+          warning: `${paidRecords.length} record(s) were already marked as paid. Their amounts were recalculated but status was preserved. Review carefully.`,
+        });
+      }
+
+      res.json({ records });
     } catch (error) {
       console.error("Error generating payroll:", error);
       res.status(500).json({ message: "Failed to generate payroll" });

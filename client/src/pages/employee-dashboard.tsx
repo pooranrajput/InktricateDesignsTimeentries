@@ -53,20 +53,27 @@ export default function EmployeeDashboard() {
     retry: false,
   });
 
-  // Calculate monthly stats with proper task-specific rates
+  // Fetch correct pay summary with task-specific rates from server
+  const { data: paySummary } = useQuery({
+    queryKey: ["/api/my-pay-summary", selectedYear, selectedMonth],
+    queryFn: async () => {
+      const response = await fetch(`/api/my-pay-summary?year=${selectedYear}&month=${selectedMonth}`);
+      if (!response.ok) throw new Error('Failed to fetch pay summary');
+      return response.json();
+    },
+    retry: false,
+  });
+
+  // Use server-calculated pay (with task-specific rates) when available
   const timeEntriesArray = Array.isArray(timeEntries) ? timeEntries : [];
-  const monthlyHours = timeEntriesArray.reduce((sum: number, entry: any) => 
+  const monthlyHours = paySummary?.totalHours ?? timeEntriesArray.reduce((sum: number, entry: any) =>
     sum + parseFloat(entry.totalHours || '0'), 0
   );
-  
-  // Calculate estimated pay using user's hourly rate
-  const estimatedPay = timeEntriesArray.reduce((sum: number, entry: any) => {
-    const hours = parseFloat(entry.totalHours || '0');
-    const userRate = user?.hourlyRate;
-    const rate = parseFloat(typeof userRate === 'string' ? userRate : (userRate?.toString() || '0'));
-    return sum + (hours * rate);
-  }, 0);
-  const workingDays = timeEntriesArray.length;
+
+  const estimatedPay = paySummary?.estimatedPay ?? 0;
+
+  // Count unique working days, not total entries
+  const workingDays = new Set(timeEntriesArray.map((entry: any) => entry.date)).size;
 
 
 

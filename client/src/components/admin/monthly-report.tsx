@@ -60,18 +60,34 @@ export default function MonthlyReport() {
     }
   };
 
+  const getEffectiveRate = (report: any) => {
+    if (report.taskBreakdown && report.taskBreakdown.length > 1) {
+      return 'Varies (see breakdown)';
+    }
+    if (report.taskBreakdown && report.taskBreakdown.length === 1) {
+      return `$${report.taskBreakdown[0].rate.toFixed(2)}`;
+    }
+    return `$${parseFloat(report.user.hourlyRate || '0').toFixed(2)}`;
+  };
+
   const exportToCSV = (data: any, filename: string) => {
-    const headers = ['Employee Name', 'Email', 'Total Hours', 'Hourly Rate', 'Gross Pay', 'Status'];
+    const headers = ['Employee Name', 'Email', 'Total Hours', 'Effective Rate', 'Gross Pay', 'Task Breakdown', 'Status'];
     const csvContent = [
       headers.join(','),
-      ...data.employeeReports.map((report: any) => [
-        `"${getDisplayName(report.user)}"`,
-        `"${report.user.email}"`,
-        report.totalHours.toFixed(1),
-        `$${parseFloat(report.user.hourlyRate || '0').toFixed(2)}`,
-        `$${report.grossPay.toFixed(2)}`,
-        report.totalHours > 0 ? 'Ready' : 'Pending'
-      ].join(','))
+      ...data.employeeReports.map((report: any) => {
+        const breakdown = report.taskBreakdown?.map((t: any) =>
+          `${t.taskName}: ${t.hours.toFixed(1)}h @ $${t.rate.toFixed(2)} = $${t.pay.toFixed(2)}`
+        ).join('; ') || '';
+        return [
+          `"${getDisplayName(report.user)}"`,
+          `"${report.user.email}"`,
+          report.totalHours.toFixed(1),
+          `"${getEffectiveRate(report)}"`,
+          `$${report.grossPay.toFixed(2)}`,
+          `"${breakdown}"`,
+          report.totalHours > 0 ? 'Ready' : 'Pending'
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -92,11 +108,15 @@ Total Payroll: $${data.totalPayroll?.toFixed(2) || '0.00'}
 Employees: ${data.employeeReports?.length || 0}
 
 Employee Details:
-${data.employeeReports?.map((report: any) => 
-  `${getDisplayName(report.user)} (${report.user.email})
-   Hours: ${report.totalHours.toFixed(1)} | Rate: $${parseFloat(report.user.hourlyRate || '0').toFixed(2)}/hr | Pay: $${report.grossPay.toFixed(2)}
+${data.employeeReports?.map((report: any) => {
+  const breakdownLines = report.taskBreakdown?.map((t: any) =>
+    `     - ${t.taskName}: ${t.hours.toFixed(1)}h @ $${t.rate.toFixed(2)}/hr = $${t.pay.toFixed(2)}`
+  ).join('\n') || '';
+  return `${getDisplayName(report.user)} (${report.user.email})
+   Hours: ${report.totalHours.toFixed(1)} | Pay: $${report.grossPay.toFixed(2)}
    Status: ${report.totalHours > 0 ? 'Ready' : 'Pending'}
-`).join('\n') || 'No employee data'}
+${breakdownLines ? '   Task Breakdown:\n' + breakdownLines : ''}`;
+}).join('\n\n') || 'No employee data'}
 
 Generated on: ${new Date().toLocaleDateString()}
     `.trim();

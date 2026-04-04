@@ -382,25 +382,23 @@ export default function TaskManagement() {
             </p>
             
             {/* Task-specific hourly rate input */}
-            {selectedTask?.name === "Production" && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-                <Label htmlFor="taskRate" className="text-sm font-medium">
-                  Production Task Hourly Rate (overrides standard rate)
-                </Label>
-                <Input
-                  id="taskRate"
-                  type="number"
-                  step="0.01"
-                  value={taskSpecificRate}
-                  onChange={(e) => setTaskSpecificRate(e.target.value)}
-                  placeholder="15.00"
-                  className="mt-1"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Leave empty to use employee's standard hourly rate
-                </p>
-              </div>
-            )}
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+              <Label htmlFor="taskRate" className="text-sm font-medium">
+                Task-Specific Hourly Rate for "{selectedTask?.name}" (overrides standard rate)
+              </Label>
+              <Input
+                id="taskRate"
+                type="number"
+                step="0.01"
+                value={taskSpecificRate}
+                onChange={(e) => setTaskSpecificRate(e.target.value)}
+                placeholder="e.g. 15.00"
+                className="mt-1"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Leave empty to use each employee's standard hourly rate
+              </p>
+            </div>
             
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {employees.map((employee: any) => (

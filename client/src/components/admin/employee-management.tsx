@@ -55,12 +55,9 @@ export default function EmployeeManagement() {
       const url = `/api/time-entries/${viewingEmployee}?startDate=${timesheetStartDate.toISOString().split('T')[0]}&endDate=${timesheetEndDate.toISOString().split('T')[0]}`;
       console.log('Fetching timesheet:', url);
       console.log('Date range:', timesheetStartDate.toISOString().split('T')[0], 'to', timesheetEndDate.toISOString().split('T')[0]);
-      return fetch(url).then(res => {
-        console.log('Response status:', res.status);
+      return fetch(url, { credentials: 'include' }).then(res => {
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         return res.json();
-      }).then(data => {
-        console.log('Received entries:', data.length, 'entries');
-        return data;
       });
     },
     enabled: !!viewingEmployee,
@@ -137,8 +134,9 @@ export default function EmployeeManagement() {
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const res = await apiRequest("POST", `/api/employees/${userId}/reset-password`);
-      return await res.json();
+      const defaultPassword = "Inktricate2024!";
+      await apiRequest("POST", `/api/employees/${userId}/reset-password`, { newPassword: defaultPassword });
+      return { newPassword: defaultPassword };
     },
     onSuccess: (data) => {
       setResetPasswordUserId(null);
@@ -178,7 +176,7 @@ export default function EmployeeManagement() {
       });
       toast({
         title: "Employee Added",
-        description: `Employee created with password: ${data.password}. They must change it on first login.`,
+        description: `Employee created with default password: Inktricate2024! — They must change it on first login.`,
       });
     },
     onError: (error: Error) => {
@@ -465,109 +463,6 @@ export default function EmployeeManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* View Employee Dialog */}
-      <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              Time Entries - {viewingEmployee ? getDisplayName((employees as any[]).find((emp: any) => emp.id === viewingEmployee)) : 'Employee'}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Showing work performed in {new Date(0, timesheetMonth - 1).toLocaleString('default', { month: 'long' })} {timesheetYear} only
-            </p>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Month/Year Filter */}
-            <div className="flex gap-4 items-center bg-muted/50 p-3 rounded-lg">
-              <div>
-                <Label htmlFor="timesheetMonth">Work Month</Label>
-                <select
-                  id="timesheetMonth"
-                  value={timesheetMonth}
-                  onChange={(e) => {
-                    setTimesheetMonth(Number(e.target.value));
-                    // Force fresh data when month changes
-                    queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
-                  }}
-                  className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="timesheetYear">Year</Label>
-                <select
-                  id="timesheetYear"
-                  value={timesheetYear}
-                  onChange={(e) => {
-                    setTimesheetYear(Number(e.target.value));
-                    // Force fresh data when year changes
-                    queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
-                  }}
-                  className="ml-2 px-3 py-1 border border-border rounded-md bg-background text-foreground"
-                >
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - 2 + i;
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-            {employeeTimeEntries.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Hours</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-card divide-y divide-border">
-                    {employeeTimeEntries.map((entry: any) => (
-                      <tr key={entry.id} className="hover:bg-muted/50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {new Date(entry.date + 'T00:00:00').toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {entry.project}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {entry.startTime} - {entry.endTime}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                          {entry.totalHours}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-foreground">
-                          {entry.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">No time entries found for this employee in the selected month.</p>
-            )}
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setViewingEmployee(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Add Employee Dialog */}
       <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
         <DialogContent className="max-w-md">
@@ -686,7 +581,7 @@ export default function EmployeeManagement() {
           {/* Month/Year Selector */}
           <div className="flex items-center space-x-3 pb-4 border-b">
             <Label htmlFor="timesheet-month" className="text-sm font-medium">View Month:</Label>
-            <select 
+            <select
               id="timesheet-month"
               className="border border-border bg-input text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               value={`${timesheetYear}-${timesheetMonth.toString().padStart(2, '0')}`}
@@ -696,19 +591,17 @@ export default function EmployeeManagement() {
                 setTimesheetMonth(parseInt(month));
               }}
             >
-              <option value={`${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`}>
-                Current Month ({new Date().toLocaleString('default', { month: 'long', year: 'numeric' })})
-              </option>
-              <option value={`${new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()}-${(new Date().getMonth() === 0 ? 12 : new Date().getMonth()).toString().padStart(2, '0')}`}>
-                Previous Month ({new Date(new Date().getFullYear(), new Date().getMonth() - 1).toLocaleString('default', { month: 'long', year: 'numeric' })})
-              </option>
-              {/* Add more month options */}
-              <option value="2025-06">June 2025</option>
-              <option value="2025-05">May 2025</option>
-              <option value="2025-04">April 2025</option>
-              <option value="2025-03">March 2025</option>
-              <option value="2025-02">February 2025</option>
-              <option value="2025-01">January 2025</option>
+              {(() => {
+                const options = [];
+                const now = new Date();
+                for (let i = -1; i <= 24; i++) {
+                  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                  const val = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                  const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+                  options.push(<option key={val} value={val}>{label}</option>);
+                }
+                return options;
+              })()}
             </select>
           </div>
           <div className="space-y-4 overflow-y-auto max-h-[60vh]">
