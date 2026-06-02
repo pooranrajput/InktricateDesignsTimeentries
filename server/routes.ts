@@ -364,7 +364,7 @@ export function registerRoutes(app: Express): Server {
       const user = await storage.getUser(userId);
       const standardHourlyRate = parseFloat(user?.hourlyRate || '0');
 
-      // Get task assignments for this user to find task-specific rates
+      // Get task assignments for per-employee rate overrides
       const userTasks = await storage.getUserAssignedTasks(userId);
       const taskRateMap = new Map<number, number>();
       for (const task of userTasks) {
@@ -373,7 +373,16 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      // Calculate pay per entry using correct rates
+      // Get task categories for default task rates
+      const allTaskCats = await storage.getAllTaskCategories();
+      const taskCatRateMap = new Map<number, number>();
+      for (const tc of allTaskCats) {
+        if (tc.defaultHourlyRate) {
+          taskCatRateMap.set(tc.id, parseFloat(tc.defaultHourlyRate));
+        }
+      }
+
+      // Rate priority: per-employee override → task default rate → employee base rate
       let estimatedPay = 0;
       const taskTotals: Record<string, { hours: number; rate: number }> = {};
 
@@ -381,8 +390,12 @@ export function registerRoutes(app: Express): Server {
         const entryHours = parseFloat(entry.totalHours || '0');
         let hourlyRate = standardHourlyRate;
 
-        if (entry.taskCategoryId && taskRateMap.has(entry.taskCategoryId)) {
-          hourlyRate = taskRateMap.get(entry.taskCategoryId)!;
+        if (entry.taskCategoryId) {
+          if (taskRateMap.has(entry.taskCategoryId)) {
+            hourlyRate = taskRateMap.get(entry.taskCategoryId)!;
+          } else if (taskCatRateMap.has(entry.taskCategoryId)) {
+            hourlyRate = taskCatRateMap.get(entry.taskCategoryId)!;
+          }
         }
 
         estimatedPay += entryHours * hourlyRate;
@@ -750,11 +763,12 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied: Admin privileges required" });
       }
       
-      const { name, description, color } = req.body;
+      const { name, description, color, defaultHourlyRate } = req.body;
       const taskData = {
         name,
         description,
         color: color || '#6B7280',
+        defaultHourlyRate: defaultHourlyRate ? defaultHourlyRate.toString() : null,
         createdBy: userId,
         isActive: true
       };
@@ -777,12 +791,13 @@ export function registerRoutes(app: Express): Server {
       }
       
       const { id } = req.params;
-      const { name, description, color } = req.body;
-      
+      const { name, description, color, defaultHourlyRate } = req.body;
+
       const task = await storage.updateTaskCategory(parseInt(id), {
         name,
         description,
         color,
+        defaultHourlyRate: defaultHourlyRate !== undefined ? (defaultHourlyRate ? defaultHourlyRate.toString() : null) : undefined,
       });
       
       res.json(task);
