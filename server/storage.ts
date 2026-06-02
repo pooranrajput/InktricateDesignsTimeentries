@@ -367,11 +367,17 @@ export class DatabaseStorage implements IStorage {
   }> {
     const employees = await this.getAllEmployees();
 
-    // Batch-load all task assignments to avoid N+1 queries
+    // Batch-load all task assignments and task categories to avoid N+1 queries
     const allTaskAssignments = await db.select().from(userTaskAssignments);
     const taskAssignmentMap = new Map<string, typeof allTaskAssignments[0]>();
     for (const ta of allTaskAssignments) {
       taskAssignmentMap.set(`${ta.userId}:${ta.taskCategoryId}`, ta);
+    }
+
+    const allTaskCategories = await db.select().from(taskCategories);
+    const taskCategoryMap = new Map<number, typeof allTaskCategories[0]>();
+    for (const tc of allTaskCategories) {
+      taskCategoryMap.set(tc.id, tc);
     }
 
     const employeeReports = [];
@@ -383,12 +389,16 @@ export class DatabaseStorage implements IStorage {
 
       const standardHourlyRate = parseFloat(employee.hourlyRate || "0");
 
-      // Helper to get the rate for an entry (uses pre-loaded map)
+      // Rate priority: 1) per-employee task override → 2) task default rate → 3) employee base rate
       const getRateForEntry = (entry: TimeEntry): number => {
         if (entry.taskCategoryId) {
           const ta = taskAssignmentMap.get(`${employee.id}:${entry.taskCategoryId}`);
           if (ta?.taskSpecificHourlyRate) {
             return parseFloat(ta.taskSpecificHourlyRate);
+          }
+          const tc = taskCategoryMap.get(entry.taskCategoryId);
+          if (tc?.defaultHourlyRate) {
+            return parseFloat(tc.defaultHourlyRate);
           }
         }
         return standardHourlyRate;
@@ -444,6 +454,7 @@ export class DatabaseStorage implements IStorage {
         name: taskCategories.name,
         description: taskCategories.description,
         color: taskCategories.color,
+        defaultHourlyRate: taskCategories.defaultHourlyRate,
         isActive: taskCategories.isActive,
         createdAt: taskCategories.createdAt,
         assignedCount: count(userTaskAssignments.id),
@@ -528,11 +539,17 @@ export class DatabaseStorage implements IStorage {
     const employees = await this.getAllEmployees();
     const records = [];
 
-    // Batch-load all task assignments to avoid N+1 queries
+    // Batch-load all task assignments and task categories to avoid N+1 queries
     const allTaskAssignments = await db.select().from(userTaskAssignments);
     const taskAssignmentMap = new Map<string, typeof allTaskAssignments[0]>();
     for (const ta of allTaskAssignments) {
       taskAssignmentMap.set(`${ta.userId}:${ta.taskCategoryId}`, ta);
+    }
+
+    const allTaskCats = await db.select().from(taskCategories);
+    const taskCategoryMap = new Map<number, typeof allTaskCats[0]>();
+    for (const tc of allTaskCats) {
+      taskCategoryMap.set(tc.id, tc);
     }
 
     for (const employee of employees) {
@@ -598,6 +615,11 @@ export class DatabaseStorage implements IStorage {
               const ta = taskAssignmentMap.get(`${employee.id}:${entry.taskCategoryId}`);
               if (ta?.taskSpecificHourlyRate) {
                 hourlyRate = parseFloat(ta.taskSpecificHourlyRate);
+              } else {
+                const tc = taskCategoryMap.get(entry.taskCategoryId);
+                if (tc?.defaultHourlyRate) {
+                  hourlyRate = parseFloat(tc.defaultHourlyRate);
+                }
               }
             }
 

@@ -17,8 +17,8 @@ export default function TaskManagement() {
   const [showEditTask, setShowEditTask] = useState(false);
   const [showAssignTask, setShowAssignTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#6B7280" });
-  const [editTask, setEditTask] = useState({ id: 0, name: "", description: "", color: "#6B7280" });
+  const [newTask, setNewTask] = useState({ name: "", description: "", color: "#6B7280", defaultHourlyRate: "" });
+  const [editTask, setEditTask] = useState({ id: 0, name: "", description: "", color: "#6B7280", defaultHourlyRate: "" });
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [taskSpecificRate, setTaskSpecificRate] = useState<string>("");
 
@@ -42,7 +42,7 @@ export default function TaskManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setShowCreateTask(false);
-      setNewTask({ name: "", description: "", color: "#6B7280" });
+      setNewTask({ name: "", description: "", color: "#6B7280", defaultHourlyRate: "" });
       toast({
         title: "Success",
         description: "Task category created successfully",
@@ -76,7 +76,7 @@ export default function TaskManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setShowEditTask(false);
-      setEditTask({ id: 0, name: "", description: "", color: "#000000" });
+      setEditTask({ id: 0, name: "", description: "", color: "#6B7280", defaultHourlyRate: "" });
       toast({
         title: "Success",
         description: "Task category updated successfully",
@@ -164,6 +164,7 @@ export default function TaskManagement() {
       name: task.name,
       description: task.description || "",
       color: task.color || "#6B7280",
+      defaultHourlyRate: task.defaultHourlyRate || "",
     });
     setShowEditTask(true);
   };
@@ -283,9 +284,15 @@ export default function TaskManagement() {
                 </div>
                 
                 {task.description && (
-                  <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
                 )}
-                
+
+                {task.defaultHourlyRate && (
+                  <p className="text-sm font-medium text-primary mb-3">
+                    ${parseFloat(task.defaultHourlyRate).toFixed(2)}/hr
+                  </p>
+                )}
+
                 <div className="flex space-x-2">
                   <Button 
                     size="sm" 
@@ -335,6 +342,17 @@ export default function TaskManagement() {
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                 placeholder="Brief description of this task category"
+              />
+            </div>
+            <div>
+              <Label htmlFor="taskRate">Hourly Rate (Optional)</Label>
+              <Input
+                id="taskRate"
+                type="number"
+                step="0.01"
+                value={newTask.defaultHourlyRate}
+                onChange={(e) => setNewTask({ ...newTask, defaultHourlyRate: e.target.value })}
+                placeholder="e.g. 15.00 — leave blank to use employee's base rate"
               />
             </div>
             <div>
@@ -467,9 +485,20 @@ export default function TaskManagement() {
               />
             </div>
             <div>
+              <Label htmlFor="editTaskRate">Hourly Rate</Label>
+              <Input
+                id="editTaskRate"
+                type="number"
+                step="0.01"
+                value={editTask.defaultHourlyRate}
+                onChange={(e) => setEditTask({ ...editTask, defaultHourlyRate: e.target.value })}
+                placeholder="Leave blank to use employee's base rate"
+              />
+            </div>
+            <div>
               <Label htmlFor="editTaskColor">Color</Label>
               <div className="flex space-x-2">
-                <div 
+                <div
                   className="w-10 h-10 rounded border border-border flex-shrink-0"
                   style={{ backgroundColor: editTask.color }}
                 ></div>
