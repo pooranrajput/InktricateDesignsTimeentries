@@ -122,6 +122,15 @@ export const quickbooksConfig = pgTable("quickbooks_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Database-stored backups (survives Replit redeploys)
+export const backups = pgTable("backups", {
+  id: serial("id").primaryKey(),
+  trigger: varchar("trigger").notNull(),
+  data: jsonb("data").notNull(),
+  counts: jsonb("counts"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   timeEntries: many(timeEntries),

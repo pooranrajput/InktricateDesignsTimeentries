@@ -2362,38 +2362,34 @@ export function registerRoutes(app: Express): Server {
     res.sendFile(path.join(process.cwd(), 'privacy-policy.html'));
   });
 
-  // BACKUP AND PROTECTION ROUTES - ADMIN ONLY
-  app.post('/api/admin/backup/create', isAuthenticated, async (req: any, res) => {
+  // BACKUP ROUTES - ADMIN ONLY (stored in database, survives redeploys)
+  app.post('/api/admin/backup/create', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const currentUser = await storage.getUser(userId);
-      
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied: Admin privileges required" });
-      }
-
-      const backupPath = await backupService.createFullBackup('manual-admin');
-      res.json({ success: true, backupPath, message: 'Full backup created successfully' });
+      const result = await backupService.createFullBackup('manual-admin');
+      res.json({ success: true, backupId: result.id, counts: result.counts, message: 'Full backup saved to database' });
     } catch (error) {
       console.error("Error creating backup:", error);
       res.status(500).json({ message: "Failed to create backup" });
     }
   });
 
-  app.post('/api/admin/backup/emergency', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/backup/emergency', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const currentUser = await storage.getUser(userId);
-      
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied: Admin privileges required" });
-      }
-
-      const backupPath = await protectData.emergencyBackup();
-      res.json({ success: true, backupPath, message: 'Emergency backup created successfully' });
+      const result = await backupService.createFullBackup('emergency');
+      res.json({ success: true, backupId: result.id, counts: result.counts, message: 'Emergency backup saved to database' });
     } catch (error) {
       console.error("Error creating emergency backup:", error);
       res.status(500).json({ message: "Failed to create emergency backup" });
+    }
+  });
+
+  app.get('/api/admin/backups', isAdmin, async (req: any, res) => {
+    try {
+      const list = await backupService.listBackups();
+      res.json(list);
+    } catch (error) {
+      console.error("Error listing backups:", error);
+      res.status(500).json({ message: "Failed to list backups" });
     }
   });
 
