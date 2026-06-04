@@ -51,6 +51,14 @@ app.use((req, res, next) => {
     console.error('Admin bootstrap failed:', error);
   }
 
+  // Start automatic backups — creates one immediately on startup, then hourly
+  try {
+    const { backupService } = await import("./backup");
+    backupService.startAutomaticBackups();
+  } catch (error) {
+    console.error('Backup service failed to start:', error);
+  }
+
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

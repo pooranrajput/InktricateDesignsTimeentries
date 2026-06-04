@@ -1,5 +1,5 @@
 import { storage } from "./storage";
-import { users, timeEntries, taskCategories, monthlyPayroll } from "@shared/schema";
+import { users, timeEntries, taskCategories, userTaskAssignments, monthlyPayroll } from "@shared/schema";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
@@ -33,23 +33,26 @@ export class BackupService {
       const allUsers = await db.select().from(users);
       const allTimeEntries = await db.select().from(timeEntries);
       const allTaskCategories = await db.select().from(taskCategories);
+      const allTaskAssignments = await db.select().from(userTaskAssignments);
       const allPayroll = await db.select().from(monthlyPayroll);
 
       const backup = {
         timestamp: new Date().toISOString(),
         trigger,
-        version: '1.0',
+        version: '2.0',
         database_url: process.env.DATABASE_URL ? 'REDACTED' : 'NOT_SET',
         data: {
           users: allUsers,
           timeEntries: allTimeEntries,
           taskCategories: allTaskCategories,
+          userTaskAssignments: allTaskAssignments,
           monthlyPayroll: allPayroll
         },
         counts: {
           users: allUsers.length,
           timeEntries: allTimeEntries.length,
           taskCategories: allTaskCategories.length,
+          userTaskAssignments: allTaskAssignments.length,
           monthlyPayroll: allPayroll.length
         }
       };
@@ -78,7 +81,10 @@ export class BackupService {
           date: timeEntries.date,
           startTime: timeEntries.startTime,
           endTime: timeEntries.endTime,
-          description: timeEntries.description,
+          project: timeEntries.project,
+          clientName: timeEntries.clientName,
+          notes: timeEntries.notes,
+          totalHours: timeEntries.totalHours,
           taskCategoryId: timeEntries.taskCategoryId,
           createdAt: timeEntries.createdAt,
           updatedAt: timeEntries.updatedAt
@@ -106,12 +112,16 @@ export class BackupService {
 
   // Scheduled backup every hour
   startAutomaticBackups() {
-    // Initial backup on startup
-    this.createFullBackup('startup');
-    
-    // Backup every hour
+    // Initial full backup on startup
+    this.createFullBackup('startup').catch(err =>
+      console.error('Startup backup failed:', err)
+    );
+
+    // Full backup every hour (not just time entries)
     setInterval(() => {
-      this.createTimeEntriesBackup('hourly');
+      this.createFullBackup('hourly').catch(err =>
+        console.error('Hourly backup failed:', err)
+      );
     }, 60 * 60 * 1000); // 1 hour
 
     // Full backup every 6 hours
