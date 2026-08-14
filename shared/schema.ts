@@ -11,6 +11,7 @@ import {
   date,
   time,
   boolean,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -218,3 +219,160 @@ export const PROJECT_TYPES = [
 ] as const;
 
 export type ProjectType = typeof PROJECT_TYPES[number];
+
+// ============================================================================
+// Load-out feature: event packing lists and production tracking
+// Built from Dubsado contract PDFs. See docs/LOADOUT_SPEC.md.
+// Additive only — nothing above this line changes.
+// ============================================================================
+
+// An event = one wedding job, imported from a contract/invoice
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  client: text("client").notNull(), // "Rajitha + Ambar"
+  invoiceNo: text("invoice_no"), // "306"
+  eventDate: date("event_date"),
+  sourceFile: text("source_file"), // original PDF filename
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// A venue groups items within an event ("Home Puja", "Plaza")
+export const venues = pgTable("venues", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  position: integer("position").notNull().default(0), // document order
+});
+
+// A packable line item. stage is the index into the stage list (0-4).
+export const items = pgTable("items", {
+  id: serial("id").primaryKey(),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  qty: integer("qty").notNull().default(1),
+  spec: text("spec"), // "3ft x 7ft, 3D lotuses, irregular shape"
+  stage: integer("stage").notNull().default(0), // 0=Not started ... 4=Packed
+  oversized: boolean("oversized").default(false),
+  dependency: text("dependency"), // "Floral arrangement from Design House"
+  needsCheck: boolean("needs_check").default(false), // venue assignment uncertain
+  position: integer("position").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Day-of services (delivery/setup/breakdown) — scheduled, not packed
+export const eventServices = pgTable("event_services", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  label: text("label").notNull(), // "Delivery / setup / breakdown - Plaza"
+});
+
+// Crew kit checklist state, per event. Composite PK on (eventId, line).
+export const kitChecks = pgTable(
+  "kit_checks",
+  {
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    line: text("line").notNull(),
+    checked: boolean("checked").default(false),
+  },
+  (table) => [primaryKey({ columns: [table.eventId, table.line] })],
+);
+
+// Access control: which users can see and use the Load-out tab.
+// Presence of a row grants access (tab-level). Admins are granted in code.
+export const loadoutAccess = pgTable("loadout_access", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  assignedBy: varchar("assigned_by")
+    .notNull()
+    .references(() => users.id),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+});
+
+// Relations
+export const eventsRelations = relations(events, ({ many }) => ({
+  venues: many(venues),
+  services: many(eventServices),
+  kitChecks: many(kitChecks),
+}));
+
+export const venuesRelations = relations(venues, ({ one, many }) => ({
+  event: one(events, {
+    fields: [venues.eventId],
+    references: [events.id],
+  }),
+  items: many(items),
+}));
+
+export const itemsRelations = relations(items, ({ one }) => ({
+  venue: one(venues, {
+    fields: [items.venueId],
+    references: [venues.id],
+  }),
+}));
+
+export const eventServicesRelations = relations(eventServices, ({ one }) => ({
+  event: one(events, {
+    fields: [eventServices.eventId],
+    references: [events.id],
+  }),
+}));
+
+export const kitChecksRelations = relations(kitChecks, ({ one }) => ({
+  event: one(events, {
+    fields: [kitChecks.eventId],
+    references: [events.id],
+  }),
+}));
+
+export const loadoutAccessRelations = relations(loadoutAccess, ({ one }) => ({
+  user: one(users, {
+    fields: [loadoutAccess.userId],
+    references: [users.id],
+  }),
+  assignedByUser: one(users, {
+    fields: [loadoutAccess.assignedBy],
+    references: [users.id],
+  }),
+}));
+
+// Insert/validation schemas
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertVenueSchema = createInsertSchema(venues).omit({
+  id: true,
+});
+
+export const insertItemSchema = createInsertSchema(items).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertEventServiceSchema = createInsertSchema(eventServices).omit({
+  id: true,
+});
+
+// Types
+export type Event = typeof events.$inferSelect;
+export type Venue = typeof venues.$inferSelect;
+export type Item = typeof items.$inferSelect;
+export type EventService = typeof eventServices.$inferSelect;
+export type KitCheck = typeof kitChecks.$inferSelect;
+export type LoadoutAccess = typeof loadoutAccess.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type InsertVenue = z.infer<typeof insertVenueSchema>;
+export type InsertItem = z.infer<typeof insertItemSchema>;
+export type InsertEventService = z.infer<typeof insertEventServiceSchema>;
